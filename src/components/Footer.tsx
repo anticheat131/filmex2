@@ -77,9 +77,9 @@ const Footer = () => {
         <div className={`${isMobile ? 'flex flex-col' : 'grid grid-cols-1 md:grid-cols-4 gap-8'}`}>
           
           {/* About Section */}
-          <FooterSection title="Filmex Official" id="about">
+          <FooterSection title="Let's Stream V2.0" id="about">
             <p className="text-white/70 text-sm mb-4">
-              Discover and enjoy the best movies and TV shows all in one place. Filmex helps you find, explore, and watch your favorite content online.
+              Discover and enjoy the best movies and TV shows all in one place. Let's Stream V2.0 helps you find, explore, and watch your favorite content online.
             </p>
             {isMobile && (
               <div className="flex items-center mb-2">
@@ -158,21 +158,36 @@ const Footer = () => {
           {/* Social */}
           <FooterSection title="Connect" id="connect">
             <div className="flex flex-wrap gap-2">
-
               <a 
-                href="https://x.com/sid992r" 
+                href="https://discord.gg/ascmZ7nExu" 
+                className="bg-white/5 hover:bg-accent/20 hover:scale-105 p-2 rounded-full transition-all duration-200"
+                aria-label="Discord"
+              >
+                <Github className="h-5 w-5 text-white" />
+              </a>
+              <a 
+                href="https://x.com/" 
                 className="bg-white/5 hover:bg-accent/20 hover:scale-105 p-2 rounded-full transition-all duration-200"
                 aria-label="Twitter"
               >
                 <Twitter className="h-5 w-5 text-white" />
               </a>
-
+              <a 
+                href="https://facebook.com/" 
+                className="bg-white/5 hover:bg-accent/20 hover:scale-105 p-2 rounded-full transition-all duration-200"
+                aria-label="Facebook"
+              >
                 <Facebook className="h-5 w-5 text-white" />
               </a>
-
-          
               <a 
-                href="https://discord.gg/ascmZ7nExu" 
+                href="https://instagram.com/" 
+                className="bg-white/5 hover:bg-accent/20 hover:scale-105 p-2 rounded-full transition-all duration-200"
+                aria-label="Instagram"
+              >
+                <Instagram className="h-5 w-5 text-white" />
+              </a>
+              <a 
+                href="mailto:nomailyet@nomail.com" 
                 className="bg-white/5 hover:bg-accent/20 hover:scale-105 p-2 rounded-full transition-all duration-200"
                 aria-label="Email"
               >
@@ -196,7 +211,7 @@ const Footer = () => {
         <div className="mt-8 pt-4 border-t border-white/10 text-center">
           <div className="flex flex-col md:flex-row justify-between items-center gap-2">
             <p className="text-white/50 text-xs flex items-center">
-              © {currentYear} Filmex.to. All rights reserved.
+              © {currentYear} Let's Stream V2.0. All rights reserved.
               <span className="inline-flex items-center mx-1">
                 Built with <Heart className="h-3 w-3 text-accent mx-1" fill="#E63462" /> by the community
               </span>
