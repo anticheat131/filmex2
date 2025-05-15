@@ -2,9 +2,7 @@ import { Routes, Route, Outlet } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AnalyticsWrapper } from '@/components/AnalyticsWrapper';
-import Anime from '@/pages/Anime';  // adjust path accordingly
 
-<Route path="/anime" element={<Anime />} />
 // Lazy load pages
 const Index = lazy(() => import('./pages/Index'));
 const Login = lazy(() => import('./pages/Login'));
