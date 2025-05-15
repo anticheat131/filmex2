@@ -31,25 +31,23 @@ const Index = () => {
   const [contentVisible, setContentVisible] = useState(false);
   const [secondaryLoaded, setSecondaryLoaded] = useState(false);
 
-  // Robust quality assignment ensuring all items have a badge
+  // Helper to add quality info to all media items, with detailed logging
   const applyQuality = (items: Media[]) =>
     items.map(item => {
-      console.log('Assigning quality for:', item.title || item.name, {
+      console.log('Media quality check:', item.title || item.name, {
         hd: item.hd,
         video_source: item.video_source,
         backdrop_path: item.backdrop_path,
       });
 
-      let quality = 'HD'; // default to HD
+      let quality = 'HD'; // default
 
       if (typeof item.hd === 'boolean') {
         quality = item.hd ? 'HD' : 'CAM';
       } else if (item.video_source && typeof item.video_source === 'string') {
         quality = item.video_source.toLowerCase().includes('cam') ? 'CAM' : 'HD';
-      } else if (item.backdrop_path) {
-        quality = 'HD';
-      } else {
-        quality = 'CAM'; // fallback
+      } else if (!item.backdrop_path) {
+        quality = 'CAM';
       }
 
       return {
@@ -112,13 +110,13 @@ const Index = () => {
 
       {isLoading ? (
         <div className="flex flex-col gap-8 pt-24 px-6">
-          <Skeleton className="w-full h-[60vh] rounded-lg" />
+          <Skeleton className="w-full h-[60vh] rounded-lg" /> {/* Hero skeleton */}
           <RowSkeleton />
           <RowSkeleton />
         </div>
       ) : (
         <>
-          <div className="pt-16">
+          <div className="pt-16">{/* Padding-top for navbar */}
             {trendingMedia.length > 0 && (
               <Hero media={trendingMedia.slice(0, 5)} className="hero" />
             )}
