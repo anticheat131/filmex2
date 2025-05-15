@@ -1,3 +1,19 @@
+import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { getPopularMovies, getTopRatedMovies } from '@/utils/api';
+import { Media, ensureExtendedMediaArray } from '@/utils/types';
+import { trackMediaPreference } from '@/lib/analytics';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import MediaGrid from '@/components/MediaGrid';
+import { MediaGridSkeleton } from '@/components/MediaSkeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Film, ChevronDown, Grid3X3, List } from 'lucide-react';
+import PageTransition from '@/components/PageTransition';
+import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { AnimatePresence } from "framer-motion";
 
 const DMCANotice = () => {

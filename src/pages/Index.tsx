@@ -1,4 +1,3 @@
-
 import { useState, useEffect, Suspense, lazy } from 'react';
 import {
   getTrending,
@@ -32,52 +31,67 @@ const Index = () => {
   const [contentVisible, setContentVisible] = useState(false);
   const [secondaryLoaded, setSecondaryLoaded] = useState(false);
 
-  // Primary data fetch - critical for initial render
+  // Helper to add quality info to all media items, with detailed logging
+  const applyQuality = (items: Media[]) =>
+    items.map(item => {
+      console.log('Media quality check:', item.title || item.name, {
+        hd: item.hd,
+        video_source: item.video_source,
+        backdrop_path: item.backdrop_path,
+      });
+
+      let quality = 'HD'; // default
+
+      if (typeof item.hd === 'boolean') {
+        quality = item.hd ? 'HD' : 'CAM';
+      } else if (item.video_source && typeof item.video_source === 'string') {
+        quality = item.video_source.toLowerCase().includes('cam') ? 'CAM' : 'HD';
+      } else if (!item.backdrop_path) {
+        quality = 'CAM';
+      }
+
+      return {
+        ...item,
+        quality,
+      };
+    });
+
   useEffect(() => {
     const fetchPrimaryData = async () => {
       try {
-        // Use Promise.all for parallel requests
         const [
           trendingData,
           popularMoviesData,
           popularTVData,
           topMoviesData,
-          topTVData
+          topTVData,
         ] = await Promise.all([
           getTrending(),
           getPopularMovies(),
           getPopularTVShows(),
           getTopRatedMovies(),
-          getTopRatedTVShows()
+          getTopRatedTVShows(),
         ]);
 
         const filteredTrendingData = trendingData.filter(item => item.backdrop_path);
 
-        setTrendingMedia(filteredTrendingData);
-        setPopularMovies(popularMoviesData);
-        setPopularTVShows(popularTVData);
-        setTopRatedMovies(topMoviesData);
-        setTopRatedTVShows(topTVData);
+        setTrendingMedia(applyQuality(filteredTrendingData));
+        setPopularMovies(applyQuality(popularMoviesData));
+        setPopularTVShows(applyQuality(popularTVData));
+        setTopRatedMovies(applyQuality(topMoviesData));
+        setTopRatedTVShows(applyQuality(topTVData));
       } catch (error) {
         console.error('Error fetching homepage data:', error);
       } finally {
         setIsLoading(false);
-        // Add a slight delay for content fade-in
-        setTimeout(() => {
-          setContentVisible(true);
-        }, 100); // Reduced from 300ms to 100ms for faster perceived performance
-        
-        // After primary content is visible, load secondary content
-        setTimeout(() => {
-          setSecondaryLoaded(true);
-        }, 1000);
+        setTimeout(() => setContentVisible(true), 100);
+        setTimeout(() => setSecondaryLoaded(true), 1000);
       }
     };
 
     fetchPrimaryData();
   }, []);
 
-  // Content placeholder skeleton
   const RowSkeleton = () => (
     <div className="mb-8">
       <Skeleton className="h-8 w-48 mb-4" />
@@ -102,21 +116,32 @@ const Index = () => {
         </div>
       ) : (
         <>
-          <div className="pt-16"> {/* Add padding-top to account for navbar */}
-            {trendingMedia.length > 0 && <Hero media={trendingMedia.slice(0, 5)} className="hero" />}
+          <div className="pt-16">{/* Padding-top for navbar */}
+            {trendingMedia.length > 0 && (
+              <Hero media={trendingMedia.slice(0, 5)} className="hero" />
+            )}
           </div>
 
-          <div className={`mt-8 md:mt-12 transition-opacity duration-300 ${contentVisible ? 'opacity-100' : 'opacity-0'}`}>
+          <div
+            className={`mt-8 md:mt-12 transition-opacity duration-300 ${
+              contentVisible ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
             {user && <ContinueWatching />}
             <ContentRow title="Trending Now" media={trendingMedia} featured />
             <ContentRow title="Popular Movies" media={popularMovies} />
             <ContentRow title="Popular TV Shows" media={popularTVShows} />
             <ContentRow title="Top Rated Movies" media={topRatedMovies} />
             <ContentRow title="Top Rated TV Shows" media={topRatedTVShows} />
-            
-            {/* Lazy load secondary content */}
+
             {secondaryLoaded && (
-              <Suspense fallback={<div className="py-8"><Spinner size="lg" className="mx-auto" /></div>}>
+              <Suspense
+                fallback={
+                  <div className="py-8">
+                    <Spinner size="lg" className="mx-auto" />
+                  </div>
+                }
+              >
                 <SecondaryContent />
               </Suspense>
             )}
