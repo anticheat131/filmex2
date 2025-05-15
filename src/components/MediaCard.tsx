@@ -107,8 +107,7 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
         'relative group/card cursor-pointer overflow-visible rounded-lg border border-white/10 bg-card shadow-lg transition-all duration-300 hover:shadow-accent/30 hover:border-accent',
         className
       )}
-      whileHover={{ scale: 1.03 }}
-      style={{ marginLeft: '4px', marginTop: '4px' }} // push card slightly right and down to keep left/top border visible on hover
+      whileHover={{ scale: 1.03, y: 6 }} // Move down 6px on hover to fully show top border
     >
       <div className="relative rounded-t-lg overflow-hidden aspect-[2/3]">
         <img
@@ -145,7 +144,8 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
           <span>
             {media.media_type === 'movie'
               ? media.release_date?.slice(0, 4)
-              : media.first_air_date?.slice(0, 4)}{durationText ? ` · ${durationText}` : ''}
+              : media.first_air_date?.slice(0, 4)}
+            {durationText ? ` · ${durationText}` : ''}
           </span>
           {media.vote_average > 0 && (
             <span className="flex items-center gap-1 text-amber-400">
