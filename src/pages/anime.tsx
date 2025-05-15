@@ -203,4 +203,85 @@ const Anime = () => {
                     <List className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
                     List View
                   </>
-               
+               ) : (
+<>
+<Grid3X3 className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
+Grid View
+</>
+)}
+</Button>
+</div>
+</div>
+      <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <TabsList className="mb-4 md:mb-0">
+            <TabsTrigger value="popular" className="data-[state=active]:bg-accent/20">Popular</TabsTrigger>
+            <TabsTrigger value="top_rated" className="data-[state=active]:bg-accent/20">Top Rated</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="popular" className="focus-visible:outline-none animate-fade-in">
+          {popularAnimeQuery.isLoading ? (
+            <MediaGridSkeleton listView={viewMode === 'list'} />
+          ) : popularAnimeQuery.isError ? (
+            <div className="py-12 text-center text-white">Error loading anime. Please try again.</div>
+          ) : (
+            <>
+              <MediaGrid media={ensureExtendedMediaArray(filteredPopularAnime)} title="Popular Anime" listView={viewMode === 'list'} />
+
+              {hasMorePopular && (
+                <div className="flex justify-center my-8">
+                  <Button
+                    onClick={handleShowMorePopular}
+                    variant="outline"
+                    className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300"
+                  >
+                    {popularAnimeQuery.isFetching ? (
+                      <>Loading...</>
+                    ) : (
+                      <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="top_rated" className="focus-visible:outline-none animate-fade-in">
+          {topRatedAnimeQuery.isLoading ? (
+            <MediaGridSkeleton listView={viewMode === 'list'} />
+          ) : topRatedAnimeQuery.isError ? (
+            <div className="py-12 text-center text-white">Error loading anime. Please try again.</div>
+          ) : (
+            <>
+              <MediaGrid media={ensureExtendedMediaArray(filteredTopRatedAnime)} title="Top Rated Anime" listView={viewMode === 'list'} />
+
+              {hasMoreTopRated && (
+                <div className="flex justify-center my-8">
+                  <Button
+                    onClick={handleShowMoreTopRated}
+                    variant="outline"
+                    className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300"
+                  >
+                    {topRatedAnimeQuery.isFetching ? (
+                      <>Loading...</>
+                    ) : (
+                      <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
+    </main>
+
+    <Footer />
+  </div>
+</PageTransition>
+);
+};
+
+export default Anime;
