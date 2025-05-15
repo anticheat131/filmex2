@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -27,8 +28,8 @@ const SportMatchPlayer = () => {
   }, [id]);
 
   const { data: streams, isLoading, error } = useQuery({
-    queryKey: ['match-streams', id, source],
-    queryFn: () => getMatchStreams(source, id),
+    queryKey: ['match-streams', id],
+    queryFn: () => getMatchStreams(null, id), // fetch all sources
     placeholderData: cachedStreams,
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
@@ -40,15 +41,14 @@ const SportMatchPlayer = () => {
       saveLocalData(`sport-streams-${id}`, streams, 30 * 60 * 1000);
 
       if (!selectedSource) {
-        const streamWithUrl = streams.find(s => s.embedUrl);
-        if (streamWithUrl) {
-          setSelectedSource(streamWithUrl.source);
-        }
+        const preferred = streams.find(s => s.source === source && s.embedUrl);
+        const fallback = streams.find(s => s.embedUrl);
+        setSelectedSource(preferred?.source || fallback?.source || null);
       }
     } else {
       console.warn("No streams available for match:", id);
     }
-  }, [streams, id, selectedSource]);
+  }, [streams, id, selectedSource, source]);
 
   const handleSourceChange = (source) => {
     setSelectedSource(source);
