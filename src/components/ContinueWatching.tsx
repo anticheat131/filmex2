@@ -1,5 +1,3 @@
-// ...imports remain unchanged
-import { useNavigate } from 'react-router-dom';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -16,9 +14,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatDistanceToNow } from 'date-fns';
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { useWatchHistory } from '@/hooks/watch-history';
-import { useAuth } from '@/hooks';
+
+interface ContinueWatchingProps {
+  maxItems?: number;
+}
+
 const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const { user } = useAuth();
   const { watchHistory } = useWatchHistory();
@@ -69,14 +69,12 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
 
   const scrollLeft = () => {
     if (!rowRef.current) return;
-    const scrollAmount = rowRef.current.clientWidth * 0.75;
-    rowRef.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    rowRef.current.scrollBy({ left: -rowRef.current.clientWidth * 0.75, behavior: 'smooth' });
   };
 
   const scrollRight = () => {
     if (!rowRef.current) return;
-    const scrollAmount = rowRef.current.clientWidth * 0.75;
-    rowRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    rowRef.current.scrollBy({ left: rowRef.current.clientWidth * 0.75, behavior: 'smooth' });
   };
 
   const handleRemoveItem = (id: string) => {
@@ -86,10 +84,9 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
 
       const filtered = parsed.filter((item: any) => item.id !== id);
       localStorage.setItem('fdf_watch_history', JSON.stringify(filtered));
-
       setContinuableItems(prev => prev.filter(item => item.id !== id));
     } catch (error) {
-      console.error('Error removing item:', error);
+      console.error('Error removing item from localStorage:', error);
     }
   };
 
