@@ -31,6 +31,7 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
+  // Filter and deduplicate watch history
   const processedHistory = useMemo(() => {
     if (watchHistory.length === 0) return [];
     
@@ -102,23 +103,21 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
     return `${minutes}:${seconds.toString().padStart(2, '0')} remaining`;
   };
 
+  // Updated to handle array structure in localStorage
   const handleRemoveFinished = () => {
     try {
-      const raw = localStorage.getItem('fdf_watch_history') || '{}';
-      const parsed = JSON.parse(raw);
+      const raw = localStorage.getItem('fdf_watch_history') || '[]';
+      const parsed: any[] = JSON.parse(raw);
 
-      let changed = false;
-      Object.entries(parsed).forEach(([id, entry]: any) => {
-        const watched = entry?.progress?.watched ?? 0;
-        const duration = entry?.progress?.duration ?? 0;
-        if (watched >= duration - END_THRESHOLD_SECONDS) {
-          delete parsed[id];
-          changed = true;
-        }
+      const filtered = parsed.filter(entry => {
+        const watched = entry.watch_position ?? 0;
+        const duration = entry.duration ?? 0;
+        // Keep only items that are NOT finished
+        return watched < duration - END_THRESHOLD_SECONDS;
       });
 
-      if (changed) {
-        localStorage.setItem('fdf_watch_history', JSON.stringify(parsed));
+      if (filtered.length !== parsed.length) {
+        localStorage.setItem('fdf_watch_history', JSON.stringify(filtered));
         alert('Removed finished items from Continue Watching.');
         window.location.reload();
       } else {
@@ -267,17 +266,17 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
         {showRightArrow && (
           <button
             className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-black/70 text-white transition-all ${
-isHovering ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'
-} hidden md:flex`}
-onClick={scrollRight}
-aria-label="Scroll right"
->
-<ChevronRight className="h-6 w-6" />
-</button>
-)}
-</div>
-</div>
-);
+              isHovering ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'
+            } hidden md:flex`}
+            onClick={scrollRight}
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default ContinueWatching;
