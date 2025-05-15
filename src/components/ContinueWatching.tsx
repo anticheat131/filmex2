@@ -31,6 +31,7 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
+  // Deduplicate and sort watch history entries
   const processedHistory = useMemo(() => {
     if (watchHistory.length === 0) return [];
 
@@ -61,6 +62,29 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   }, [watchHistory]);
 
   useEffect(() => {
+    // Clean up fully watched items from localStorage vidLinkProgress
+    try {
+      const raw = localStorage.getItem('vidLinkProgress') || '{}';
+      const parsed = JSON.parse(raw);
+
+      let changed = false;
+      Object.entries(parsed).forEach(([id, entry]: any) => {
+        const watched = entry?.progress?.watched;
+        const duration = entry?.progress?.duration;
+        if (!isNaN(watched) && !isNaN(duration) && watched >= duration - END_THRESHOLD_SECONDS) {
+          delete parsed[id];
+          changed = true;
+        }
+      });
+
+      if (changed) {
+        localStorage.setItem('vidLinkProgress', JSON.stringify(parsed));
+      }
+    } catch (e) {
+      console.error('Error cleaning vidLinkProgress in localStorage:', e);
+    }
+
+    // Filter processedHistory to exclude nearly finished items
     const filtered = processedHistory.filter((item) => {
       const watched = Number(item.watch_position);
       const duration = Number(item.duration);
