@@ -31,18 +31,26 @@ const Index = () => {
   const [contentVisible, setContentVisible] = useState(false);
   const [secondaryLoaded, setSecondaryLoaded] = useState(false);
 
-  // Helper to add quality info to all media items
+  // Robust quality assignment ensuring all items have a badge
   const applyQuality = (items: Media[]) =>
     items.map(item => {
-      // Log for debugging
-      console.log('Media item quality check:', item.title || item.name, {
+      console.log('Assigning quality for:', item.title || item.name, {
         hd: item.hd,
         video_source: item.video_source,
         backdrop_path: item.backdrop_path,
       });
 
-      // Force 'HD' for testing badge display
-      const quality = 'HD';
+      let quality = 'HD'; // default to HD
+
+      if (typeof item.hd === 'boolean') {
+        quality = item.hd ? 'HD' : 'CAM';
+      } else if (item.video_source && typeof item.video_source === 'string') {
+        quality = item.video_source.toLowerCase().includes('cam') ? 'CAM' : 'HD';
+      } else if (item.backdrop_path) {
+        quality = 'HD';
+      } else {
+        quality = 'CAM'; // fallback
+      }
 
       return {
         ...item,
@@ -50,11 +58,9 @@ const Index = () => {
       };
     });
 
-  // Primary data fetch - critical for initial render
   useEffect(() => {
     const fetchPrimaryData = async () => {
       try {
-        // Use Promise.all for parallel requests
         const [
           trendingData,
           popularMoviesData,
@@ -80,19 +86,14 @@ const Index = () => {
         console.error('Error fetching homepage data:', error);
       } finally {
         setIsLoading(false);
-        setTimeout(() => {
-          setContentVisible(true);
-        }, 100);
-        setTimeout(() => {
-          setSecondaryLoaded(true);
-        }, 1000);
+        setTimeout(() => setContentVisible(true), 100);
+        setTimeout(() => setSecondaryLoaded(true), 1000);
       }
     };
 
     fetchPrimaryData();
   }, []);
 
-  // Content placeholder skeleton
   const RowSkeleton = () => (
     <div className="mb-8">
       <Skeleton className="h-8 w-48 mb-4" />
@@ -111,13 +112,13 @@ const Index = () => {
 
       {isLoading ? (
         <div className="flex flex-col gap-8 pt-24 px-6">
-          <Skeleton className="w-full h-[60vh] rounded-lg" /> {/* Hero skeleton */}
+          <Skeleton className="w-full h-[60vh] rounded-lg" />
           <RowSkeleton />
           <RowSkeleton />
         </div>
       ) : (
         <>
-          <div className="pt-16">{/* Padding-top for navbar */}
+          <div className="pt-16">
             {trendingMedia.length > 0 && (
               <Hero media={trendingMedia.slice(0, 5)} className="hero" />
             )}
