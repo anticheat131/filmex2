@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import ContentRow from '@/components/ContentRow';
 import { Media } from '@/utils/types';
@@ -17,6 +16,23 @@ import {
   getSonyLivContent
 } from '@/utils/api';
 
+// Helper to assign quality
+const applyQuality = (items: Media[]) =>
+  items.map(item => {
+    let quality = 'HD';
+    if (typeof item.hd === 'boolean') {
+      quality = item.hd ? 'HD' : 'CAM';
+    } else if (item.video_source && typeof item.video_source === 'string') {
+      quality = item.video_source.toLowerCase().includes('cam') ? 'CAM' : 'HD';
+    } else if (!item.backdrop_path) {
+      quality = 'CAM';
+    }
+    return {
+      ...item,
+      quality,
+    };
+  });
+
 const SecondaryContent = () => {
   const [bollywoodMovies, setBollywoodMovies] = useState<Media[]>([]);
   const [actionMovies, setActionMovies] = useState<Media[]>([]);
@@ -34,16 +50,14 @@ const SecondaryContent = () => {
   useEffect(() => {
     const fetchGenreContent = async () => {
       try {
-        // Fetch genre-based content in parallel
         const [bollywood, action, drama] = await Promise.all([
           getBollywoodMovies(),
           getActionMovies(),
           getDramaMovies()
         ]);
-        
-        setBollywoodMovies(bollywood);
-        setActionMovies(action);
-        setDramaMovies(drama);
+        setBollywoodMovies(applyQuality(bollywood));
+        setActionMovies(applyQuality(action));
+        setDramaMovies(applyQuality(drama));
       } catch (error) {
         console.error('Error fetching genre content:', error);
       }
@@ -51,44 +65,37 @@ const SecondaryContent = () => {
 
     const fetchPlatformContent = async () => {
       try {
-        // Fetch platform-specific content in batches to improve performance
         const [netflix, hulu, prime] = await Promise.all([
           getNetflixContent(),
           getHuluContent(),
           getPrimeContent()
         ]);
-        
-        setNetflixContent(netflix);
-        setHuluContent(hulu);
-        setPrimeContent(prime);
-        
-        // Second batch of platform content
+        setNetflixContent(applyQuality(netflix));
+        setHuluContent(applyQuality(hulu));
+        setPrimeContent(applyQuality(prime));
+
         const [paramount, disney, hotstar] = await Promise.all([
           getParamountContent(),
           getDisneyContent(),
           getHotstarContent()
         ]);
-        
-        setParamountContent(paramount);
-        setDisneyContent(disney);
-        setHotstarContent(hotstar);
-        
-        // Third batch of platform content
+        setParamountContent(applyQuality(paramount));
+        setDisneyContent(applyQuality(disney));
+        setHotstarContent(applyQuality(hotstar));
+
         const [appleTV, jioCinema, sonyLiv] = await Promise.all([
           getAppleTVContent(),
           getJioCinemaContent(),
           getSonyLivContent()
         ]);
-        
-        setAppleTVContent(appleTV);
-        setJioCinemaContent(jioCinema);
-        setSonyLivContent(sonyLiv);
+        setAppleTVContent(applyQuality(appleTV));
+        setJioCinemaContent(applyQuality(jioCinema));
+        setSonyLivContent(applyQuality(sonyLiv));
       } catch (error) {
         console.error('Error fetching platform content:', error);
       }
     };
 
-    // Execute both fetches in parallel
     fetchGenreContent();
     fetchPlatformContent();
   }, []);
@@ -99,7 +106,7 @@ const SecondaryContent = () => {
       {bollywoodMovies.length > 0 && <ContentRow title="Bollywood" media={bollywoodMovies} />}
       {actionMovies.length > 0 && <ContentRow title="Action" media={actionMovies} />}
       {dramaMovies.length > 0 && <ContentRow title="Drama" media={dramaMovies} />}
-      
+
       {/* Platform-specific content */}
       {netflixContent.length > 0 && <ContentRow title="Netflix" media={netflixContent} />}
       {huluContent.length > 0 && <ContentRow title="Hulu" media={huluContent} />}
