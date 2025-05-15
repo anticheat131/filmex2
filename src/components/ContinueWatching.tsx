@@ -19,6 +19,8 @@ interface ContinueWatchingProps {
   maxItems?: number;
 }
 
+const END_THRESHOLD_SECONDS = 30; // Items with less than 30s left are considered finished
+
 const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const { user } = useAuth();
   const { watchHistory } = useWatchHistory();
@@ -29,7 +31,7 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // Filter and deduplicate watch history, excluding finished items (≥95% watched)
+  // Filter and deduplicate watch history, excluding items with less than 30s remaining
   const processedHistory = useMemo(() => {
     if (watchHistory.length === 0) return [];
 
@@ -39,27 +41,17 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
         const date = new Date(item.created_at);
         if (isNaN(date.getTime())) return false;
 
-        // Convert watch_position and duration to numbers
         const position = Number(item.watch_position);
         const duration = Number(item.duration);
 
-        // Debug log to verify values
-        console.log(
-          'Filtering watch history item:',
-          item.title,
-          position,
-          duration,
-          position / duration
-        );
-
-        // Exclude if watched 95% or more
+        // Exclude if near or at the end
         if (
           !isNaN(position) &&
           !isNaN(duration) &&
           duration > 0 &&
-          position >= duration * 0.95
+          position >= duration - END_THRESHOLD_SECONDS
         ) {
-          return false; // Exclude finished
+          return false;
         }
 
         return true;
@@ -255,8 +247,7 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
                             100,
                             Math.max(
                               0,
-                              (Number(item.watch_position) / Number(item.duration)) *
-                                100
+                              (Number(item.watch_position) / Number(item.duration)) * 100
                             )
                           )
                         : 0
