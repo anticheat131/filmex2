@@ -42,13 +42,7 @@ const MediaCard = ({ media, className, featured = false, minimal = false }: Medi
     navigate(detailPath);
   };
 
-  const handleFavoriteClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    await trackMediaPreference(media.media_type as 'movie' | 'tv', 'favorite');
-  };
-
-  const quality = media.quality?.toUpperCase() || '';
+  const quality = media.quality?.toUpperCase();
 
   if (minimal) {
     return (
