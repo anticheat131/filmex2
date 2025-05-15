@@ -15,6 +15,29 @@ interface MediaCardProps {
   minimal?: boolean;
 }
 
+// Simple TMDB genre ID to name map (adjust or import yours)
+const genreMap: Record<number, string> = {
+  28: 'Action',
+  12: 'Adventure',
+  16: 'Animation',
+  35: 'Comedy',
+  80: 'Crime',
+  99: 'Documentary',
+  18: 'Drama',
+  10751: 'Family',
+  14: 'Fantasy',
+  36: 'History',
+  27: 'Horror',
+  10402: 'Music',
+  9648: 'Mystery',
+  10749: 'Romance',
+  878: 'Sci-Fi',
+  10770: 'TV Movie',
+  53: 'Thriller',
+  10752: 'War',
+  37: 'Western',
+};
+
 const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
   const [imageError, setImageError] = useState(false);
   const navigate = useNavigate();
@@ -43,6 +66,12 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
     ]);
     navigate(detailPath);
   };
+
+  // Map genre IDs to names and show max 3
+  const genreNames = media.genre_ids
+    ?.map(id => genreMap[id])
+    .filter(Boolean)
+    .slice(0, 3);
 
   if (minimal) {
     return (
@@ -101,11 +130,14 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
       </div>
 
       <div className="p-3 space-y-1 text-white">
-        <h3 className="text-base font-semibold line-clamp-1">
-          {media.title || media.name}
-        </h3>
+        <h3 className="text-base font-semibold line-clamp-1">{media.title || media.name}</h3>
 
-        {/* Removed description paragraph here */}
+        {/* Genre list */}
+        {genreNames && genreNames.length > 0 && (
+          <p className="text-xs text-white/70 line-clamp-1">
+            {genreNames.join(', ')}
+          </p>
+        )}
 
         <div className="flex justify-between items-center text-sm text-white/70 mt-1">
           <span>
