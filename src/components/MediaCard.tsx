@@ -56,21 +56,29 @@ const MediaCard = ({ media, className, featured = false, minimal = false }: Medi
     }
   }
 
-  // Reduce size by ~10%: scale down width from ~160/180px to ~144/162px
-  // You can adjust width here to achieve 10% smaller cards
+  // Extract genre names (assumes media.genres or media.genre_names exists)
+  const genreNames: string[] = (() => {
+    if (media.genres && Array.isArray(media.genres)) {
+      return media.genres.slice(0, 3).map(g => typeof g === 'string' ? g : g.name);
+    }
+    if (media.genre_names && Array.isArray(media.genre_names)) {
+      return media.genre_names.slice(0, 3);
+    }
+    return [];
+  })();
 
   return (
     <Link
       to={detailPath}
       className={cn(
-        "relative block group/card transform transition-all duration-300 hover:-translate-y-2",
+        "relative block group/card transform transition-all duration-300 hover:-translate-y-2 border border-gray-700 rounded-md", // added border & rounded corners
         className
       )}
       onClick={handleClick}
-      style={{ width: featured ? 198 : 144 }} // featured wider, else smaller width for grid
+      style={{ width: featured ? 198 : 144 }} // 10% smaller width approx
     >
       <motion.div>
-        <div className="relative rounded-md overflow-hidden shadow-md aspect-[2/3]" style={{ width: '100%', height: 'auto' }}>
+        <div className="relative rounded-md overflow-hidden shadow-md aspect-[2/3]">
           <img
             src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium) || '/placeholder.svg'}
             alt={media.title || media.name || 'Media Poster'}
@@ -94,12 +102,17 @@ const MediaCard = ({ media, className, featured = false, minimal = false }: Medi
           )}
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
-
-          {/* Removed description as requested */}
         </div>
 
         <div className="mt-2 px-1 transition-all duration-300 group-hover/card:translate-y-0">
           <h3 className="text-white font-medium line-clamp-1 text-balance">{media.title || media.name}</h3>
+
+          {/* Genres */}
+          {genreNames.length > 0 && (
+            <p className="text-sm text-white/60 line-clamp-1 mt-0.5">
+              {genreNames.join(', ')}
+            </p>
+          )}
 
           <div className="flex flex-col gap-0.5 mt-1 text-sm text-white/70">
             <div className="flex items-center justify-between">
