@@ -108,6 +108,7 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
         className
       )}
       whileHover={{ scale: 1.03 }}
+      style={{ marginLeft: '4px', marginTop: '4px' }} // push card slightly right and down to keep left/top border visible on hover
     >
       <div className="relative rounded-t-lg overflow-hidden aspect-[2/3]">
         <img
