@@ -22,6 +22,7 @@ const SecondaryContent = lazy(() => import('./components/SecondaryContent'));
 
 const Index = () => {
   const { user } = useAuth();
+  const [sliderMedia, setSliderMedia] = useState<Media[]>([]);
   const [trendingMedia, setTrendingMedia] = useState<Media[]>([]);
   const [popularMovies, setPopularMovies] = useState<Media[]>([]);
   const [popularTVShows, setPopularTVShows] = useState<Media[]>([]);
@@ -31,15 +32,9 @@ const Index = () => {
   const [contentVisible, setContentVisible] = useState(false);
   const [secondaryLoaded, setSecondaryLoaded] = useState(false);
 
-  // Helper to add quality info to all media items, with detailed logging
+  // Helper to add quality info to all media items
   const applyQuality = (items: Media[]) =>
     items.map(item => {
-      console.log('Media quality check:', item.title || item.name, {
-        hd: item.hd,
-        video_source: item.video_source,
-        backdrop_path: item.backdrop_path,
-      });
-
       let quality = 'HD'; // default
 
       if (typeof item.hd === 'boolean') {
@@ -56,6 +51,33 @@ const Index = () => {
       };
     });
 
+  // Fetch slider media: popular new movies + TV shows combined & sorted by release date descending
+  useEffect(() => {
+    const fetchSliderMedia = async () => {
+      try {
+        const [popularMoviesData, popularTVData] = await Promise.all([
+          getPopularMovies(),
+          getPopularTVShows(),
+        ]);
+
+        const combined = [...popularMoviesData, ...popularTVData]
+          .filter(item => item.backdrop_path)
+          .sort((a, b) => {
+            const dateA = new Date(a.release_date || a.first_air_date).getTime();
+            const dateB = new Date(b.release_date || b.first_air_date).getTime();
+            return dateB - dateA;
+          });
+
+        setSliderMedia(applyQuality(combined.slice(0, 5)));
+      } catch (error) {
+        console.error('Failed fetching slider media:', error);
+      }
+    };
+
+    fetchSliderMedia();
+  }, []);
+
+  // Fetch other homepage data as before
   useEffect(() => {
     const fetchPrimaryData = async () => {
       try {
@@ -117,8 +139,8 @@ const Index = () => {
       ) : (
         <>
           <div className="pt-16">{/* Padding-top for navbar */}
-            {trendingMedia.length > 0 && (
-              <Hero media={trendingMedia.slice(0, 5)} className="hero" />
+            {sliderMedia.length > 0 && (
+              <Hero media={sliderMedia} className="hero" />
             )}
           </div>
 
