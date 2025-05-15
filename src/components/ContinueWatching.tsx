@@ -1,5 +1,5 @@
 // ...imports remain unchanged
-
+import { useAuth } from '@/hooks';
 const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const { user } = useAuth();
   const { watchHistory } = useWatchHistory();
