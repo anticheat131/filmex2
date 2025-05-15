@@ -5,8 +5,6 @@ import { Clock, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 
-const END_THRESHOLD_SECONDS = 30;
-
 const ContinueWatching = () => {
   const [items, setItems] = useState<any[]>([]);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -18,19 +16,17 @@ const ContinueWatching = () => {
   useEffect(() => {
     try {
       const raw = localStorage.getItem('vidLinkProgress') || '{}';
+      console.log('Raw progress:', raw);
+
       const parsed = JSON.parse(raw);
+      const entries = Object.values(parsed);
 
-      const allEntries = Object.values(parsed);
+      console.log('Parsed entries:', entries);
 
-      const filtered = allEntries.filter((item: any) => {
-        const watched = Number(item.progress?.watched);
-        const duration = Number(item.progress?.duration);
-        return isNaN(watched) || isNaN(duration) || watched < duration - END_THRESHOLD_SECONDS;
-      });
-
-      setItems(filtered);
+      // Show all items (no filtering for progress)
+      setItems(entries);
     } catch (e) {
-      console.error('Error reading vidLinkProgress from localStorage:', e);
+      console.error('Error reading from localStorage:', e);
       setItems([]);
     }
   }, []);
@@ -102,10 +98,12 @@ const ContinueWatching = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 z-10">
                 <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg">{item.title}</h3>
+
                 <Progress
                   value={Math.min(100, (item.progress?.watched / item.progress?.duration) * 100)}
                   className="h-1 my-2"
                 />
+
                 <Button
                   className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1"
                   size="sm"
