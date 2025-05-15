@@ -16,14 +16,19 @@ interface HeroProps {
   className?: string;
 }
 
+const SLIDE_DURATION_MS = 6000; // 6 seconds
+
 const Hero = ({ media, className = '' }: HeroProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [progress, setProgress] = useState(0); // 0 to 100
   const navigate = useNavigate();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const progressRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
   const { preference } = useMediaPreferences();
 
   // Filter and prioritize media based on user preferences
@@ -45,11 +50,13 @@ const Hero = ({ media, className = '' }: HeroProps) => {
   const goToNext = useCallback(() => {
     setIsLoaded(false);
     setCurrentIndex(prev => (prev + 1) % filteredMedia.length);
+    resetProgress();
   }, [filteredMedia.length]);
 
   const goToPrev = useCallback(() => {
     setIsLoaded(false);
     setCurrentIndex(prev => (prev - 1 + filteredMedia.length) % filteredMedia.length);
+    resetProgress();
   }, [filteredMedia.length]);
 
   // Keyboard navigation
@@ -93,40 +100,69 @@ const Hero = ({ media, className = '' }: HeroProps) => {
     restartAutoRotation();
   };
 
-  // Auto rotation management
-  const startAutoRotation = useCallback(() => {
-    if (filteredMedia.length <= 1) return;
+  // Progress bar update loop
+  const startProgress = () => {
+    if (progressRef.current) clearInterval(progressRef.current);
+    startTimeRef.current = Date.now();
+    setProgress(0);
 
-    intervalRef.current = setInterval(() => {
-      if (!isPaused) {
+    progressRef.current = setInterval(() => {
+      if (isPaused) return; // pause progress while paused
+
+      const elapsed = Date.now() - startTimeRef.current;
+      const percentage = Math.min((elapsed / SLIDE_DURATION_MS) * 100, 100);
+      setProgress(percentage);
+
+      if (percentage >= 100) {
         goToNext();
       }
-    }, 6000); // 6 seconds interval
-  }, [filteredMedia.length, goToNext, isPaused]);
+    }, 50); // update every 50ms for smoothness
+  };
 
   const pauseAutoRotation = () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    if (progressRef.current) {
+      clearInterval(progressRef.current);
+      progressRef.current = null;
+    }
   };
 
   const restartAutoRotation = () => {
     pauseAutoRotation();
-    startAutoRotation();
+    if (!isPaused) {
+      startProgress();
+    }
   };
 
-  // Initialize and clean up auto rotation
+  const resetProgress = () => {
+    setProgress(0);
+    startTimeRef.current = Date.now();
+  };
+
+  // Initialize progress and auto rotation on mount and index change
   useEffect(() => {
-    startAutoRotation();
-    return pauseAutoRotation;
-  }, [startAutoRotation]);
+    if (filteredMedia.length > 1 && !isPaused) {
+      startProgress();
+    }
+    return () => {
+      pauseAutoRotation();
+    };
+  }, [currentIndex, isPaused, filteredMedia.length]);
 
-  // Handle mouse interactions
-  const handleMouseEnter = pauseAutoRotation;
-  const handleMouseLeave = restartAutoRotation;
+  // Handle mouse enter/leave
+  const handleMouseEnter = () => {
+    setIsPaused(true);
+    pauseAutoRotation();
+  };
+  const handleMouseLeave = () => {
+    setIsPaused(false);
+    restartAutoRotation();
+  };
 
-  // Play/pause toggle handler
+  // Pause/play toggle handler
   const togglePause = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsPaused(prev => !prev);
@@ -155,7 +191,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
 
   return (
     <section
-      className={`relative w-full h-[42vh] md:h-[48vh] overflow-hidden ${className}`} // approx 60% smaller height
+      className={`relative w-full h-[42vh] md:h-[48vh] overflow-hidden ${className}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onTouchStart={onTouchStart}
@@ -187,7 +223,6 @@ const Hero = ({ media, className = '' }: HeroProps) => {
           transition={{ duration: 1, ease: 'easeInOut' }}
           className="absolute inset-0"
         >
-          {/* Hero Image */}
           <img
             src={getImageUrl(featuredMedia.backdrop_path, backdropSizes.original)}
             alt={title}
@@ -196,13 +231,10 @@ const Hero = ({ media, className = '' }: HeroProps) => {
             loading={currentIndex === 0 ? 'eager' : 'lazy'}
           />
 
-          {/* Combined gradient overlay */}
           <div
             className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent"
             style={{ backdropFilter: 'brightness(0.8)' }}
           />
-
-          {/* Side gradient for better text contrast */}
           <div className="absolute inset-0 md:w-1/2 bg-gradient-to-r from-background/90 to-transparent" />
         </motion.div>
       </AnimatePresence>
@@ -217,7 +249,6 @@ const Hero = ({ media, className = '' }: HeroProps) => {
           transition={{ duration: 0.5, ease: 'easeOut', delay: 0.2 }}
           className="absolute inset-x-0 bottom-0 p-6 md:p-12 lg:p-16 flex flex-col items-start max-w-3xl"
         >
-          {/* Metadata badges */}
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <span className="px-3 py-1 rounded-full bg-accent/90 backdrop-blur-sm text-xs font-medium text-white uppercase tracking-wider">
               {featuredMedia.media_type === 'movie' ? 'Movie' : 'TV Series'}
@@ -238,15 +269,12 @@ const Hero = ({ media, className = '' }: HeroProps) => {
             )}
           </div>
 
-          {/* Title */}
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-3 text-shadow text-balance">{title}</h1>
 
-          {/* Overview */}
           <p className="text-white/90 mb-8 line-clamp-3 md:line-clamp-3 text-sm md:text-base max-w-2xl text-shadow">
             {featuredMedia.overview}
           </p>
 
-          {/* Action buttons */}
           <div className="flex items-center gap-4">
             <Button
               onClick={handlePlay}
@@ -270,14 +298,24 @@ const Hero = ({ media, className = '' }: HeroProps) => {
         </motion.div>
       </AnimatePresence>
 
-      {/* Controls: left arrow, pause/play, right arrow */}
+      {/* Progress Bar */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+        <motion.div
+          className="h-1 bg-accent"
+          style={{ width: `${progress}%` }}
+          transition={{ ease: 'linear' }}
+          aria-hidden="true"
+        />
+      </div>
+
+      {/* Controls */}
       {filteredMedia.length > 1 && (
         <nav
           className="absolute bottom-4 right-6 flex items-center space-x-4 z-20"
           aria-label="Hero carousel controls"
         >
           <button
-            className="w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition"
+            className="w-10 h-10 rounded-full bg-black/30 hover:bg-black/60 text-white flex items-center justify-center transition opacity-70 hover:opacity-100"
             onClick={goToPrev}
             aria-label="Previous slide"
           >
@@ -293,7 +331,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
           </button>
 
           <button
-            className="w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition"
+            className="w-10 h-10 rounded-full bg-black/30 hover:bg-black/60 text-white flex items-center justify-center transition opacity-70 hover:opacity-100"
             onClick={togglePause}
             aria-label={isPaused ? 'Play carousel' : 'Pause carousel'}
           >
@@ -301,7 +339,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
           </button>
 
           <button
-            className="w-10 h-10 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition"
+            className="w-10 h-10 rounded-full bg-black/30 hover:bg-black/60 text-white flex items-center justify-center transition opacity-70 hover:opacity-100"
             onClick={goToNext}
             aria-label="Next slide"
           >
