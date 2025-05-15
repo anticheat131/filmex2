@@ -29,6 +29,7 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   
+  // Filter and deduplicate watch history, excluding finished items (≥95% watched)
   const processedHistory = useMemo(() => {
     if (watchHistory.length === 0) return [];
     
@@ -36,7 +37,15 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
       if (!item.created_at) return false;
       try {
         const date = new Date(item.created_at);
-        return !isNaN(date.getTime());
+        if (isNaN(date.getTime())) return false;
+
+        // Exclude if finished (watched 95% or more)
+        if (item.duration && item.watch_position) {
+          const progress = Number(item.watch_position) / Number(item.duration);
+          if (progress >= 0.95) return false;
+        }
+
+        return true;
       } catch {
         return false;
       }
@@ -150,108 +159,99 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
           animate={{ opacity: 1 }}
           transition={{ staggerChildren: 0.1 }}
         >
-          {continuableItems.map((item) => {
-            // Debug logging
-            console.log('Watch Item:', {
-              title: item.title,
-              position: item.watch_position,
-              duration: item.duration,
-            });
-
-            return (
-              <motion.div
-                key={`${item.id}-${item.media_id}-${item.season || 0}-${item.episode || 0}`}
-                className="relative flex-none w-[280px] md:w-[300px] aspect-video bg-card rounded-lg overflow-hidden group cursor-pointer hover-card"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileHover={{ scale: 1.02 }}
-                onClick={() => handleContinueWatching(item)}
-                style={{
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
-                }}
-              >
-                <img
-                  src={`https://image.tmdb.org/t/p/w500${item.backdrop_path}`}
-                  alt={item.title}
-                  className="w-full h-full object-cover transition-transform group-hover:scale-110 group-hover:brightness-110"
-                />
-                
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
-                
-                <div className="absolute bottom-4 left-4 right-4 z-10">
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg">{item.title}</h3>
-                    <TooltipProvider delayDuration={300}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7 rounded-full bg-black/30 hover:bg-accent/80 transition-colors -mt-1"
-                            onClick={(e) => handleNavigateToDetails(e, item)}
-                          >
-                            <Info className="h-3.5 w-3.5 text-white" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">
-                          <p>View details</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-xs text-white/70 mb-2">
-                    <span className="flex items-center">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {formatLastWatched(item.created_at)}
-                    </span>
-                    
-                    {item.media_type === 'tv' && (
-                      <span>S{item.season} E{item.episode}</span>
-                    )}
-                  </div>
-                  
-                  <div className="mb-3 relative">
-                    <Progress 
-                      value={
-                        item.duration && item.watch_position
-                          ? Math.min(100, Math.max(0, (Number(item.watch_position) / Number(item.duration)) * 100))
-                          : 0
-                      } 
-                      className="h-1" 
-                    />
-                    <div className="text-xs text-white/70 mt-1 text-right">
-                      {formatTimeRemaining(item.watch_position, item.duration)}
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1"
-                    size="sm"
-                  >
-                    <Play className="h-3 w-3" />
-                    Continue
-                  </Button>
+          {continuableItems.map((item) => (
+            <motion.div
+              key={`${item.id}-${item.media_id}-${item.season || 0}-${item.episode || 0}`}
+              className="relative flex-none w-[280px] md:w-[300px] aspect-video bg-card rounded-lg overflow-hidden group cursor-pointer hover-card"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.02 }}
+              onClick={() => handleContinueWatching(item)}
+              style={{
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
+              }}
+            >
+              <img
+                src={`https://image.tmdb.org/t/p/w500${item.backdrop_path}`}
+                alt={item.title}
+                className="w-full h-full object-cover transition-transform group-hover:scale-110 group-hover:brightness-110"
+              />
+              
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
+              
+              <div className="absolute bottom-4 left-4 right-4 z-10">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg">{item.title}</h3>
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-7 w-7 rounded-full bg-black/30 hover:bg-accent/80 transition-colors -mt-1"
+                          onClick={(e) => handleNavigateToDetails(e, item)}
+                        >
+                          <Info className="h-3.5 w-3.5 text-white" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p>View details</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
-              </motion.div>
-            );
-          })}
+                
+                <div className="flex items-center justify-between text-xs text-white/70 mb-2">
+                  <span className="flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {formatLastWatched(item.created_at)}
+                  </span>
+                  
+                  {item.media_type === 'tv' && (
+                    <span>S{item.season} E{item.episode}</span>
+                  )}
+                </div>
+                
+                <div className="mb-3 relative">
+                  <Progress 
+                    value={
+                      item.duration && item.watch_position
+                    ? Math.min(100, Math.max(0, (Number(item.watch_position) / Number(item.duration)) * 100))
+                    : 0
+                } 
+                className="h-1" 
+              />
+              <div className="text-xs text-white/70 mt-1 text-right">
+                {formatTimeRemaining(item.watch_position, item.duration)}
+              </div>
+            </div>
+            
+            <Button 
+              className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1"
+              size="sm"
+            >
+              <Play className="h-3 w-3" />
+              Continue
+            </Button>
+          </div>
         </motion.div>
+      ))}
+    </motion.div>
 
-        {showRightArrow && (
-          <button
-            className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-black/70 text-white transition-all ${
-              isHovering ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'
-            } hidden md:flex`}
-            onClick={scrollRight}
-            aria-label="Scroll right"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </button>
-        )}
-      </div>
-    </div>
-  );
+    {showRightArrow && (
+      <button
+        className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-black/70 text-white transition-all ${
+          isHovering ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'
+        } hidden md:flex`}
+        onClick={scrollRight}
+        aria-label="Scroll right"
+      >
+        <ChevronRight className="h-6 w-6" />
+      </button>
+    )}
+  </div>
+</div>
+);
 };
 
 export default ContinueWatching;
