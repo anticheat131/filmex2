@@ -101,7 +101,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
 
   return (
     <section
-      className={`relative w-full h-[30vh] md:h-[35vh] overflow-hidden ${className}`}
+      className={`relative w-full h-[62vh] overflow-hidden ${className}`}
     >
       {!isLoaded && (
         <div className="absolute inset-0 z-10">
@@ -165,7 +165,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
       {/* Left nav */}
       <button
         onClick={goToPrev}
-        className="absolute left-0 top-0 bottom-0 w-12 md:w-16 flex items-center justify-center bg-black/30 hover:bg-black/50 text-white z-20"
+        className="absolute left-0 top-0 bottom-0 w-12 md:w-16 flex items-center justify-center bg-black/10 hover:bg-black/30 text-white z-20"
       >
         <ChevronLeft className="w-6 h-6" />
       </button>
@@ -173,7 +173,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
       {/* Right nav */}
       <button
         onClick={goToNext}
-        className="absolute right-0 top-0 bottom-0 w-12 md:w-16 flex items-center justify-center bg-black/30 hover:bg-black/50 text-white z-20"
+        className="absolute right-0 top-0 bottom-0 w-12 md:w-16 flex items-center justify-center bg-black/10 hover:bg-black/30 text-white z-20"
       >
         <ChevronRight className="w-6 h-6" />
       </button>
@@ -181,7 +181,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
       {/* Pause button */}
       <button
         onClick={() => setIsPaused(prev => !prev)}
-        className="absolute bottom-4 right-4 z-30 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full backdrop-blur-sm"
+        className="absolute bottom-4 right-20 z-30 bg-black/20 hover:bg-black/40 text-white p-2 rounded-full backdrop-blur-sm"
       >
         <Pause className="w-4 h-4" />
       </button>
