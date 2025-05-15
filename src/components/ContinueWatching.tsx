@@ -125,18 +125,4 @@ const ContinueWatching = () => {
                 navigate(
                   item.type === 'tv'
                     ? `/tv/${item.id}/season/${item.last_season_watched}/episode/${item.last_episode_watched}`
-                    : `/watch/movie/${item.id}`
-                )
-              }
-            >
-              <img
-                src={`https://image.tmdb.org/t/p/w500${item.backdrop_path || item.poster_path}`}
-                alt={item.title}
-                className="w-full h-full object-cover transition-transform group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4 z-10">
-                <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg">{item.title}</h3>
-
-                <Progress
-                  value={Math.min(100, (item.progre
+                    : `/watc
