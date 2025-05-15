@@ -17,6 +17,7 @@ import Spinner from '@/components/ui/spinner';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 import { Skeleton } from '@/components/ui/skeleton';
 
+// Lazy-loaded secondary content
 const SecondaryContent = lazy(() => import('./components/SecondaryContent'));
 
 const Index = () => {
@@ -30,16 +31,18 @@ const Index = () => {
   const [contentVisible, setContentVisible] = useState(false);
   const [secondaryLoaded, setSecondaryLoaded] = useState(false);
 
-  // Adds quality info to each media object
-  const addQuality = (items: Media[]) =>
+  // Helper to add quality info
+  const applyQuality = (items: Media[]) =>
     items.map(item => ({
       ...item,
-      quality: item.hd ? 'HD' : 'CAM', // Adjust this logic based on your data
+      quality: item.backdrop_path ? 'HD' : 'CAM', // Customize this logic if needed
     }));
 
+  // Primary data fetch - critical for initial render
   useEffect(() => {
     const fetchPrimaryData = async () => {
       try {
+        // Use Promise.all for parallel requests
         const [
           trendingData,
           popularMoviesData,
@@ -56,20 +59,21 @@ const Index = () => {
 
         const filteredTrendingData = trendingData.filter(item => item.backdrop_path);
 
-        // Inject quality into all datasets
-        setTrendingMedia(addQuality(filteredTrendingData));
-        setPopularMovies(addQuality(popularMoviesData));
-        setPopularTVShows(addQuality(popularTVData));
-        setTopRatedMovies(addQuality(topMoviesData));
-        setTopRatedTVShows(addQuality(topTVData));
+        setTrendingMedia(applyQuality(filteredTrendingData));
+        setPopularMovies(applyQuality(popularMoviesData));
+        setPopularTVShows(applyQuality(popularTVData));
+        setTopRatedMovies(applyQuality(topMoviesData));
+        setTopRatedTVShows(applyQuality(topTVData));
       } catch (error) {
         console.error('Error fetching homepage data:', error);
       } finally {
         setIsLoading(false);
+        // Add a slight delay for content fade-in
         setTimeout(() => {
           setContentVisible(true);
-        }, 100);
-
+        }, 100); // Reduced from 300ms to 100ms for faster perceived performance
+        
+        // After primary content is visible, load secondary content
         setTimeout(() => {
           setSecondaryLoaded(true);
         }, 1000);
@@ -79,6 +83,7 @@ const Index = () => {
     fetchPrimaryData();
   }, []);
 
+  // Content placeholder skeleton
   const RowSkeleton = () => (
     <div className="mb-8">
       <Skeleton className="h-8 w-48 mb-4" />
@@ -97,13 +102,13 @@ const Index = () => {
 
       {isLoading ? (
         <div className="flex flex-col gap-8 pt-24 px-6">
-          <Skeleton className="w-full h-[60vh] rounded-lg" />
+          <Skeleton className="w-full h-[60vh] rounded-lg" /> {/* Hero skeleton */}
           <RowSkeleton />
           <RowSkeleton />
         </div>
       ) : (
         <>
-          <div className="pt-16">
+          <div className="pt-16"> {/* Add padding-top to account for navbar */}
             {trendingMedia.length > 0 && <Hero media={trendingMedia.slice(0, 5)} className="hero" />}
           </div>
 
@@ -114,7 +119,8 @@ const Index = () => {
             <ContentRow title="Popular TV Shows" media={popularTVShows} />
             <ContentRow title="Top Rated Movies" media={topRatedMovies} />
             <ContentRow title="Top Rated TV Shows" media={topRatedTVShows} />
-
+            
+            {/* Lazy load secondary content */}
             {secondaryLoaded && (
               <Suspense fallback={<div className="py-8"><Spinner size="lg" className="mx-auto" /></div>}>
                 <SecondaryContent />
