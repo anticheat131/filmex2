@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks';
 import { useWatchHistory } from '@/hooks/watch-history';
 import { WatchHistoryItem } from '@/contexts/types/watch-history';
-import { Play, Clock, ChevronLeft, ChevronRight, Info, Trash } from 'lucide-react';
+import { Play, Clock, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { 
@@ -31,7 +31,6 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // Filter and deduplicate watch history
   const processedHistory = useMemo(() => {
     if (watchHistory.length === 0) return [];
     
@@ -120,8 +119,6 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
 
       if (changed) {
         localStorage.setItem('fdf_watch_history', JSON.stringify(parsed));
-        // Optionally, refresh list from localStorage or force reload page here
-        // But for now, just alert user and reload page to refresh ContinueWatching
         alert('Removed finished items from Continue Watching.');
         window.location.reload();
       } else {
@@ -214,4 +211,73 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
               
               <div className="absolute bottom-4 left-4 right-4 z-10">
                 <div className="flex justify-between items-start mb-1">
-                  <h3 className="text-white font-medium line-clamp-1 text-base m
+                  <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg">{item.title}</h3>
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-7 w-7 rounded-full bg-black/30 hover:bg-accent/80 transition-colors -mt-1"
+                          onClick={(e) => handleNavigateToDetails(e, item)}
+                        >
+                          <Info className="h-3.5 w-3.5 text-white" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p>View details</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                
+                <div className="flex items-center justify-between text-xs text-white/70 mb-2">
+                  <span className="flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {formatLastWatched(item.created_at)}
+                  </span>
+                  
+                  {item.media_type === 'tv' && (
+                    <span>S{item.season} E{item.episode}</span>
+                  )}
+                </div>
+                
+                <div className="mb-3 relative">
+                  <Progress 
+                    value={(item.watch_position / item.duration) * 100} 
+                    className="h-1" 
+                  />
+                  <div className="text-xs text-white/70 mt-1 text-right">
+                    {formatTimeRemaining(item.watch_position, item.duration)}
+                  </div>
+                </div>
+                
+                <Button 
+                  className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1"
+                  size="sm"
+                >
+                  <Play className="h-3 w-3" />
+                  Continue
+                </Button>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {showRightArrow && (
+          <button
+            className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-black/70 text-white transition-all ${
+isHovering ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'
+} hidden md:flex`}
+onClick={scrollRight}
+aria-label="Scroll right"
+>
+<ChevronRight className="h-6 w-6" />
+</button>
+)}
+</div>
+</div>
+);
+};
+
+export default ContinueWatching;
