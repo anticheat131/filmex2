@@ -34,55 +34,61 @@ const SportMatchPlayer = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Extract unique sources
-  const uniqueSources = useMemo(() => {
+  // Clean and deduplicate streams
+  const cleanStreams = useMemo(() => {
     if (!streams) return [];
-    const sourcesSet = new Set<string>();
-    streams.forEach(s => {
-      if (s.source) sourcesSet.add(s.source);
+    const seen = new Set();
+    return streams.filter(s => {
+      if (!s.source || !s.embedUrl) return false;
+      const key = s.source + '|' + s.embedUrl;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
+  }, [streams]);
+
+  // Unique sources list
+  const uniqueSources = useMemo(() => {
+    const sourcesSet = new Set(cleanStreams.map(s => s.source));
     return Array.from(sourcesSet);
-  }, [streams]);
+  }, [cleanStreams]);
 
-  // Set default selectedSource on streams load or URL param change
+  // Set initial selectedSource on streams load or URL param change
   useEffect(() => {
-    if (streams && streams.length > 0) {
-      const preferred = streams.find(s => s.source === source && s.embedUrl);
-      if (preferred) {
-        setSelectedSource(preferred.source);
-      } else if (uniqueSources.length > 0) {
-        setSelectedSource(uniqueSources[0]);
-      }
-    } else {
+    if (cleanStreams.length === 0) {
       setSelectedSource(null);
+      return;
     }
-  }, [streams, source, uniqueSources]);
-
-  useEffect(() => {
-    if (streams) {
-      console.log('Streams:', streams);
+    const preferred = cleanStreams.find(s => s.source === source && s.embedUrl);
+    if (preferred) {
+      setSelectedSource(preferred.source);
+    } else {
+      setSelectedSource(uniqueSources[0]);
     }
-  }, [streams]);
+  }, [cleanStreams, source, uniqueSources]);
 
-  const handleSourceChange = (source: string) => {
-    setSelectedSource(source);
+  // Streams filtered by selected source
+  const currentStreams = useMemo(() => {
+    if (!selectedSource) return [];
+    return cleanStreams.filter(s => s.source === selectedSource);
+  }, [cleanStreams, selectedSource]);
+
+  const embedUrl = currentStreams.length > 0 ? currentStreams[0].embedUrl : '';
+
+  const handleSourceChange = (src: string) => {
+    setSelectedSource(src);
     setIsPlayerLoaded(false);
     setLoadAttempts(0);
 
     toast({
       title: "Source changed",
-      description: `Switched to ${source}`,
+      description: `Switched to ${src}`,
       duration: 2000,
     });
   };
 
-  const embedUrl = streams && selectedSource
-    ? streams.find(s => s.source === selectedSource)?.embedUrl
-    : '';
-
   const handleIframeLoad = () => {
     setIsPlayerLoaded(true);
-    console.log('Stream loaded successfully:', embedUrl);
     toast({ title: "Stream loaded", description: "Video player ready", duration: 2000 });
   };
 
@@ -214,18 +220,4 @@ const SportMatchPlayer = () => {
                 <h3 className="text-lg font-medium text-white mb-2">Stream Information</h3>
                 <p className="text-sm text-white/70">
                   Source: {selectedSource} • 
-                  Quality: {streams?.find(s => s.source === selectedSource)?.hd ? 'HD' : 'SD'} •
-                  Status: {isPlayerLoaded ? 'Ready' : 'Loading'}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <Footer />
-      </div>
-    </PageTransition>
-  );
-};
-
-export default SportMatchPlayer;
+                  Quality: {currentStreams[0]?.hd ? 'HD
