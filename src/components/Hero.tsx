@@ -4,7 +4,7 @@ import { Media } from '@/utils/types';
 import { backdropSizes } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { Button } from '@/components/ui/button';
-import { Play, Info, Star, Calendar, Film, Tv, Video } from 'lucide-react';
+import { Play, Info, Star, Calendar, Video } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaPreferences } from '@/hooks/use-media-preferences';
@@ -46,32 +46,23 @@ const Hero = ({ media, className = '' }: HeroProps) => {
     setProgress(0);
   }, [filteredMedia.length]);
 
-  const goToPrev = useCallback(() => {
-    setIsLoaded(false);
-    setCurrentIndex((prev) => (prev - 1 + filteredMedia.length) % filteredMedia.length);
-    setProgress(0);
-  }, [filteredMedia.length]);
-
   useKeyPress("ArrowRight", goToNext);
-  useKeyPress("ArrowLeft", goToPrev);
+  useKeyPress("ArrowLeft", goToNext);
 
   const handleMouseEnter = () => setIsPaused(true);
   const handleMouseLeave = () => setIsPaused(false);
 
   useEffect(() => {
     if (isPaused) return;
-
     intervalRef.current = setInterval(goToNext, SLIDE_DURATION);
     return () => clearInterval(intervalRef.current!);
   }, [goToNext, isPaused]);
 
   useEffect(() => {
     if (isPaused) return;
-
     progressRef.current = setInterval(() => {
       setProgress((prev) => (prev >= 100 ? 0 : prev + 100 / (SLIDE_DURATION / 100)));
     }, 100);
-
     return () => clearInterval(progressRef.current!);
   }, [isPaused, currentIndex]);
 
@@ -93,7 +84,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
   const title = featuredMedia.title || featuredMedia.name || 'Untitled';
   const releaseDate = featuredMedia.release_date || featuredMedia.first_air_date;
   const releaseYear = releaseDate ? new Date(releaseDate).getFullYear() : '';
-  const genreNames = featuredMedia.genre_names?.join(', ') || 'Various';
+  const genres = featuredMedia.genre_names?.slice(0, 3).join(', ') || '';
   let quality = 'HD';
 
   if (typeof featuredMedia.hd === 'boolean') {
@@ -138,13 +129,12 @@ const Hero = ({ media, className = '' }: HeroProps) => {
         </motion.div>
       </AnimatePresence>
 
-      {/* Text & Controls */}
       <motion.div
         key={currentIndex + '-content'}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
-        className="absolute inset-x-0 bottom-0 p-6 md:p-12 max-w-4xl text-white"
+        className="absolute inset-x-0 bottom-0 p-6 md:p-12 max-w-4xl text-white text-left"
       >
         <div className="flex flex-wrap items-center gap-3 mb-3 text-xs font-medium">
           <span className="px-3 py-1 rounded-full bg-accent/90">
@@ -175,9 +165,11 @@ const Hero = ({ media, className = '' }: HeroProps) => {
 
         <h1 className="text-3xl md:text-5xl font-bold mb-2">{title}</h1>
 
-        <p className="text-white/80 text-sm mb-1">
-          <strong>Genres:</strong> {genreNames}
-        </p>
+        {genres && (
+          <p className="text-white/80 text-sm mb-1">
+            <strong>Genres:</strong> {genres}
+          </p>
+        )}
 
         <p className="text-white/90 mb-6 line-clamp-3 max-w-2xl text-sm md:text-base">
           {featuredMedia.overview}
@@ -210,27 +202,6 @@ const Hero = ({ media, className = '' }: HeroProps) => {
           className="h-1 bg-accent transition-all"
           style={{ width: `${progress}%` }}
         />
-      </div>
-
-      {/* Navigation buttons */}
-      <button
-        onClick={goToPrev}
-        className="absolute left-0 top-0 bottom-0 w-10 bg-black/20 hover:bg-black/30 transition-opacity text-white z-10"
-        aria-label="Previous"
-      >
-        ‹
-      </button>
-      <button
-        onClick={goToNext}
-        className="absolute right-0 top-0 bottom-0 w-10 bg-black/20 hover:bg-black/30 transition-opacity text-white z-10"
-        aria-label="Next"
-      >
-        ›
-      </button>
-
-      {/* Pause Indicator */}
-      <div className="absolute bottom-4 right-16 text-white text-xs opacity-60">
-        {isPaused ? 'Paused' : ''}
       </div>
     </section>
   );
