@@ -1,7 +1,7 @@
 
 {
-  "name": "Let's Stream V2.0",
-  "short_name": "Let's Stream",
+  "name": "Filmex Official",
+  "short_name": "Filmex",
   "description": "Watch movies and TV shows online",
   "start_url": "/",
   "id": "/",
@@ -38,8 +38,8 @@
   ],
   "shortcuts": [
     {
-      "name": "Let's Stream",
-      "short_name": "Let's Stream",
+      "name": "Filmex Official",
+      "short_name": "Filmex",
       "description": "Watch movies and TV shows online",
       "url": "/",
       "icons": [{ "src": "manifest-icon-192.maskable.png", "sizes": "192x192" }]
