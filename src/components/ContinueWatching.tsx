@@ -1,4 +1,21 @@
 // ...imports remain unchanged
+import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
+import { useWatchHistory } from '@/hooks/use-watch-history';
+import { WatchHistoryItem } from '@/contexts/types/watch-history';
+import { Play, Clock, ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { formatDistanceToNow } from 'date-fns';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useWatchHistory } from '@/hooks/watch-history';
 import { useAuth } from '@/hooks';
