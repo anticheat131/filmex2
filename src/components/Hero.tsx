@@ -16,17 +16,37 @@ interface HeroProps {
   className?: string;
 }
 
+const genreMap: Record<number, string> = {
+  28: 'Action',
+  12: 'Adventure',
+  16: 'Animation',
+  35: 'Comedy',
+  80: 'Crime',
+  99: 'Documentary',
+  18: 'Drama',
+  10751: 'Family',
+  14: 'Fantasy',
+  36: 'History',
+  27: 'Horror',
+  10402: 'Music',
+  9648: 'Mystery',
+  10749: 'Romance',
+  878: 'Sci-Fi',
+  10770: 'TV Movie',
+  53: 'Thriller',
+  10752: 'War',
+  37: 'Western',
+};
+
 const Hero = ({ media, className = '' }: HeroProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
   const navigate = useNavigate();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const progressRef = useRef<NodeJS.Timeout | null>(null);
   const { preference } = useMediaPreferences();
-
-  const SLIDE_DURATION = 6000;
 
   const filteredMedia = useMemo(() => {
     const withBackdrop = media.filter(item => item.backdrop_path);
@@ -41,37 +61,23 @@ const Hero = ({ media, className = '' }: HeroProps) => {
   const featuredMedia = filteredMedia[currentIndex];
 
   const goToNext = useCallback(() => {
-    setIsLoaded(false);
-    setCurrentIndex((prev) => (prev + 1) % filteredMedia.length);
+    setCurrentIndex(prev => (prev + 1) % filteredMedia.length);
     setProgress(0);
+    setIsLoaded(false);
   }, [filteredMedia.length]);
 
-  useKeyPress("ArrowRight", goToNext);
-  useKeyPress("ArrowLeft", goToNext);
-
-  const handleMouseEnter = () => setIsPaused(true);
-  const handleMouseLeave = () => setIsPaused(false);
-
-  useEffect(() => {
-    if (isPaused) return;
-    intervalRef.current = setInterval(goToNext, SLIDE_DURATION);
-    return () => clearInterval(intervalRef.current!);
-  }, [goToNext, isPaused]);
-
-  useEffect(() => {
-    if (isPaused) return;
-    progressRef.current = setInterval(() => {
-      setProgress((prev) => (prev >= 100 ? 0 : prev + 100 / (SLIDE_DURATION / 100)));
-    }, 100);
-    return () => clearInterval(progressRef.current!);
-  }, [isPaused, currentIndex]);
+  const handleMediaClick = (media: Media) => {
+    trackMediaPreference(media.media_type as 'movie' | 'tv', 'select');
+    navigate(media.media_type === 'movie' ? `/movie/${media.id}` : `/tv/${media.id}`);
+  };
 
   const handlePlay = () => {
-    const { media_type, id } = featuredMedia;
-    if (media_type === 'tv') {
+    const mediaType = featuredMedia.media_type;
+    const id = featuredMedia.id;
+    if (mediaType === 'tv') {
       navigate(`/watch/tv/${id}/1/1`);
     } else {
-      navigate(`/watch/${media_type}/${id}`);
+      navigate(`/watch/${mediaType}/${id}`);
     }
   };
 
@@ -79,32 +85,34 @@ const Hero = ({ media, className = '' }: HeroProps) => {
     navigate(`/${featuredMedia.media_type}/${featuredMedia.id}`);
   };
 
-  if (!featuredMedia) return null;
+  useEffect(() => {
+    if (paused || filteredMedia.length <= 1) return;
+    intervalRef.current = setInterval(goToNext, 6000);
+    return () => clearInterval(intervalRef.current as NodeJS.Timeout);
+  }, [goToNext, paused, filteredMedia.length]);
+
+  useEffect(() => {
+    if (paused || filteredMedia.length <= 1) return;
+    progressRef.current = setInterval(() => {
+      setProgress(p => (p < 100 ? p + 1.67 : 0));
+    }, 100);
+    return () => clearInterval(progressRef.current as NodeJS.Timeout);
+  }, [paused, currentIndex, filteredMedia.length]);
 
   const title = featuredMedia.title || featuredMedia.name || 'Untitled';
   const releaseDate = featuredMedia.release_date || featuredMedia.first_air_date;
   const releaseYear = releaseDate ? new Date(releaseDate).getFullYear() : '';
-  const genres = featuredMedia.genre_names?.slice(0, 3).join(', ') || '';
-  let quality = 'HD';
-
-  if (typeof featuredMedia.hd === 'boolean') {
-    quality = featuredMedia.hd ? 'HD' : 'CAM';
-  } else if (featuredMedia.video_source?.toLowerCase().includes('cam')) {
-    quality = 'CAM';
-  } else if (!featuredMedia.backdrop_path) {
-    quality = 'CAM';
-  }
+  const quality = featuredMedia.video_source?.toLowerCase().includes('cam') ? 'CAM' : 'HD';
+  const genres = featuredMedia.genre_ids?.slice(0, 3).map(id => genreMap[id]).filter(Boolean) || [];
 
   return (
     <section
-      className={`relative w-full h-[38vh] md:h-[42vh] overflow-hidden ${className}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      role="region"
-      aria-label="Featured media carousel"
+      className={`relative w-full h-[38vh] md:h-[45vh] overflow-hidden ${className}`}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
     >
       {!isLoaded && (
-        <div className="absolute inset-0 bg-background z-10">
+        <div className="absolute inset-0 bg-background flex items-center justify-center z-10">
           <Skeleton className="w-full h-full" />
         </div>
       )}
@@ -112,8 +120,8 @@ const Hero = ({ media, className = '' }: HeroProps) => {
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isLoaded ? 1 : 0 }}
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={{ opacity: isLoaded ? 1 : 0, scale: isLoaded ? 1 : 1.05 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6 }}
           className="absolute inset-0"
@@ -124,85 +132,67 @@ const Hero = ({ media, className = '' }: HeroProps) => {
             className="w-full h-full object-cover"
             onLoad={() => setIsLoaded(true)}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
-          <div className="absolute inset-0 md:w-1/2 bg-gradient-to-r from-background/90 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+          <div className="absolute inset-0 md:w-2/3 bg-gradient-to-r from-black/80 to-transparent" />
         </motion.div>
       </AnimatePresence>
 
-      <motion.div
-        key={currentIndex + '-content'}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-        className="absolute inset-x-0 bottom-0 p-6 md:p-12 max-w-4xl text-white text-left"
-      >
-        <div className="flex flex-wrap items-center gap-3 mb-3 text-xs font-medium">
-          <span className="px-3 py-1 rounded-full bg-accent/90">
-            {featuredMedia.media_type === 'movie' ? 'Movie' : 'TV Show'}
-          </span>
+      <div className="absolute inset-0 flex items-end px-6 py-6 md:px-12 md:py-10 z-20">
+        <div className="max-w-2xl space-y-3 text-left">
+          <div className="flex gap-2 flex-wrap text-white text-xs font-semibold uppercase">
+            <span className="bg-accent/90 px-2 py-1 rounded">{featuredMedia.media_type === 'movie' ? 'Movie' : 'TV Show'}</span>
+            {releaseYear && (
+              <span className="bg-white/10 px-2 py-1 rounded flex items-center">
+                <Calendar className="h-3 w-3 mr-1" /> {releaseYear}
+              </span>
+            )}
+            <span className="bg-white/10 px-2 py-1 rounded">{quality}</span>
+            {featuredMedia.vote_average > 0 && (
+              <span className="bg-white/10 px-2 py-1 rounded flex items-center">
+                <Star className="h-3 w-3 mr-1 text-yellow-400 fill-yellow-400" />
+                {featuredMedia.vote_average.toFixed(1)}
+              </span>
+            )}
+            {genres.map((g, idx) => (
+              <span key={idx} className="bg-white/10 px-2 py-1 rounded">{g}</span>
+            ))}
+          </div>
 
-          {releaseYear && (
-            <span className="flex items-center px-3 py-1 rounded-full bg-white/10">
-              <Calendar className="w-3 h-3 mr-1" />
-              {releaseYear}
-            </span>
-          )}
+          <h1 className="text-3xl md:text-5xl font-bold text-white">{title}</h1>
+          <p className="text-white/90 text-sm md:text-base line-clamp-3">{featuredMedia.overview}</p>
 
-          {featuredMedia.vote_average > 0 && (
-            <span className="flex items-center px-3 py-1 rounded-full bg-white/10">
-              <Star className="w-3 h-3 mr-1 fill-amber-400 text-amber-400" />
-              {featuredMedia.vote_average.toFixed(1)}
-            </span>
-          )}
-
-          {quality && (
-            <span className="flex items-center px-3 py-1 rounded-full bg-white/10">
-              <Video className="w-3 h-3 mr-1" />
-              {quality}
-            </span>
-          )}
+          <div className="flex gap-3 mt-4">
+            <Button onClick={handlePlay} className="bg-accent hover:bg-accent/90 text-white flex items-center gap-2">
+              <Play className="h-4 w-4" /> Play
+            </Button>
+            <Button
+              onClick={handleMoreInfo}
+              variant="outline"
+              className="border-white/30 bg-black/50 text-white hover:bg-black/70"
+            >
+              <Info className="h-4 w-4 mr-1" /> More Info
+            </Button>
+          </div>
         </div>
-
-        <h1 className="text-3xl md:text-5xl font-bold mb-2">{title}</h1>
-
-        {genres && (
-          <p className="text-white/80 text-sm mb-1">
-            <strong>Genres:</strong> {genres}
-          </p>
-        )}
-
-        <p className="text-white/90 mb-6 line-clamp-3 max-w-2xl text-sm md:text-base">
-          {featuredMedia.overview}
-        </p>
-
-        <div className="flex gap-4">
-          <Button
-            onClick={handlePlay}
-            className="bg-accent text-white flex items-center hover:bg-accent/80"
-            size="lg"
-          >
-            <Play className="h-4 w-4 mr-2" />
-            Play
-          </Button>
-          <Button
-            onClick={handleMoreInfo}
-            variant="outline"
-            size="lg"
-            className="text-white border-white/20 hover:bg-white/10"
-          >
-            <Info className="h-4 w-4 mr-2" />
-            More Info
-          </Button>
-        </div>
-      </motion.div>
-
-      {/* Progress bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10">
-        <div
-          className="h-1 bg-accent transition-all"
-          style={{ width: `${progress}%` }}
-        />
       </div>
+
+      <div className="absolute bottom-4 right-6 z-30">
+        <button
+          onClick={() => setPaused(p => !p)}
+          className="bg-black/40 hover:bg-black/60 text-white px-3 py-1 rounded text-sm opacity-70 hover:opacity-90"
+        >
+          {paused ? 'Play ▶' : 'Pause ⏸'}
+        </button>
+      </div>
+
+      {filteredMedia.length > 1 && (
+        <div className="absolute bottom-1.5 left-0 right-0 h-1 bg-white/20 z-20">
+          <div
+            className="h-full bg-accent transition-all duration-100"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
     </section>
   );
 };
