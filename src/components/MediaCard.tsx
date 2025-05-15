@@ -15,7 +15,6 @@ interface MediaCardProps {
   minimal?: boolean;
 }
 
-// Simple TMDB genre ID to name map (adjust or import yours)
 const genreMap: Record<number, string> = {
   28: 'Action',
   12: 'Adventure',
@@ -47,7 +46,6 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
   const mediaId = media.media_id || media.id;
   const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
 
-  // Quality fallback logic
   let quality = media.quality?.toUpperCase();
   if (!quality) {
     if (typeof media.hd === 'boolean') quality = media.hd ? 'HD' : 'CAM';
@@ -67,11 +65,15 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
     navigate(detailPath);
   };
 
-  // Map genre IDs to names and show max 3
   const genreNames = media.genre_ids
     ?.map(id => genreMap[id])
     .filter(Boolean)
     .slice(0, 3);
+
+  // Format duration in minutes, fallback to undefined
+  const durationText = media.media_type === 'movie' && media.runtime
+    ? `${media.runtime} min`
+    : undefined;
 
   if (minimal) {
     return (
@@ -132,7 +134,6 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
       <div className="p-3 space-y-1 text-white">
         <h3 className="text-base font-semibold line-clamp-1">{media.title || media.name}</h3>
 
-        {/* Genre list */}
         {genreNames && genreNames.length > 0 && (
           <p className="text-xs text-white/70 line-clamp-1">
             {genreNames.join(', ')}
@@ -143,7 +144,7 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
           <span>
             {media.media_type === 'movie'
               ? media.release_date?.slice(0, 4)
-              : media.first_air_date?.slice(0, 4)}
+              : media.first_air_date?.slice(0, 4)}{durationText ? ` · ${durationText}` : ''}
           </span>
           {media.vote_average > 0 && (
             <span className="flex items-center gap-1 text-amber-400">
