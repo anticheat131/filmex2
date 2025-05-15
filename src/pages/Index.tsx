@@ -34,15 +34,15 @@ const Index = () => {
   // Helper to add quality info to all media items
   const applyQuality = (items: Media[]) =>
     items.map(item => {
-      let quality = 'HD'; // default quality
+      // Log for debugging
+      console.log('Media item quality check:', item.title || item.name, {
+        hd: item.hd,
+        video_source: item.video_source,
+        backdrop_path: item.backdrop_path,
+      });
 
-      if (typeof item.hd === 'boolean') {
-        quality = item.hd ? 'HD' : 'CAM';
-      } else if (item.video_source && typeof item.video_source === 'string') {
-        quality = item.video_source.toLowerCase().includes('cam') ? 'CAM' : 'HD';
-      } else if (!item.backdrop_path) {
-        quality = 'CAM';
-      }
+      // Force 'HD' for testing badge display
+      const quality = 'HD';
 
       return {
         ...item,
@@ -80,12 +80,9 @@ const Index = () => {
         console.error('Error fetching homepage data:', error);
       } finally {
         setIsLoading(false);
-        // Add a slight delay for content fade-in
         setTimeout(() => {
           setContentVisible(true);
         }, 100);
-        
-        // After primary content is visible, load secondary content
         setTimeout(() => {
           setSecondaryLoaded(true);
         }, 1000);
@@ -138,7 +135,6 @@ const Index = () => {
             <ContentRow title="Top Rated Movies" media={topRatedMovies} />
             <ContentRow title="Top Rated TV Shows" media={topRatedTVShows} />
 
-            {/* Lazy load secondary content */}
             {secondaryLoaded && (
               <Suspense
                 fallback={
