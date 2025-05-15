@@ -28,58 +28,46 @@ const SportMatchPlayer = () => {
 
   const { data: streams, isLoading, error } = useQuery({
     queryKey: ['match-streams', id],
-    queryFn: () => getMatchStreams(null, id), // fetch all sources
+    queryFn: () => getMatchStreams(null, id),
     placeholderData: cachedStreams,
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
   });
 
-  // Clean and deduplicate streams
   const cleanStreams = useMemo(() => {
     if (!streams) return [];
-    const seen = new Set();
-    return streams.filter(s => {
-      if (!s.source || !s.embedUrl) return false;
-      const key = s.source + '|' + s.embedUrl;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+    return streams.filter(s => s.source && s.embedUrl);
   }, [streams]);
 
-  // Unique sources list
-  const uniqueSources = useMemo(() => {
-    const sourcesSet = new Set(cleanStreams.map(s => s.source));
-    return Array.from(sourcesSet);
+  const sourcesMap = useMemo(() => {
+    const map = new Map();
+    for (const s of cleanStreams) {
+      if (!map.has(s.source)) {
+        map.set(s.source, s);
+      }
+    }
+    return map;
   }, [cleanStreams]);
 
-  // Set initial selectedSource on streams load or URL param change
+  const uniqueSources = useMemo(() => Array.from(sourcesMap.keys()), [sourcesMap]);
+
   useEffect(() => {
-    if (cleanStreams.length === 0) {
-      setSelectedSource(null);
-      return;
+    if (uniqueSources.length > 0 && !selectedSource) {
+      if (uniqueSources.includes(source)) {
+        setSelectedSource(source);
+      } else {
+        setSelectedSource(uniqueSources[0]);
+      }
     }
-    const preferred = cleanStreams.find(s => s.source === source && s.embedUrl);
-    if (preferred) {
-      setSelectedSource(preferred.source);
-    } else {
-      setSelectedSource(uniqueSources[0]);
-    }
-  }, [cleanStreams, source, uniqueSources]);
+  }, [uniqueSources, selectedSource, source]);
 
-  // Streams filtered by selected source
-  const currentStreams = useMemo(() => {
-    if (!selectedSource) return [];
-    return cleanStreams.filter(s => s.source === selectedSource);
-  }, [cleanStreams, selectedSource]);
+  const currentStream = selectedSource ? sourcesMap.get(selectedSource) : null;
+  const embedUrl = currentStream?.embedUrl || '';
 
-  const embedUrl = currentStreams.length > 0 ? currentStreams[0].embedUrl : '';
-
-  const handleSourceChange = (src: string) => {
+  const handleSourceChange = (src) => {
     setSelectedSource(src);
     setIsPlayerLoaded(false);
     setLoadAttempts(0);
-
     toast({
       title: "Source changed",
       description: `Switched to ${src}`,
@@ -94,7 +82,6 @@ const SportMatchPlayer = () => {
 
   const handleIframeError = () => {
     setLoadAttempts(prev => prev + 1);
-
     if (loadAttempts < 2) {
       toast({
         title: "Stream loading failed",
@@ -215,9 +202,23 @@ const SportMatchPlayer = () => {
             </div>
 
             {/* Stream Info */}
-            {selectedSource && (
+            {selectedSource && currentStream && (
               <div className="mt-4 p-4 bg-white/5 rounded-md">
                 <h3 className="text-lg font-medium text-white mb-2">Stream Information</h3>
                 <p className="text-sm text-white/70">
                   Source: {selectedSource} • 
-                  Quality: {currentStreams[0]?.hd ? 'HD
+                  Quality: {currentStream.hd ? 'HD' : 'SD'} •
+                  Status: {isPlayerLoaded ? 'Ready' : 'Loading'}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <Footer />
+      </div>
+    </PageTransition>
+  );
+};
+
+export default SportMatchPlayer;
