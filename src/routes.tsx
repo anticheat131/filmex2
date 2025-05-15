@@ -2,7 +2,9 @@ import { Routes, Route, Outlet } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AnalyticsWrapper } from '@/components/AnalyticsWrapper';
+import Anime from '@/pages/Anime';  // adjust path accordingly
 
+<Route path="/anime" element={<Anime />} />
 // Lazy load pages
 const Index = lazy(() => import('./pages/Index'));
 const Login = lazy(() => import('./pages/Login'));
@@ -27,6 +29,7 @@ const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const ContentRemoval = lazy(() => import('./pages/ContentRemoval'));
 const DMCANotice = lazy(() => import('./pages/DMCANotice'));
 
+<Route path="/anime" element={<Anime />} />
 export default function AppRoutes() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
