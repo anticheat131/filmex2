@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { saveLocalData, getLocalData } from '@/utils/supabase';
 
 const SportMatchPlayer = () => {
-  const { matchId } = useParams();
+  const { id, source } = useParams();
   const { toast } = useToast();
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [isPlayerLoaded, setIsPlayerLoaded] = useState(false);
@@ -19,24 +19,26 @@ const SportMatchPlayer = () => {
 
   useEffect(() => {
     const loadCachedData = async () => {
-      const data = await getLocalData(`sport-streams-${matchId}`, null);
+      if (!id) return;
+      const data = await getLocalData(`sport-streams-${id}`, null);
       setCachedStreams(data);
     };
     loadCachedData();
-  }, [matchId]);
+  }, [id]);
 
   const { data: streams, isLoading, error } = useQuery({
-    queryKey: ['match-streams', matchId],
-    queryFn: () => getMatchStreams(null, matchId),
+    queryKey: ['match-streams', id, source],
+    queryFn: () => getMatchStreams(source, id),
     placeholderData: cachedStreams,
+    enabled: !!id,
     staleTime: 5 * 60 * 1000,
   });
 
   useEffect(() => {
     if (streams && streams.length > 0) {
       console.log("Fetched streams:", streams);
-      saveLocalData(`sport-streams-${matchId}`, streams, 30 * 60 * 1000);
-      
+      saveLocalData(`sport-streams-${id}`, streams, 30 * 60 * 1000);
+
       if (!selectedSource) {
         const streamWithUrl = streams.find(s => s.embedUrl);
         if (streamWithUrl) {
@@ -44,9 +46,9 @@ const SportMatchPlayer = () => {
         }
       }
     } else {
-      console.warn("No streams available for match:", matchId);
+      console.warn("No streams available for match:", id);
     }
-  }, [streams, matchId, selectedSource]);
+  }, [streams, id, selectedSource]);
 
   const handleSourceChange = (source) => {
     setSelectedSource(source);
@@ -90,6 +92,14 @@ const SportMatchPlayer = () => {
     }
   };
 
+  if (!id) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center text-white">
+        <p>Invalid match ID. Please check the URL.</p>
+      </div>
+    );
+  }
+
   if (isLoading && !cachedStreams) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -122,7 +132,7 @@ const SportMatchPlayer = () => {
           <div className="container mx-auto px-4 md:px-6">
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-white mb-2">Sport Match Player</h1>
-              <p className="text-white/70">Watch the match: {matchId}</p>
+              <p className="text-white/70">Watching match ID: {id}</p>
             </div>
 
             {/* Source Dropdown */}
