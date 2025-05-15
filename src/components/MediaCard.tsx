@@ -70,10 +70,16 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
     .filter(Boolean)
     .slice(0, 3);
 
-  // Format duration in minutes, fallback to undefined
-  const durationText = media.media_type === 'movie' && media.runtime
-    ? `${media.runtime} min`
-    : undefined;
+  // Runtime calculation
+  // For movies: media.runtime in minutes
+  // For TV shows: first value in media.episode_run_time array if available
+  const runtimeMinutes = media.media_type === 'movie'
+    ? media.runtime
+    : media.media_type === 'tv' && Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0
+      ? media.episode_run_time[0]
+      : undefined;
+
+  const durationText = runtimeMinutes ? `${runtimeMinutes} min` : undefined;
 
   if (minimal) {
     return (
@@ -107,7 +113,7 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
         'relative group/card cursor-pointer overflow-visible rounded-lg border border-white/10 bg-card shadow-lg transition-all duration-300 hover:shadow-accent/30 hover:border-accent',
         className
       )}
-      whileHover={{ scale: 1.03, y: 6 }} // Move down 6px on hover to fully show top border
+      whileHover={{ scale: 1.03, y: 6, x: 4 }} // Shift right and down on hover to fully show top and left border
     >
       <div className="relative rounded-t-lg overflow-hidden aspect-[2/3]">
         <img
