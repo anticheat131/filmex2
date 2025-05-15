@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
@@ -35,22 +34,37 @@ const SportMatchPlayer = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Extract unique sources
+  const uniqueSources = useMemo(() => {
+    if (!streams) return [];
+    const sourcesSet = new Set<string>();
+    streams.forEach(s => {
+      if (s.source) sourcesSet.add(s.source);
+    });
+    return Array.from(sourcesSet);
+  }, [streams]);
+
+  // Set default selectedSource on streams load or URL param change
   useEffect(() => {
     if (streams && streams.length > 0) {
-      console.log("Fetched streams:", streams);
-      saveLocalData(`sport-streams-${id}`, streams, 30 * 60 * 1000);
-
-      if (!selectedSource) {
-        const preferred = streams.find(s => s.source === source && s.embedUrl);
-        const fallback = streams.find(s => s.embedUrl);
-        setSelectedSource(preferred?.source || fallback?.source || null);
+      const preferred = streams.find(s => s.source === source && s.embedUrl);
+      if (preferred) {
+        setSelectedSource(preferred.source);
+      } else if (uniqueSources.length > 0) {
+        setSelectedSource(uniqueSources[0]);
       }
     } else {
-      console.warn("No streams available for match:", id);
+      setSelectedSource(null);
     }
-  }, [streams, id, selectedSource, source]);
+  }, [streams, source, uniqueSources]);
 
-  const handleSourceChange = (source) => {
+  useEffect(() => {
+    if (streams) {
+      console.log('Streams:', streams);
+    }
+  }, [streams]);
+
+  const handleSourceChange = (source: string) => {
     setSelectedSource(source);
     setIsPlayerLoaded(false);
     setLoadAttempts(0);
@@ -62,8 +76,9 @@ const SportMatchPlayer = () => {
     });
   };
 
-  const embedUrl = streams && selectedSource ?
-    streams.find(s => s.source === selectedSource)?.embedUrl : '';
+  const embedUrl = streams && selectedSource
+    ? streams.find(s => s.source === selectedSource)?.embedUrl
+    : '';
 
   const handleIframeLoad = () => {
     setIsPlayerLoaded(true);
@@ -136,16 +151,16 @@ const SportMatchPlayer = () => {
             </div>
 
             {/* Source Dropdown */}
-            {streams && streams.length > 1 && (
+            {uniqueSources.length > 1 && (
               <div className="mb-4 flex items-center gap-4">
                 <DropdownMenu>
                   <DropdownMenuTrigger className="bg-white/10 text-white rounded-md px-4 py-2 inline-flex items-center justify-center">
                     {selectedSource ? `Source: ${selectedSource}` : 'Select Source'}
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="bg-background border border-white/20">
-                    {streams.map((stream) => (
-                      <DropdownMenuItem key={stream.source} onSelect={() => handleSourceChange(stream.source)}>
-                        {stream.source}
+                    {uniqueSources.map((src) => (
+                      <DropdownMenuItem key={src} onSelect={() => handleSourceChange(src)}>
+                        {src}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
