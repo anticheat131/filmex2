@@ -7,7 +7,6 @@ import PageTransition from '@/components/PageTransition';
 import { getMatchStreams } from '@/utils/sports-api';
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { swMonitor } from '@/utils/sw-monitor';
 import { saveLocalData, getLocalData } from '@/utils/supabase';
 
 const SportMatchPlayer = () => {
@@ -17,42 +16,43 @@ const SportMatchPlayer = () => {
   const [isPlayerLoaded, setIsPlayerLoaded] = useState(false);
   const [loadAttempts, setLoadAttempts] = useState(0);
   const [cachedStreams, setCachedStreams] = useState(null);
-  
-  // Load cached stream data if available
+
   useEffect(() => {
     const loadCachedData = async () => {
       const data = await getLocalData(`sport-streams-${matchId}`, null);
       setCachedStreams(data);
     };
-    
     loadCachedData();
   }, [matchId]);
-  
+
   const { data: streams, isLoading, error } = useQuery({
     queryKey: ['match-streams', matchId],
     queryFn: () => getMatchStreams(null, matchId),
-    placeholderData: cachedStreams, // Use cached data as placeholder
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    placeholderData: cachedStreams,
+    staleTime: 5 * 60 * 1000,
   });
-  
-  // Cache streams when we get them
+
   useEffect(() => {
     if (streams && streams.length > 0) {
-      saveLocalData(`sport-streams-${matchId}`, streams, 30 * 60 * 1000); // Cache for 30 minutes
+      console.log("Fetched streams:", streams);
+      saveLocalData(`sport-streams-${matchId}`, streams, 30 * 60 * 1000);
       
-      // Set initial source if not already set
       if (!selectedSource) {
-        const initialSource = streams[0]?.source || null;
-        setSelectedSource(initialSource);
+        const streamWithUrl = streams.find(s => s.embedUrl);
+        if (streamWithUrl) {
+          setSelectedSource(streamWithUrl.source);
+        }
       }
+    } else {
+      console.warn("No streams available for match:", matchId);
     }
   }, [streams, matchId, selectedSource]);
 
   const handleSourceChange = (source) => {
     setSelectedSource(source);
-    setIsPlayerLoaded(false); // Reset player loaded state when changing source
-    setLoadAttempts(0); // Reset load attempts counter
-    
+    setIsPlayerLoaded(false);
+    setLoadAttempts(0);
+
     toast({
       title: "Source changed",
       description: `Switched to ${source}`,
@@ -60,27 +60,18 @@ const SportMatchPlayer = () => {
     });
   };
 
-  const embedUrl = streams && selectedSource ? 
+  const embedUrl = streams && selectedSource ?
     streams.find(s => s.source === selectedSource)?.embedUrl : '';
 
-  // Handle iframe load event
   const handleIframeLoad = () => {
     setIsPlayerLoaded(true);
-    
-    // Record successful stream load without using recordCacheAccess
     console.log('Stream loaded successfully:', embedUrl);
-    
-    toast({
-      title: "Stream loaded",
-      description: "Video player ready",
-      duration: 2000,
-    });
+    toast({ title: "Stream loaded", description: "Video player ready", duration: 2000 });
   };
-  
-  // Handle iframe load error
+
   const handleIframeError = () => {
     setLoadAttempts(prev => prev + 1);
-    
+
     if (loadAttempts < 2) {
       toast({
         title: "Stream loading failed",
@@ -88,8 +79,6 @@ const SportMatchPlayer = () => {
         variant: "destructive",
         duration: 3000,
       });
-      
-      // Force refresh of the iframe by toggling the key
       setIsPlayerLoaded(false);
     } else {
       toast({
@@ -136,7 +125,7 @@ const SportMatchPlayer = () => {
               <p className="text-white/70">Watch the match: {matchId}</p>
             </div>
 
-            {/* Source Selection Dropdown */}
+            {/* Source Dropdown */}
             {streams && streams.length > 1 && (
               <div className="mb-4 flex items-center gap-4">
                 <DropdownMenu>
@@ -151,13 +140,15 @@ const SportMatchPlayer = () => {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                
+
                 <div className="text-sm text-white/50">
                   {isPlayerLoaded ? (
                     <span className="text-green-400">✓ Stream loaded</span>
                   ) : embedUrl ? (
                     <span className="animate-pulse">Loading stream...</span>
-                  ) : null}
+                  ) : (
+                    <span>No embed URL</span>
+                  )}
                 </div>
               </div>
             )}
@@ -178,11 +169,10 @@ const SportMatchPlayer = () => {
                 ></iframe>
               ) : (
                 <div className="flex items-center justify-center h-full text-white">
-                  <p>No streams available for this match.</p>
+                  <p>No streams or embed URL available for this match.</p>
                 </div>
               )}
-              
-              {/* Loading overlay */}
+
               {!isPlayerLoaded && embedUrl && (
                 <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
                   <div className="text-white text-center">
@@ -192,8 +182,8 @@ const SportMatchPlayer = () => {
                 </div>
               )}
             </div>
-            
-            {/* Stream info */}
+
+            {/* Stream Info */}
             {selectedSource && (
               <div className="mt-4 p-4 bg-white/5 rounded-md">
                 <h3 className="text-lg font-medium text-white mb-2">Stream Information</h3>
@@ -201,9 +191,6 @@ const SportMatchPlayer = () => {
                   Source: {selectedSource} • 
                   Quality: {streams?.find(s => s.source === selectedSource)?.hd ? 'HD' : 'SD'} •
                   Status: {isPlayerLoaded ? 'Ready' : 'Loading'}
-                </p>
-                <p className="text-xs text-white/50 mt-1">
-                  If the current stream isn't working, try switching to another source.
                 </p>
               </div>
             )}
