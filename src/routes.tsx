@@ -27,7 +27,7 @@ const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const ContentRemoval = lazy(() => import('./pages/ContentRemoval'));
 const DMCANotice = lazy(() => import('./pages/DMCANotice'));
 
-<Route path="/anime" element={<Anime />} />
+
 export default function AppRoutes() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
