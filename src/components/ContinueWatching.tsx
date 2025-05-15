@@ -1,4 +1,5 @@
 // ...imports remain unchanged
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useWatchHistory } from '@/hooks/watch-history';
 import { useAuth } from '@/hooks';
 const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
