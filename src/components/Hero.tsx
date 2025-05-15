@@ -74,7 +74,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
 
   return (
     <section
-      className={`relative w-full h-[48vh] md:h-[60vh] overflow-hidden ${className}`}
+      className={`relative w-full h-[36vh] md:h-[48vh] overflow-hidden ${className}`}
       role="region"
       aria-label="Featured media carousel"
     >
@@ -131,20 +131,20 @@ const Hero = ({ media, className = '' }: HeroProps) => {
             )}
           </div>
 
-          <h1 className="text-white text-3xl md:text-5xl font-bold mb-4">
+          <h1 className="text-white text-2xl md:text-4xl font-bold mb-3">
             {title}
           </h1>
 
-          <p className="text-white/90 line-clamp-3 text-sm md:text-base mb-6">
+          <p className="text-white/90 line-clamp-3 text-sm md:text-base mb-5">
             {featuredMedia.overview}
           </p>
 
-          <div className="flex gap-4">
-            <Button onClick={handlePlay} className="bg-accent hover:bg-accent/80 text-white">
+          <div className="flex gap-4 flex-wrap">
+            <Button onClick={handlePlay} className="bg-accent hover:bg-accent/80 text-white px-5">
               <Play className="w-4 h-4 mr-2" />
               Play Now
             </Button>
-            <Button onClick={handleMoreInfo} variant="outline" className="text-white border-white/40 hover:bg-white/10">
+            <Button onClick={handleMoreInfo} variant="outline" className="text-white border-white/40 hover:bg-white/10 px-5">
               <Info className="w-4 h-4 mr-2" />
               More Info
             </Button>
