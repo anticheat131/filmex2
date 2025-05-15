@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Clock, ChevronLeft, ChevronRight, Play, Info } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, Play, Info, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -19,10 +19,17 @@ const ContinueWatching = () => {
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
+  // Load and clean items on mount
   useEffect(() => {
+    loadItems();
+  }, []);
+
+  const loadItems = () => {
     try {
       const raw = localStorage.getItem('fdf_watch_history') || '{}';
       const parsed = JSON.parse(raw);
@@ -43,11 +50,13 @@ const ContinueWatching = () => {
 
       const filteredItems = Object.values(parsed);
       setItems(filteredItems);
+      setSelectedIds(new Set());
     } catch (e) {
       console.error('Error loading or cleaning fdf_watch_history:', e);
       setItems([]);
+      setSelectedIds(new Set());
     }
-  }, []);
+  };
 
   const handleScroll = () => {
     if (!rowRef.current) return;
@@ -64,6 +73,35 @@ const ContinueWatching = () => {
     rowRef.current?.scrollBy({ left: rowRef.current.clientWidth * 0.75, behavior: 'smooth' });
   };
 
+  const toggleSelectMode = () => {
+    setSelectMode(!selectMode);
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelectItem = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const removeSelected = () => {
+    if (selectedIds.size === 0) return;
+    try {
+      const raw = localStorage.getItem('fdf_watch_history') || '{}';
+      const parsed = JSON.parse(raw);
+      selectedIds.forEach(id => delete parsed[id]);
+      localStorage.setItem('fdf_watch_history', JSON.stringify(parsed));
+      loadItems();
+      setSelectMode(false);
+    } catch (e) {
+      console.error('Error removing selected items:', e);
+    }
+  };
+
   const formatLastWatched = (dateString: string) => {
     if (!dateString) return 'Recently';
     try {
@@ -77,22 +115,26 @@ const ContinueWatching = () => {
     }
   };
 
-  const formatTimeRemaining = (position: number, duration: number) => {
-    if (!duration) return '';
-    const remaining = Math.max(0, duration - position);
-    const minutes = Math.floor(remaining / 60);
-    const seconds = Math.floor(remaining % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')} remaining`;
-  };
-
   if (items.length === 0) return null;
 
   return (
     <div className="px-4 md:px-8 mt-8 mb-6">
-      <h2 className="text-xl md:text-2xl font-bold text-white mb-4 flex items-center">
-        <Clock className="h-5 w-5 mr-2 text-accent" />
-        Continue Watching
-      </h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl md:text-2xl font-bold text-white flex items-center">
+          <Clock className="h-5 w-5 mr-2 text-accent" />
+          Continue Watching
+        </h2>
+        <div className="flex gap-2">
+          {selectMode && (
+            <Button variant="destructive" onClick={removeSelected} disabled={selectedIds.size === 0}>
+              <Trash2 className="w-4 h-4 mr-1" /> Remove Selected
+            </Button>
+          )}
+          <Button variant={selectMode ? 'outline' : 'default'} onClick={toggleSelectMode}>
+            {selectMode ? 'Cancel' : 'Manage'}
+          </Button>
+        </div>
+      </div>
 
       <div
         className="relative group"
@@ -116,43 +158,63 @@ const ContinueWatching = () => {
           className="flex overflow-x-auto hide-scrollbar gap-4 pb-4"
           onScroll={handleScroll}
         >
-          {items.map((item: any) => (
-            <motion.div
-              key={item.id}
-              className="relative flex-none w-[280px] md:w-[300px] aspect-video bg-card rounded-lg overflow-hidden group cursor-pointer"
-              whileHover={{ scale: 1.02 }}
-              onClick={() =>
-                navigate(
-                  item.type === 'tv'
-                    ? `/tv/${item.id}/season/${item.last_season_watched}/episode/${item.last_episode_watched}`
-                    : `/watch/movie/${item.id}`
-                )
-              }
-            >
-              <img
-                src={`https://image.tmdb.org/t/p/w500${item.backdrop_path || item.poster_path}`}
-                alt={item.title}
-                className="w-full h-full object-cover transition-transform group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4 z-10">
-                <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg">{item.title}</h3>
-
-                <Progress
-                  value={Math.min(100, (item.progress?.watched / item.progress?.duration) * 100)}
-                  className="h-1 my-2"
+          {items.map((item: any) => {
+            const isSelected = selectedIds.has(item.id);
+            return (
+              <motion.div
+                key={item.id}
+                className={`relative flex-none w-[280px] md:w-[300px] aspect-video bg-card rounded-lg overflow-hidden group cursor-pointer ${
+                  selectMode ? 'border-4 border-accent' : ''
+                }`}
+                whileHover={{ scale: selectMode ? 1 : 1.02 }}
+                onClick={() => {
+                  if (selectMode) {
+                    toggleSelectItem(item.id);
+                  } else {
+                    if (item.type === 'tv') {
+                      navigate(`/tv/${item.id}/season/${item.last_season_watched}/episode/${item.last_episode_watched}`);
+                    } else {
+                      navigate(`/watch/movie/${item.id}`);
+                    }
+                  }
+                }}
+              >
+                {selectMode && (
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleSelectItem(item.id)}
+                    className="absolute top-2 left-2 z-20 w-5 h-5 accent-accent cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                )}
+                <img
+                  src={`https://image.tmdb.org/t/p/w500${item.backdrop_path || item.poster_path}`}
+                  alt={item.title}
+                  className="w-full h-full object-cover transition-transform group-hover:scale-110"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4 z-10">
+                  <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg">{item.title}</h3>
 
-                <Button
-                  className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1"
-                  size="sm"
-                >
-                  <Play className="h-3 w-3" />
-                  Continue
-                </Button>
-              </div>
-            </motion.div>
-          ))}
+                  <Progress
+                    value={Math.min(100, (item.progress?.watched / item.progress?.duration) * 100)}
+                    className="h-1 my-2"
+                  />
+
+                  {!selectMode && (
+                    <Button
+                      className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1"
+                      size="sm"
+                    >
+                      <Play className="h-3 w-3" />
+                      Continue
+                    </Button>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
         </motion.div>
 
         {showRightArrow && (
