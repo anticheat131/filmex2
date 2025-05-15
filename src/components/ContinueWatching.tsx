@@ -14,6 +14,8 @@ const ContinueWatching = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("✅ ContinueWatching component mounted");
+
     try {
       const raw = localStorage.getItem('vidLinkProgress') || '{}';
       console.log('Raw progress:', raw);
@@ -23,10 +25,10 @@ const ContinueWatching = () => {
 
       console.log('Parsed entries:', entries);
 
-      // Show all items (no filtering for progress)
+      // Show all items for now
       setItems(entries);
     } catch (e) {
-      console.error('Error reading from localStorage:', e);
+      console.error('❌ Error reading vidLinkProgress from localStorage:', e);
       setItems([]);
     }
   }, []);
