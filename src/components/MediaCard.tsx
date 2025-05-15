@@ -11,8 +11,8 @@ import { trackMediaPreference, trackMediaView } from '@/lib/analytics';
 interface MediaCardProps {
   media: Media;
   className?: string;
-  featured?: boolean;
   minimal?: boolean;
+  smaller?: boolean; // New prop to make card 10% smaller
 }
 
 const genreMap: Record<number, string> = {
@@ -37,7 +37,7 @@ const genreMap: Record<number, string> = {
   37: 'Western',
 };
 
-const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
+const MediaCard = ({ media, className, minimal = false, smaller = false }: MediaCardProps) => {
   const [imageError, setImageError] = useState(false);
   const navigate = useNavigate();
 
@@ -46,6 +46,7 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
   const mediaId = media.media_id || media.id;
   const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
 
+  // Determine quality label
   let quality = media.quality?.toUpperCase();
   if (!quality) {
     if (typeof media.hd === 'boolean') quality = media.hd ? 'HD' : 'CAM';
@@ -65,14 +66,13 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
     navigate(detailPath);
   };
 
+  // Genres (up to 3)
   const genreNames = media.genre_ids
     ?.map(id => genreMap[id])
     .filter(Boolean)
     .slice(0, 3);
 
-  // Runtime calculation
-  // For movies: media.runtime in minutes
-  // For TV shows: first value in media.episode_run_time array if available
+  // Calculate runtime (movies use runtime, tv uses episode_run_time[0])
   const runtimeMinutes = media.media_type === 'movie'
     ? media.runtime
     : media.media_type === 'tv' && Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0
@@ -111,9 +111,11 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
       onClick={handleClick}
       className={cn(
         'relative group/card cursor-pointer overflow-visible rounded-lg border border-white/10 bg-card shadow-lg transition-all duration-300 hover:shadow-accent/30 hover:border-accent',
+        smaller ? 'scale-90 origin-top-left' : '',
         className
       )}
-      whileHover={{ scale: 1.03, y: 6, x: 4 }} // Shift right and down on hover to fully show top and left border
+      whileHover={{ scale: smaller ? 0.93 : 1.03 }}
+      style={{ transformOrigin: 'top left' }}
     >
       <div className="relative rounded-t-lg overflow-hidden aspect-[2/3]">
         <img
@@ -150,8 +152,7 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
           <span>
             {media.media_type === 'movie'
               ? media.release_date?.slice(0, 4)
-              : media.first_air_date?.slice(0, 4)}
-            {durationText ? ` · ${durationText}` : ''}
+              : media.first_air_date?.slice(0, 4)}{durationText ? ` · ${durationText}` : ''}
           </span>
           {media.vote_average > 0 && (
             <span className="flex items-center gap-1 text-amber-400">
