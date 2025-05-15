@@ -1,37 +1,74 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Clock, ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import { useAuth } from '@/hooks';
+import { useWatchHistory } from '@/hooks/watch-history';
+import { WatchHistoryItem } from '@/contexts/types/watch-history';
+import { Play, Clock, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { formatDistanceToNow } from 'date-fns';
 
-const ContinueWatching = () => {
-  const [items, setItems] = useState<any[]>([]);
+interface ContinueWatchingProps {
+  maxItems?: number;
+}
+
+const END_THRESHOLD_SECONDS = 30;
+
+const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
+  const { user } = useAuth();
+  const { watchHistory } = useWatchHistory();
+  const [continuableItems, setContinuableItems] = useState<WatchHistoryItem[]>([]);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
+  const processedHistory = useMemo(() => {
+    if (watchHistory.length === 0) return [];
+
+    const validItems = watchHistory.filter(item => {
+      if (!item.created_at) return false;
+      try {
+        const date = new Date(item.created_at);
+        return !isNaN(date.getTime());
+      } catch {
+        return false;
+      }
+    });
+
+    const uniqueMediaMap = new Map<string, WatchHistoryItem>();
+
+    validItems.forEach(item => {
+      const key = `${item.media_type}-${item.media_id}${item.media_type === 'tv' ? `-s${item.season}-e${item.episode}` : ''}`;
+      if (
+        !uniqueMediaMap.has(key) ||
+        new Date(item.created_at) > new Date(uniqueMediaMap.get(key)!.created_at)
+      ) {
+        uniqueMediaMap.set(key, item);
+      }
+    });
+
+    return Array.from(uniqueMediaMap.values())
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [watchHistory]);
+
   useEffect(() => {
-    console.log("✅ ContinueWatching component mounted");
+    const filtered = processedHistory.filter((item) => {
+      const watched = Number(item.watch_position);
+      const duration = Number(item.duration);
+      return isNaN(watched) || isNaN(duration) || watched < duration - END_THRESHOLD_SECONDS;
+    });
 
-    try {
-      const raw = localStorage.getItem('vidLinkProgress') || '{}';
-      console.log('Raw progress:', raw);
-
-      const parsed = JSON.parse(raw);
-      const entries = Object.values(parsed);
-
-      console.log('Parsed entries:', entries);
-
-      // Show all items for now
-      setItems(entries);
-    } catch (e) {
-      console.error('❌ Error reading vidLinkProgress from localStorage:', e);
-      setItems([]);
-    }
-  }, []);
+    setContinuableItems(filtered.slice(0, maxItems));
+  }, [processedHistory, maxItems]);
 
   const handleScroll = () => {
     if (!rowRef.current) return;
@@ -48,7 +85,41 @@ const ContinueWatching = () => {
     rowRef.current?.scrollBy({ left: rowRef.current.clientWidth * 0.75, behavior: 'smooth' });
   };
 
-  if (items.length === 0) return null;
+  const formatLastWatched = (dateString: string) => {
+    if (!dateString) return 'Recently';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime()) || date > new Date()) {
+        return 'Recently';
+      }
+      return formatDistanceToNow(date, { addSuffix: true });
+    } catch {
+      return 'Recently';
+    }
+  };
+
+  const formatTimeRemaining = (position: number, duration: number) => {
+    if (!duration) return '';
+    const remaining = Math.max(0, duration - position);
+    const minutes = Math.floor(remaining / 60);
+    const seconds = Math.floor(remaining % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')} remaining`;
+  };
+
+  const handleContinueWatching = (item: WatchHistoryItem) => {
+    if (item.media_type === 'movie') {
+      navigate(`/watch/${item.media_type}/${item.media_id}`);
+    } else if (item.media_type === 'tv') {
+      navigate(`/watch/${item.media_type}/${item.media_id}/${item.season}/${item.episode}`);
+    }
+  };
+
+  const handleNavigateToDetails = (event: React.MouseEvent, item: WatchHistoryItem) => {
+    event.stopPropagation();
+    navigate(`/${item.media_type === 'movie' ? 'movie' : 'tv'}/${item.media_id}`);
+  };
+
+  if (!user || continuableItems.length === 0) return null;
 
   return (
     <div className="px-4 md:px-8 mt-8 mb-6">
@@ -79,32 +150,65 @@ const ContinueWatching = () => {
           className="flex overflow-x-auto hide-scrollbar gap-4 pb-4"
           onScroll={handleScroll}
         >
-          {items.map((item: any) => (
+          {continuableItems.map((item) => (
             <motion.div
-              key={item.id}
-              className="relative flex-none w-[280px] md:w-[300px] aspect-video bg-card rounded-lg overflow-hidden group cursor-pointer"
+              key={`${item.id}-${item.media_id}-${item.season || 0}-${item.episode || 0}`}
+              className="relative flex-none w-[280px] md:w-[300px] aspect-video bg-card rounded-lg overflow-hidden group cursor-pointer hover-card"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               whileHover={{ scale: 1.02 }}
-              onClick={() =>
-                navigate(
-                  item.type === 'tv'
-                    ? `/tv/${item.id}/season/${item.last_season_watched}/episode/${item.last_episode_watched}`
-                    : `/watch/movie/${item.id}`
-                )
-              }
+              onClick={() => handleContinueWatching(item)}
             >
               <img
-                src={`https://image.tmdb.org/t/p/w500${item.backdrop_path || item.poster_path}`}
+                src={`https://image.tmdb.org/t/p/w500${item.backdrop_path}`}
                 alt={item.title}
                 className="w-full h-full object-cover transition-transform group-hover:scale-110"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
-              <div className="absolute bottom-4 left-4 right-4 z-10">
-                <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg">{item.title}</h3>
 
-                <Progress
-                  value={Math.min(100, (item.progress?.watched / item.progress?.duration) * 100)}
-                  className="h-1 my-2"
-                />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
+
+              <div className="absolute bottom-4 left-4 right-4 z-10">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg">{item.title}</h3>
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 rounded-full bg-black/30 hover:bg-accent/80 transition-colors -mt-1"
+                          onClick={(e) => handleNavigateToDetails(e, item)}
+                        >
+                          <Info className="h-3.5 w-3.5 text-white" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p>View details</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-white/70 mb-2">
+                  <span className="flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {formatLastWatched(item.created_at)}
+                  </span>
+
+                  {item.media_type === 'tv' && (
+                    <span>S{item.season} E{item.episode}</span>
+                  )}
+                </div>
+
+                <div className="mb-3 relative">
+                  <Progress
+                    value={(item.watch_position / item.duration) * 100}
+                    className="h-1"
+                  />
+                  <div className="text-xs text-white/70 mt-1 text-right">
+                    {formatTimeRemaining(item.watch_position, item.duration)}
+                  </div>
+                </div>
 
                 <Button
                   className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1"
