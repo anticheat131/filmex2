@@ -73,7 +73,7 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
     <motion.div
       onClick={handleClick}
       className={cn(
-        'relative group/card cursor-pointer overflow-hidden rounded-lg border border-white/10 bg-card shadow-lg transition-all duration-300 hover:shadow-accent/30 hover:border-accent',
+        'relative group/card cursor-pointer overflow-visible rounded-lg border border-white/10 bg-card shadow-lg transition-all duration-300 hover:shadow-accent/30 hover:border-accent',
         className
       )}
       whileHover={{ scale: 1.03 }}
@@ -105,7 +105,7 @@ const MediaCard = ({ media, className, minimal = false }: MediaCardProps) => {
           {media.title || media.name}
         </h3>
 
-        <p className="text-xs text-white/70 line-clamp-3">{media.overview}</p>
+        {/* Removed description paragraph here */}
 
         <div className="flex justify-between items-center text-sm text-white/70 mt-1">
           <span>
