@@ -1,7 +1,7 @@
 
 import { APIMatch, Sport, Stream } from './sports-types';
 
-const API_BASE_URL = 'http://streamed.su';
+const API_BASE_URL = 'https://streamed.su';
 
 export const getSportsList = async (): Promise<Sport[]> => {
   try {
