@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 import { Media } from '@/utils/types';
 import { posterSizes } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
@@ -42,7 +42,11 @@ const MediaCard = ({ media, className, featured = false, minimal = false }: Medi
     navigate(detailPath);
   };
 
+<<<<<<< HEAD
   // Fallback logic to ensure quality is always present
+=======
+  // Determine quality badge text and color
+>>>>>>> 72f52f7c28dedebb0ddba3d1dcd0239ed1875cc5
   let quality = media.quality?.toUpperCase();
   if (!quality) {
     if (typeof media.hd === 'boolean') {
