@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Media } from '@/utils/types';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { posterSizes } from '@/utils/api';
 import { cn } from '@/lib/utils';
-import { Star } from 'lucide-react';
+import { Star, ArrowRight } from 'lucide-react';
 
 interface MediaCardProps {
   media: Media;
@@ -19,6 +19,7 @@ const genreMap: Record<number, string> = {
 };
 
 const MediaCard = ({ media, className }: MediaCardProps) => {
+  const [hovered, setHovered] = useState(false);
   const navigate = useNavigate();
 
   const title = media.title || media.name || 'Untitled';
@@ -30,13 +31,17 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
     .filter(Boolean)
     .slice(0, 2)
     .join(', ');
-
   const runtime = media.runtime || (Array.isArray(media.episode_run_time) ? media.episode_run_time[0] : undefined);
   const runtimeText = runtime ? `${runtime} min` : '';
 
   const handleClick = () => {
     const mediaType = media.media_type === 'tv' ? 'tv' : 'movie';
     navigate(`/${mediaType}/${media.id}`);
+  };
+
+  const handleDetailsClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleClick();
   };
 
   return (
@@ -46,6 +51,8 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
         className
       )}
       onClick={handleClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       {/* Poster */}
       <img
@@ -54,6 +61,16 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
         className="w-full h-auto object-cover aspect-[2/3] rounded-lg"
         loading="lazy"
       />
+
+      {/* Top-left details button */}
+      {hovered && (
+        <button
+          onClick={handleDetailsClick}
+          className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-white/90 text-black text-xs font-medium px-2 py-1 rounded shadow hover:bg-white transition"
+        >
+          Details <ArrowRight className="w-3 h-3" />
+        </button>
+      )}
 
       {/* Rating badge */}
       {media.vote_average > 0 && (
@@ -64,9 +81,9 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
       )}
 
       {/* Info Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 py-4 z-10">
-        <h3 className="text-white text-sm font-semibold leading-tight line-clamp-2">{title}</h3>
-        <p className="text-xs text-white/70 mt-0.5">
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-3 py-4 z-10">
+        <h3 className="text-white text-sm font-semibold leading-snug line-clamp-2">{title}</h3>
+        <p className="text-[11px] text-white/70 mt-0.5 font-medium">
           {releaseYear}
           {genres && ` • ${genres}`}
           {runtimeText && ` • ${runtimeText}`}
