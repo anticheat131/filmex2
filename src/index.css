@@ -314,3 +314,9 @@ body {
 ;
     }
 }
+  @media (min-width: 768px) {
+  .md\:px-8 {
+    padding-left: 0rem !important;
+    padding-right: 0rem !important;
+  }
+}
