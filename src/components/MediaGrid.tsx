@@ -206,21 +206,21 @@ const MediaGrid = ({
           ))}
         </motion.div>
       ) : (
-        <motion.div
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-10"
+        <motion.div 
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"
           variants={container}
           initial="hidden"
           animate="show"
         >
           {media.map((mediaItem, idx) => (
-            <motion.div
-              key={`${mediaItem.media_type}-${mediaItem.id}-${mediaItem.docId ?? idx}`}
+            <motion.div 
+              key={`${mediaItem.media_type}-${mediaItem.id}-${mediaItem.docId ?? idx}`} 
               variants={item}
               className="group relative"
             >
               {selectMode && mediaItem.docId && (
                 <div className="absolute top-2 left-2 z-10">
-                  <Checkbox
+                  <Checkbox 
                     checked={selectedItems.includes(mediaItem.docId)}
                     onCheckedChange={() => handleSelect(mediaItem.docId!)}
                   />
