@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Media } from '@/utils/types';
 import { backdropSizes } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
+import { Button } from '@/components/ui/button';
 import { Play, Info } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaPreferences } from '@/hooks/use-media-preferences';
-import { trackMediaPreference } from '@/lib/analytics';
 
 interface HeroProps {
   media: Media[];
@@ -18,10 +18,8 @@ const Hero = ({ media, className = '' }: HeroProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [progress, setProgress] = useState(0);
   const navigate = useNavigate();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const progressRef = useRef<NodeJS.Timeout | null>(null);
   const { preference } = useMediaPreferences();
 
   const filteredMedia = useMemo(() => {
@@ -34,27 +32,12 @@ const Hero = ({ media, className = '' }: HeroProps) => {
     return withBackdrop;
   }, [media, preference]);
 
-  const featuredMedia = filteredMedia[currentIndex];
+  const featured = filteredMedia[currentIndex];
 
   const goToNext = useCallback(() => {
     setCurrentIndex(prev => (prev + 1) % filteredMedia.length);
-    setProgress(0);
     setIsLoaded(false);
   }, [filteredMedia.length]);
-
-  const handlePlay = () => {
-    const mediaType = featuredMedia.media_type;
-    const id = featuredMedia.id;
-    if (mediaType === 'tv') {
-      navigate(`/watch/tv/${id}/1/1`);
-    } else {
-      navigate(`/watch/${mediaType}/${id}`);
-    }
-  };
-
-  const handleMoreInfo = () => {
-    navigate(`/${featuredMedia.media_type}/${featuredMedia.id}`);
-  };
 
   useEffect(() => {
     if (paused || filteredMedia.length <= 1) return;
@@ -62,22 +45,33 @@ const Hero = ({ media, className = '' }: HeroProps) => {
     return () => clearInterval(intervalRef.current as NodeJS.Timeout);
   }, [goToNext, paused, filteredMedia.length]);
 
-  useEffect(() => {
-    if (paused || filteredMedia.length <= 1) return;
-    progressRef.current = setInterval(() => {
-      setProgress(p => (p < 100 ? p + 1.67 : 0));
-    }, 100);
-    return () => clearInterval(progressRef.current as NodeJS.Timeout);
-  }, [paused, currentIndex, filteredMedia.length]);
+  const handlePlay = () => {
+    if (!featured) return;
+    navigate(
+      featured.media_type === 'tv'
+        ? `/watch/tv/${featured.id}/1/1`
+        : `/watch/movie/${featured.id}`
+    );
+  };
+
+  const handleMoreInfo = () => {
+    if (!featured) return;
+    navigate(`/${featured.media_type}/${featured.id}`);
+  };
+
+  const title = featured?.title || featured?.name || '';
+  const overview = featured?.overview || '';
 
   return (
     <section
-      className={`relative w-full h-[90vh] overflow-hidden ${className}`}
+      className={`
+        relative w-full h-[80vh] md:h-[90vh] overflow-hidden bg-black ${className}
+      `}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
       {!isLoaded && (
-        <div className="absolute inset-0 bg-background flex items-center justify-center z-10">
+        <div className="absolute inset-0 z-10 flex items-center justify-center">
           <Skeleton className="w-full h-full" />
         </div>
       )}
@@ -87,54 +81,43 @@ const Hero = ({ media, className = '' }: HeroProps) => {
           key={currentIndex}
           initial={{ opacity: 0 }}
           animate={{ opacity: isLoaded ? 1 : 0 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 0.6 }}
           className="absolute inset-0"
         >
           <img
-            src={getImageUrl(featuredMedia.backdrop_path, backdropSizes.original)}
-            alt={featuredMedia.title || featuredMedia.name || 'Featured media'}
+            src={getImageUrl(featured.backdrop_path, backdropSizes.original)}
+            alt={title}
             className="w-full h-full object-cover"
             onLoad={() => setIsLoaded(true)}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/90" />
         </motion.div>
       </AnimatePresence>
 
-      <div className="absolute inset-0 flex items-center justify-start px-6 md:px-16 z-20">
-        <div className="max-w-3xl bg-black/40 backdrop-blur-md p-8 rounded-2xl space-y-6">
-          <h1 className="text-4xl md:text-6xl font-extrabold text-white drop-shadow-xl leading-tight">
-            {featuredMedia.title || featuredMedia.name}
-          </h1>
-
-          <p className="text-white/90 text-base md:text-lg max-w-2xl line-clamp-6 drop-shadow-sm">
-            {featuredMedia.overview}
-          </p>
-
-          <div className="flex gap-4 pt-2">
-            <button
-              onClick={handlePlay}
-              className="bg-white text-black px-6 py-2 rounded-full font-semibold text-sm hover:bg-white/90 transition shadow-md shadow-white/10"
-            >
-              <Play className="inline-block w-4 h-4 mr-2" /> Watch
-            </button>
-            <button
-              onClick={handleMoreInfo}
-              className="bg-white/10 text-white px-6 py-2 rounded-full border border-white/20 hover:bg-white/20 transition text-sm"
-            >
-              <Info className="inline-block w-4 h-4 mr-2" /> Details
-            </button>
-          </div>
+      {/* Content overlay */}
+      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-6 md:px-16 text-center text-white">
+        <p className="text-xs md:text-sm text-accent tracking-widest mb-3 uppercase">Trending Now</p>
+        <h1 className="text-3xl md:text-5xl font-bold max-w-3xl">{title}</h1>
+        <p className="mt-4 max-w-2xl text-sm md:text-base text-white/80 line-clamp-4">{overview}</p>
+        <div className="mt-6 flex gap-4">
+          <Button
+            onClick={handlePlay}
+            className="bg-accent hover:bg-accent/80 text-white px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2"
+          >
+            <Play className="w-4 h-4" />
+            Watch
+          </Button>
+          <Button
+            onClick={handleMoreInfo}
+            variant="outline"
+            className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2"
+          >
+            <Info className="w-4 h-4" />
+            Details
+          </Button>
         </div>
       </div>
-
-      {filteredMedia.length > 1 && (
-        <div className="absolute bottom-2 left-0 right-0 h-1 bg-white/20 z-30">
-          <div
-            className="h-full bg-accent transition-all duration-100"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
     </section>
   );
 };
