@@ -43,6 +43,28 @@ const Navbar = () => {
     };
   }, [isMobileMenuOpen]);
 
+  // Load Google Translate script once on mount
+  useEffect(() => {
+    const addGoogleTranslate = () => {
+      if (document.getElementById('google-translate-script')) return;
+      const script = document.createElement('script');
+      script.id = 'google-translate-script';
+      script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      document.body.appendChild(script);
+
+      (window as any).googleTranslateElementInit = () => {
+        new (window as any).google.translate.TranslateElement(
+          {
+            pageLanguage: 'en',
+            layout: (window as any).google.translate.TranslateElement.InlineLayout.SIMPLE,
+          },
+          'google_translate_element'
+        );
+      };
+    };
+    addGoogleTranslate();
+  }, []);
+
   const toggleSearch = () => {
     setIsSearchExpanded(!isSearchExpanded);
   };
@@ -63,7 +85,7 @@ const Navbar = () => {
             <NavLinks />
           </div>
 
-          {/* Right side: Search, Profile/Auth, Menu button */}
+          {/* Right side: Search, Profile/Auth, Menu button, Language */}
           <div className="flex items-center gap-3">
             {/* Desktop search bar - hidden on mobile */}
             <div className="hidden md:block">
@@ -108,7 +130,10 @@ const Navbar = () => {
                 ) : (
                   <AuthButtons />
                 )}
-                
+
+                {/* Google Translate Dropdown */}
+                <div id="google_translate_element" className="ml-4" />
+
                 {/* Mobile menu button - only visible on mobile */}
                 <Button
                   variant="ghost"
