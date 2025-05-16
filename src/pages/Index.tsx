@@ -41,7 +41,10 @@ const Index = () => {
       } else if (!item.backdrop_path) {
         quality = 'CAM';
       }
-      return { ...item, quality };
+      return {
+        ...item,
+        quality,
+      };
     });
 
   useEffect(() => {
@@ -51,7 +54,6 @@ const Index = () => {
           getPopularMovies(),
           getPopularTVShows(),
         ]);
-
         const combined = [...popularMoviesData, ...popularTVData]
           .filter(item => item.backdrop_path)
           .sort((a, b) => {
@@ -65,7 +67,6 @@ const Index = () => {
         console.error('Failed fetching slider media:', error);
       }
     };
-
     fetchSliderMedia();
   }, []);
 
@@ -87,7 +88,6 @@ const Index = () => {
         ]);
 
         const filteredTrendingData = trendingData.filter(item => item.backdrop_path);
-
         setTrendingMedia(applyQuality(filteredTrendingData));
         setPopularMovies(applyQuality(popularMoviesData));
         setPopularTVShows(applyQuality(popularTVData));
@@ -101,7 +101,6 @@ const Index = () => {
         setTimeout(() => setSecondaryLoaded(true), 1000);
       }
     };
-
     fetchPrimaryData();
   }, []);
 
