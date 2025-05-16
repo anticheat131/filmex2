@@ -164,6 +164,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
             </span>
           )}
         </div>
+      </div>
 
       {/* Popup */}
       <AnimatePresence>
