@@ -32,12 +32,18 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
 
   const genreNames = media.genre_ids?.map(id => genreMap[id]).filter(Boolean).slice(0, 2);
-  const runtimeMinutes =
-    media.media_type === 'movie'
-      ? media.runtime
-      : Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0
-      ? media.episode_run_time[0]
-      : undefined;
+
+  const runtimeMinutes = (() => {
+    if (media.media_type === 'movie') {
+      return media.runtime;
+    } else if (media.media_type === 'tv') {
+      if (Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0) {
+        return media.episode_run_time[0];
+      }
+      return media.runtime || undefined;
+    }
+    return undefined;
+  })();
 
   const fullReleaseDate = media.media_type === 'movie' ? media.release_date : media.first_air_date;
   const releaseDate = new Date(fullReleaseDate || '');
@@ -144,7 +150,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
 
         <div className="flex justify-between items-end text-xs">
           <p className="text-white/70 line-clamp-1 max-w-[60%] pl-[5%]">{genreNames?.join(', ') || '—'}</p>
-          {typeof runtimeMinutes === 'number' && (
+          {runtimeMinutes && (
             <p className="text-white/60 text-xs text-right min-w-[35%]">{runtimeMinutes} min</p>
           )}
         </div>
