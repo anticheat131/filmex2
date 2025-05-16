@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Media } from '@/utils/types';
 import { getImageUrl } from '@/utils/services/tmdb';
@@ -19,7 +19,6 @@ interface MediaCardProps {
 }
 
 const MediaCard = ({ media, className }: MediaCardProps) => {
-  const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
 
   const title = media.title || media.name || 'Untitled';
@@ -45,42 +44,33 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
   return (
     <div
       className={cn(
-        'm-2 relative w-[210px] md:w-[240px] aspect-[2/3.2] rounded-[6px] border border-transparent bg-zinc-900 shadow-md overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-[1.05] hover:border-white/20',
+        'group relative flex-shrink-0 w-[230px] aspect-[2/3.2] rounded-md overflow-hidden bg-zinc-900 shadow-lg transition-transform duration-300 hover:scale-[1.04]',
         className
       )}
-      onClick={handleDetailsClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Poster */}
       <img
         src={posterUrl}
         alt={title}
-        className="w-full h-full object-cover rounded-[6px]"
+        className="w-full h-full object-cover"
         loading="lazy"
       />
 
-      {/* Score badge */}
-      <div className="absolute top-2 right-2 z-10">
-        <div className="bg-black/70 backdrop-blur-sm text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
-          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-          <span>{rating}</span>
-        </div>
+      {/* Gradient overlay at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 px-3 py-3 bg-gradient-to-t from-black/90 via-black/70 to-transparent">
+        <h3 className="text-white text-sm font-semibold truncate">{title}</h3>
+        <p className="text-xs text-white/70">
+          {releaseYear} • {genres}{runtimeText ? ` • ${runtimeText}` : ''}
+        </p>
       </div>
 
-      {/* Always-visible info block at bottom */}
-      <div className="absolute bottom-0 left-0 w-full px-3 py-2 bg-gradient-to-t from-black via-black/60 to-transparent z-10">
-        <h3 className="text-sm font-bold text-white truncate">{title}</h3>
-        <p className="text-xs text-white/80">{releaseYear} • {genres}{runtimeText && ` • ${runtimeText}`}</p>
+      {/* Rating badge */}
+      <div className="absolute top-2 right-2 z-10 bg-black/70 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
+        <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+        {rating}
       </div>
 
-      {/* Buttons on hover */}
-      <div
-        className={cn(
-          'absolute top-2 left-2 z-20 flex gap-2 transition-opacity duration-300',
-          isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        )}
-      >
+      {/* Buttons always visible above */}
+      <div className="absolute top-2 left-2 z-10 flex gap-2">
         <button
           onClick={handleDetailsClick}
           className="flex items-center gap-1 px-3 py-1 border border-white text-white text-xs font-medium bg-black/70 hover:bg-white hover:text-black transition rounded-sm"
@@ -92,7 +82,7 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
           onClick={handleWatchClick}
           className="flex items-center gap-1 px-3 py-1 bg-white text-black text-xs font-medium hover:bg-gray-200 transition rounded-sm"
         >
-          <Play className="w-4 h-4" />
+          <Play className="w-3.5 h-3.5" />
           Watch
         </button>
       </div>
