@@ -303,3 +303,6 @@ body {
     padding-right: 0 !important;
   }
 }
+  .gap-4 {
+    gap: 0.2rem;
+}
