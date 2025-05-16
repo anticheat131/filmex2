@@ -334,3 +334,8 @@ body {
 .bg-accent {
     background-color: hsl(240deg 10% 3.92%);
 }
+.text-white\/50 {
+    color: #ffffff80;
+    border: 1px solid #514e4e;
+    background: #161616;
+}
