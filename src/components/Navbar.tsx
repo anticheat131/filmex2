@@ -53,19 +53,17 @@ const Navbar = () => {
       }`}
       style={{
         backgroundColor: 'rgb(9, 9, 11)', // darker black background
-        borderBottom: '2px solid rgb(57 55 55)', // 2px bottom border
+        borderBottom: '1px solid rgb(57 55 55)', // 1px bottom border
         width: '100vw',
         boxSizing: 'border-box',
-        // Reduce height by about 5%
-        // We'll control padding inside container to shrink height and pull content up
       }}
     >
-      <div className="container mx-auto px-4 py-[11px]"> 
-        {/* Reduced vertical padding (original was probably py-3 = 12px) */}
-        <div className="flex items-center justify-between" style={{ marginTop: '-4px' }}>
-          {/* Pull up all content slightly by negative top margin */}
+      <div className="container mx-auto px-4" style={{ paddingTop: '11.4px', paddingBottom: '11.4px' }}>
+        {/* Padding reduced by ~1% from original py-3 (12px) */}
+        <div className="flex items-center justify-between" style={{ marginTop: '-1px' }}>
+          {/* Slightly pull content up by 1px */}
 
-          {/* Logo area */}
+          {/* Logo */}
           <div className="flex items-center">
             <Logo />
           </div>
@@ -75,14 +73,14 @@ const Navbar = () => {
             <NavLinks />
           </div>
 
-          {/* Right side controls */}
+          {/* Right controls */}
           <div className="flex items-center gap-3">
             {/* Desktop search */}
             <div className="hidden md:block">
               <SearchBar />
             </div>
             
-            {/* Mobile search - collapsed */}
+            {/* Mobile search collapsed */}
             {isMobile && !isSearchExpanded && (
               <SearchBar 
                 isMobile 
@@ -91,7 +89,7 @@ const Navbar = () => {
               />
             )}
 
-            {/* Mobile search - expanded */}
+            {/* Mobile search expanded */}
             {isMobile && isSearchExpanded && (
               <div className="absolute inset-x-0 top-0 p-3 bg-black/95 backdrop-blur-xl z-50 flex items-center">
                 <Button 
