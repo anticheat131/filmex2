@@ -48,9 +48,7 @@ const MediaGrid = ({
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.05
-      }
+      transition: { staggerChildren: 0.05 }
     }
   };
 
@@ -73,16 +71,15 @@ const MediaGrid = ({
   };
 
   const handleSelectAll = () => {
-    if (selectedItems.length === media.length) {
-      setSelectedItems([]);
-    } else {
-      setSelectedItems(media.map(item => item.docId!).filter(Boolean));
-    }
+    setSelectedItems(
+      selectedItems.length === media.length
+        ? []
+        : media.map(item => item.docId!).filter(Boolean)
+    );
   };
 
   const renderTimestamp = (media: ExtendedMedia) => {
     if (!media.created_at) return null;
-
     return (
       <div className="flex items-center text-xs text-white/70 mb-2">
         <Clock className="h-3 w-3 mr-1" />
@@ -172,7 +169,9 @@ const MediaGrid = ({
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-white">{mediaItem.title || mediaItem.name}</h3>
+                    <h3 className="text-lg font-semibold text-white">
+                      {mediaItem.title || mediaItem.name}
+                    </h3>
                     {!selectMode && onDelete && mediaItem.docId && (
                       <Button
                         variant="ghost"
@@ -205,7 +204,7 @@ const MediaGrid = ({
         </motion.div>
       ) : (
         <motion.div
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-10"
           variants={container}
           initial="hidden"
           animate="show"
@@ -214,8 +213,26 @@ const MediaGrid = ({
             <motion.div
               key={`${mediaItem.media_type}-${mediaItem.id}-${mediaItem.docId ?? idx}`}
               variants={item}
-              className="p-6" // Padding creates spacing around each card
+              className="w-full h-full"
             >
+              {selectMode && mediaItem.docId && (
+                <div className="absolute top-2 left-2 z-10">
+                  <Checkbox
+                    checked={selectedItems.includes(mediaItem.docId)}
+                    onCheckedChange={() => handleSelect(mediaItem.docId!)}
+                  />
+                </div>
+              )}
+              {!selectMode && onDelete && mediaItem.docId && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onDelete(mediaItem.docId!)}
+                  className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Trash2 className="h-4 w-4 text-white/70 hover:text-red-500" />
+                </Button>
+              )}
               <MediaCard media={{ ...mediaItem, id: mediaItem.media_id }} />
             </motion.div>
           ))}
