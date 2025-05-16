@@ -297,4 +297,9 @@ body {
   border-left: 1px solid #C0C0C0;  /* Silver/white border */
   border-right: 1px solid #C0C0C0;
 }
-
+@media (min-width: 768px) {
+  .custom-md-no-padding.md\:px-8 {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
