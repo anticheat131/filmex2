@@ -284,3 +284,7 @@
 .hero-button:hover::after {
   transform: translateX(0);
 }
+body {
+  background-image: url('https://c4.wallpaperflare.com/wallpaper/32/753/307/abstract-monochrome-minimalism-gray-wallpaper-preview.jpg'); /* place your image in public folder */
+
+}
