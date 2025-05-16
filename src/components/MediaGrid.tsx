@@ -257,3 +257,5 @@ const MediaGrid = ({
                 )}
                 <MediaCard media={{ ...mediaItem, id: mediaItem.media_id }} />
              
+</div> ))} </div> </div> )} </div> ); };
+export default MediaGrid;
