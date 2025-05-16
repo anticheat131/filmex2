@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from "@/lib/utils";
 import { Media } from '@/utils/types';
 import { posterSizes } from '@/utils/api';
-import { getImageUrl } from '@/utils/services/tmdb';
+import { getImageUrl, getMediaDetails } from '@/utils/services/tmdb';
 import { Star, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { trackMediaPreference, trackMediaView } from '@/lib/analytics';
@@ -39,12 +39,24 @@ const genreMap: Record<number, string> = {
 
 const MediaCard = ({ media, className, minimal = false, smaller = false }: MediaCardProps) => {
   const [imageError, setImageError] = useState(false);
+  const [runtime, setRuntime] = useState<number | null>(null);
   const navigate = useNavigate();
-
-  const handleImageError = () => setImageError(true);
 
   const mediaId = media.media_id || media.id;
   const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
+
+  const handleImageError = () => setImageError(true);
+
+  // Fetch runtime for movies if not provided
+  useEffect(() => {
+    if (media.media_type === 'movie' && media.runtime == null) {
+      getMediaDetails('movie', mediaId)
+        .then(data => setRuntime(data.runtime))
+        .catch(() => setRuntime(null));
+    } else {
+      setRuntime(media.runtime ?? null);
+    }
+  }, [media.media_type, media.runtime, mediaId]);
 
   let quality = media.quality?.toUpperCase();
   if (!quality) {
@@ -65,35 +77,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
     navigate(detailPath);
   };
 
-  const genreNames = media.genre_ids
-    ?.map(id => genreMap[id])
-    .filter(Boolean)
-    .slice(0, 3);
-
-  if (minimal) {
-    return (
-      <Link to={detailPath} className={cn("block h-full", className)}>
-        <div className="relative h-full rounded-lg overflow-hidden shadow-md border border-white/10 hover:border-accent transition-colors">
-          <img
-            src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium) || '/placeholder.svg'}
-            alt={media.title || media.name || 'Media Poster'}
-            className="object-cover w-full h-full"
-            loading="lazy"
-            onError={handleImageError}
-          />
-          {quality && (
-            <span
-              className={`absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded backdrop-blur-sm ${
-                quality === 'HD' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'
-              }`}
-            >
-              {quality}
-            </span>
-          )}
-        </div>
-      </Link>
-    );
-  }
+  const genreNames = media.genre_ids?.map(id => genreMap[id]).filter(Boolean).slice(0, 3);
 
   return (
     <motion.div
@@ -114,7 +98,6 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           loading="lazy"
           onError={handleImageError}
         />
-
         {quality && (
           <span
             className={`absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded backdrop-blur-sm ${
@@ -124,25 +107,20 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
             {quality}
           </span>
         )}
-
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
       </div>
 
       <div className="p-3 space-y-1 text-white">
         <h3 className="text-base font-semibold line-clamp-1">{media.title || media.name}</h3>
-
-        {genreNames && genreNames.length > 0 && (
-          <p className="text-xs text-white/70 line-clamp-1">
-            {genreNames.join(', ')}
-          </p>
+        {genreNames?.length > 0 && (
+          <p className="text-xs text-white/70 line-clamp-1">{genreNames.join(', ')}</p>
         )}
-
         <div className="flex justify-between items-center text-sm text-white/70 mt-1">
           <span>
             {media.media_type === 'movie'
               ? media.release_date?.slice(0, 4)
               : media.first_air_date?.slice(0, 4)}
-            {media.media_type === 'movie' && media.runtime ? ` · ${media.runtime} min` : ''}
+            {runtime ? ` · ${runtime} min` : ''}
           </span>
           {media.vote_average > 0 && (
             <span className="flex items-center gap-1 text-amber-400">
@@ -151,7 +129,6 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
             </span>
           )}
         </div>
-
         <div className="flex justify-center mt-2">
           <button
             className="glass px-3 py-1 rounded text-xs flex items-center gap-1 text-white hover:bg-white/20 transition-colors"
