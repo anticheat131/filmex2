@@ -64,7 +64,7 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
   return (
     <div
       className={cn(
-        'relative block w-[276px] rounded-xl border border-white/10 bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden hover:border-white/30 hover:shadow-white/10',
+        'relative inline-block w-[230px] rounded-xl border border-white/10 bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden hover:border-white/30 hover:shadow-white/10',
         className
       )}
       onClick={() => navigate(detailPath)}
