@@ -19,34 +19,27 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 50);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
-    // Prevent scrolling when mobile menu is open
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    
+    document.body.style.overflow = isMobileMenuOpen ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
   }, [isMobileMenuOpen]);
 
-  // Load Google Translate script once on mount
+  const toggleSearch = () => {
+    setIsSearchExpanded(!isSearchExpanded);
+  };
+
   useEffect(() => {
     const addGoogleTranslate = () => {
       if (document.getElementById('google-translate-script')) return;
+
       const script = document.createElement('script');
       script.id = 'google-translate-script';
       script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
@@ -62,12 +55,9 @@ const Navbar = () => {
         );
       };
     };
+
     addGoogleTranslate();
   }, []);
-
-  const toggleSearch = () => {
-    setIsSearchExpanded(!isSearchExpanded);
-  };
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -75,24 +65,24 @@ const Navbar = () => {
     }`}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          {/* Logo area - always visible */}
+          {/* Logo */}
           <div className="flex items-center">
             <Logo />
           </div>
-          
-          {/* Desktop nav links - hidden on mobile */}
+
+          {/* Nav links */}
           <div className="hidden md:flex items-center justify-center ml-8">
             <NavLinks />
           </div>
 
-          {/* Right side: Search, Profile/Auth, Menu button, Language */}
+          {/* Right side */}
           <div className="flex items-center gap-3">
-            {/* Desktop search bar - hidden on mobile */}
+            {/* Desktop search */}
             <div className="hidden md:block">
               <SearchBar />
             </div>
-            
-            {/* Mobile search - Only visible on mobile */}
+
+            {/* Mobile search */}
             {isMobile && !isSearchExpanded && (
               <SearchBar 
                 isMobile 
@@ -101,7 +91,6 @@ const Navbar = () => {
               />
             )}
 
-            {/* Expanded mobile search takes full width - Only visible when expanded */}
             {isMobile && isSearchExpanded && (
               <div className="absolute inset-x-0 top-0 p-3 bg-black/95 backdrop-blur-xl z-50 flex items-center">
                 <Button 
@@ -121,20 +110,20 @@ const Navbar = () => {
                 />
               </div>
             )}
-            
-            {/* User menu or auth buttons */}
+
+            {/* Auth/User menu */}
             {!isSearchExpanded && (
               <>
-                {user ? (
-                  <UserMenu />
-                ) : (
-                  <AuthButtons />
-                )}
+                {user ? <UserMenu /> : <AuthButtons />}
 
-                {/* Google Translate Dropdown */}
-                <div id="google_translate_element" className="ml-4" />
+                {/* Language switcher (desktop only) */}
+                <div
+                  id="google_translate_element"
+                  className="hidden md:block px-2 py-1 bg-black/40 rounded text-white text-sm border border-white/20"
+                  style={{ transform: 'scale(0.85)', transformOrigin: 'right' }}
+                />
 
-                {/* Mobile menu button - only visible on mobile */}
+                {/* Mobile menu button */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -149,12 +138,19 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-      
-      {/* Mobile menu overlay */}
+
+      {/* Mobile menu drawer with translate */}
       <MobileMenu 
         isOpen={isMobileMenuOpen} 
         onClose={() => setIsMobileMenuOpen(false)}
-      />
+      >
+        <div className="mt-4 px-4 block md:hidden">
+          <div
+            id="google_translate_element_mobile"
+            className="bg-black/70 px-2 py-1 rounded text-white text-sm border border-white/20"
+          />
+        </div>
+      </MobileMenu>
     </header>
   );
 };
