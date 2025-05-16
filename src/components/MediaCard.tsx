@@ -42,7 +42,7 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
   return (
     <div
       className={cn(
-        'relative rounded-md border border-transparent bg-zinc-900 shadow-md overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-[1.04] hover:border-white/20',
+        'relative w-[180px] md:w-[210px] lg:w-[230px] aspect-[2/3.6] rounded-[6px] border border-transparent bg-zinc-900 shadow-md overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-[1.05] hover:border-white/20',
         className
       )}
       onClick={handleDetailsClick}
@@ -53,38 +53,38 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
       <img
         src={posterUrl}
         alt={title}
-        className="w-full aspect-[2/3] object-cover"
+        className="w-full h-full object-cover rounded-[6px]"
         loading="lazy"
       />
 
-      {/* Bottom-left overlay: rating, title, year */}
-      <div className="absolute left-3 bottom-3 z-20 bg-black/70 rounded-md px-2 py-1 max-w-[calc(100%-2rem)]">
+      {/* Bottom-left info bar */}
+      <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 rounded-sm px-2 py-1 max-w-[calc(100%-1rem)]">
         <div className="flex items-center gap-1">
           <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-          <span className="text-white font-semibold text-sm">{rating}</span>
+          <span className="text-white font-semibold text-xs leading-none">{rating}</span>
         </div>
-        <p className="mt-0.5 text-white text-xs truncate max-w-[150px]">{title}</p>
-        <p className="text-white/60 text-xs">{releaseYear}</p>
+        <p className="text-white text-xs font-semibold truncate max-w-[150px] leading-tight">{title}</p>
+        <p className="text-white/60 text-xs leading-tight">{releaseYear}</p>
       </div>
 
       {/* Buttons overlay on hover */}
       <div
         className={cn(
-          'absolute inset-x-0 bottom-0 z-30 flex justify-center gap-3 py-2 bg-black/80 bg-opacity-90 border-t border-white/10 transition-opacity duration-300',
-          isHovered ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          'absolute bottom-0 left-0 right-0 z-40 flex justify-center gap-2 py-2 bg-black bg-opacity-90 border-t border-white/10 transition-transform duration-300',
+          isHovered ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-full opacity-0 pointer-events-none'
         )}
       >
         <button
           onClick={handleDetailsClick}
-          className="flex items-center gap-1 px-5 py-1 border border-white/60 rounded-none text-white text-sm hover:bg-white/10 transition"
+          className="flex items-center gap-1 px-4 py-1 border border-white rounded-none text-white text-xs font-semibold hover:bg-white hover:text-black transition"
         >
           Details
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-3 h-3" />
         </button>
 
         <button
           onClick={handleWatchClick}
-          className="flex items-center gap-1 px-5 py-1 border border-white/60 rounded-none text-white text-sm hover:bg-white/10 transition"
+          className="flex items-center gap-1 px-4 py-1 bg-white rounded-none text-black text-xs font-semibold hover:bg-gray-200 transition"
         >
           <Play className="w-4 h-4" />
           Watch
