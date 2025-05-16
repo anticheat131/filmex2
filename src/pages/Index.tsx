@@ -17,7 +17,6 @@ import Spinner from '@/components/ui/spinner';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Lazy-loaded secondary content
 const SecondaryContent = lazy(() => import('./components/SecondaryContent'));
 
 const Index = () => {
@@ -32,10 +31,9 @@ const Index = () => {
   const [contentVisible, setContentVisible] = useState(false);
   const [secondaryLoaded, setSecondaryLoaded] = useState(false);
 
-  // Helper to add quality info to all media items
   const applyQuality = (items: Media[]) =>
     items.map(item => {
-      let quality = 'HD'; // default
+      let quality = 'HD';
 
       if (typeof item.hd === 'boolean') {
         quality = item.hd ? 'HD' : 'CAM';
@@ -51,7 +49,6 @@ const Index = () => {
       };
     });
 
-  // Fetch slider media: popular new movies + TV shows combined & sorted by release date descending
   useEffect(() => {
     const fetchSliderMedia = async () => {
       try {
@@ -77,7 +74,6 @@ const Index = () => {
     fetchSliderMedia();
   }, []);
 
-  // Fetch other homepage data as before
   useEffect(() => {
     const fetchPrimaryData = async () => {
       try {
@@ -132,16 +128,15 @@ const Index = () => {
 
       {isLoading ? (
         <div className="flex flex-col gap-8 pt-24 px-6">
-          <Skeleton className="w-full h-[60vh] rounded-lg" /> {/* Hero skeleton */}
+          <Skeleton className="w-full h-[60vh] rounded-lg" />
           <RowSkeleton />
           <RowSkeleton />
         </div>
       ) : (
-        // Main content container with left/right borders and max-width
         <div
-          className="mx-auto mt-8 md:mt-12 transition-opacity duration-300 px-6"
+          className="mx-auto mt-8 md:mt-12 transition-opacity duration-300 px-8"
           style={{
-            maxWidth: '1280px',
+            maxWidth: '1600px',
             borderLeft: '2px solid rgb(57 55 55)',
             borderRight: '2px solid rgb(57 55 55)',
           }}
@@ -151,7 +146,7 @@ const Index = () => {
               contentVisible ? 'opacity-100' : 'opacity-0'
             }`}
           >
-            <div className="pt-16">{/* Padding-top for navbar */}
+            <div className="pt-16">
               {sliderMedia.length > 0 && <Hero media={sliderMedia} className="hero" />}
             </div>
 
