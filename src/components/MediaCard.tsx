@@ -63,9 +63,6 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
     const fetchQuality = async () => {
       if (media.media_type !== 'movie') return;
 
-      const today = new Date();
-      const diffInDays = (today.getTime() - releaseDate.getTime()) / (1000 * 60 * 60 * 24);
-
       try {
         const res = await fetch(
           `https://api.themoviedb.org/3/movie/${mediaId}/release_dates?api_key=${import.meta.env.VITE_TMDB_API_KEY}`
@@ -74,23 +71,24 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         const usRelease = data.results?.find((r: any) => r.iso_3166_1 === 'US');
         const types = usRelease?.release_dates?.map((r: any) => r.type) || [];
 
-        const onlyCAM = types.every((t: number) => t === 2 || t === 3);
-        const anyHD = types.some((t: number) => ![2, 3].includes(t));
+        const now = new Date();
+        const release = new Date(media.release_date);
+        const diffInDays = Math.floor((now.getTime() - release.getTime()) / (1000 * 60 * 60 * 24));
 
-        if (anyHD) {
-          setQuality('HD');
-        } else if (onlyCAM && diffInDays < 60) {
-          setQuality('CAM');
+        if (types.length === 0) {
+          setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
+        } else if (types.every((t: number) => t === 2 || t === 3)) {
+          setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
         } else {
           setQuality('HD');
         }
       } catch (e) {
-        setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
+        setQuality(null);
       }
     };
 
     fetchQuality();
-  }, [mediaId, media.media_type, releaseDate]);
+  }, [mediaId, media.media_type]);
 
   return (
     <div
@@ -121,11 +119,10 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
 
         {quality && (
           <div
-            className={`absolute top-2 left-2 px-3 py-1 text-[11px] font-semibold rounded-lg shadow-md text-white ${
-              quality === 'HD'
+            className={`absolute top-2 left-2 px-3 py-1 text-[11px] font-semibold rounded-lg shadow-md text-white
+              ${quality === 'HD'
                 ? 'bg-gradient-to-r from-green-600 to-green-500'
-                : 'bg-gradient-to-r from-red-600 to-red-500'
-            }`}
+                : 'bg-gradient-to-r from-red-600 to-red-500'}`}
             style={{ letterSpacing: '0.05em', textShadow: '0 0 3px rgba(0,0,0,0.6)' }}
           >
             {quality}
