@@ -19,25 +19,14 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 30);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
-    // Prevent scrolling when mobile menu is open
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    
+    document.body.style.overflow = isMobileMenuOpen ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
@@ -48,88 +37,86 @@ const Navbar = () => {
   };
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled ? 'nav-scrolled' : 'nav-transparent'
-    }`}>
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
-          {/* Logo area - always visible */}
-          <div className="flex items-center">
-            <Logo />
-          </div>
-          
-          {/* Desktop nav links - hidden on mobile */}
-          <div className="hidden md:flex items-center justify-center ml-8">
-            <NavLinks />
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${
+        isScrolled ? 'bg-black/90 backdrop-blur-md shadow-lg' : 'bg-transparent'
+      }`}
+    >
+      <div className="container mx-auto px-5 py-3 flex items-center justify-between">
+        {/* Logo */}
+        <div className="flex items-center">
+          <Logo className="h-10 w-auto" />
+        </div>
+
+        {/* Desktop nav */}
+        <nav className="hidden md:flex space-x-8 items-center">
+          <NavLinks />
+        </nav>
+
+        {/* Right controls */}
+        <div className="flex items-center gap-3">
+          {/* Desktop search */}
+          <div className="hidden md:block">
+            <SearchBar />
           </div>
 
-          {/* Right side: Search, Profile/Auth, Menu button */}
-          <div className="flex items-center gap-3">
-            {/* Desktop search bar - hidden on mobile */}
-            <div className="hidden md:block">
-              <SearchBar />
-            </div>
-            
-            {/* Mobile search - Only visible on mobile */}
-            {isMobile && !isSearchExpanded && (
-              <SearchBar 
-                isMobile 
-                expanded={isSearchExpanded} 
+          {/* Mobile search icon */}
+          {isMobile && !isSearchExpanded && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSearch}
+              className="text-white hover:bg-white/10"
+              aria-label="Open search"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+          )}
+
+          {/* Mobile expanded search */}
+          {isMobile && isSearchExpanded && (
+            <div className="absolute inset-x-0 top-0 p-3 bg-black/95 backdrop-blur-xl z-50 flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleSearch}
+                className="mr-2 text-white hover:bg-white/10"
+                aria-label="Close search"
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
+              <SearchBar
+                isMobile
+                expanded={true}
                 onToggleExpand={toggleSearch}
+                className="flex-1"
+                onSearch={toggleSearch}
               />
-            )}
+            </div>
+          )}
 
-            {/* Expanded mobile search takes full width - Only visible when expanded */}
-            {isMobile && isSearchExpanded && (
-              <div className="absolute inset-x-0 top-0 p-3 bg-black/95 backdrop-blur-xl z-50 flex items-center">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={toggleSearch}
-                  className="mr-2 text-white hover:bg-white/10"
-                >
-                  <Menu className="h-6 w-6" />
-                </Button>
-                <SearchBar 
-                  isMobile 
-                  expanded={true} 
-                  onToggleExpand={toggleSearch} 
-                  className="flex-1"
-                  onSearch={toggleSearch}
-                />
-              </div>
-            )}
-            
-            {/* User menu or auth buttons */}
-            {!isSearchExpanded && (
-              <>
-                {user ? (
-                  <UserMenu />
-                ) : (
-                  <AuthButtons />
-                )}
-                
-                {/* Mobile menu button - only visible on mobile */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="md:hidden text-white hover:bg-white/10"
-                  onClick={() => setIsMobileMenuOpen(true)}
-                  aria-label="Open menu"
-                >
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </>
-            )}
-          </div>
+          {/* User or auth buttons */}
+          {!isSearchExpanded && (
+            <>
+              {user ? <UserMenu /> : <AuthButtons />}
+
+              {/* Mobile menu button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden text-white hover:bg-white/10"
+                onClick={() => setIsMobileMenuOpen(true)}
+                aria-label="Open menu"
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
-      
-      {/* Mobile menu overlay */}
-      <MobileMenu 
-        isOpen={isMobileMenuOpen} 
-        onClose={() => setIsMobileMenuOpen(false)}
-      />
+
+      {/* Mobile menu */}
+      <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
     </header>
   );
 };
