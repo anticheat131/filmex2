@@ -1,110 +1,82 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Star } from 'lucide-react';
-import { getImageUrl } from '@/utils/services/tmdb';
-import { posterSizes } from '@/utils/api';
 import { cn } from '@/lib/utils';
-import { trackMediaPreference, trackMediaView } from '@/lib/analytics';
-import { Media } from '@/utils/types';
-
-const genreMap: Record<number, string> = {
-  28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
-  99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
-  27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance',
-  878: 'Sci-Fi', 10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western',
-};
+import { getGenreNames } from '@/lib/tmdbHelpers';
 
 interface MediaCardProps {
-  media: Media;
-  className?: string;
-  minimal?: boolean;
-  smaller?: boolean;
+  id: number;
+  title: string;
+  poster_path: string;
+  release_date: string;
+  vote_average: number;
+  media_type: 'movie' | 'tv';
+  genre_ids?: number[];
+  runtime?: number;
+  quality?: 'HD' | 'CAM';
 }
 
-const MediaCard = ({ media, className, minimal = false, smaller = false }: MediaCardProps) => {
-  const [imageError, setImageError] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
+const MediaCard: React.FC<MediaCardProps> = ({
+  id,
+  title,
+  poster_path,
+  release_date,
+  vote_average,
+  media_type,
+  genre_ids = [],
+  runtime,
+  quality,
+}) => {
   const navigate = useNavigate();
+  const [showPopup, setShowPopup] = useState(false);
 
-  const handleImageError = () => setImageError(true);
+  const year = release_date ? new Date(release_date).getFullYear() : '';
+  const fullDate = release_date
+    ? new Date(release_date).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'long',
+      })
+    : '';
 
-  const mediaId = media.media_id || media.id;
-  const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
-
-  const quality = media.quality?.toUpperCase() || (media.hd ? 'HD' : 'CAM');
-
-  const genreNames = media.genre_ids
-    ?.map(id => genreMap[id])
-    .filter(Boolean)
-    .slice(0, 2);
-
-  const runtimeMinutes =
-    media.media_type === 'movie'
-      ? media.runtime
-      : Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0
-      ? media.episode_run_time[0]
-      : undefined;
-
-  const fullReleaseDate = media.media_type === 'movie' ? media.release_date : media.first_air_date;
-
-  const releaseDate = new Date(fullReleaseDate || '');
-  const formattedMonthYear = !isNaN(releaseDate.getTime())
-    ? `${releaseDate.toLocaleString('default', { month: 'long' })} ${releaseDate.getFullYear()}`
-    : 'Unknown';
-
-  const handleClick = async () => {
-    await Promise.all([
-      trackMediaPreference(media.media_type, 'select'),
-      trackMediaView({
-        mediaType: media.media_type as 'movie' | 'tv',
-        mediaId: media.id.toString(),
-        title: media.title || media.name || '',
-      }),
-    ]);
-    navigate(detailPath);
-  };
+  const genres = getGenreNames(genre_ids).slice(0, 2); // Max 2 genres
+  const detailPath = `/${media_type}/${id}`;
 
   return (
     <div
-      className={cn(
-        'relative inline-block rounded-xl border border-white/10 bg-card shadow-lg transition-all duration-300 cursor-pointer overflow-hidden',
-        'hover:border-white hover:shadow-white/40',
-        smaller ? 'scale-90 origin-top-left' : '',
-        className
-      )}
-      onClick={handleClick}
+      className="relative w-[170px] sm:w-[190px] md:w-[200px] h-[270px] sm:h-[300px] md:h-[330px] cursor-pointer rounded-xl overflow-hidden bg-zinc-900 transition-all duration-300 group"
+      onClick={() => navigate(detailPath)}
       onMouseEnter={() => setShowPopup(true)}
       onMouseLeave={() => setShowPopup(false)}
     >
-      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl">
+      {/* Poster */}
+      <div className="relative w-full h-full">
         <img
-          src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium)}
-          alt={media.title || media.name || 'Media Poster'}
-          onError={handleImageError}
-          className="w-full h-full object-cover"
+          src={`https://image.tmdb.org/t/p/w500${poster_path}`}
+          alt={title}
+          className="w-full h-full object-cover rounded-xl"
         />
 
-        {/* IMDb Score - Top Right */}
-        {media.vote_average > 0 && (
-          <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-black/70 text-amber-400 rounded-md text-xs font-medium shadow">
-            <Star className="w-4 h-4 fill-amber-400" />
-            {media.vote_average.toFixed(1)}
-          </div>
-        )}
-
-        {/* Quality Badge - Restored HD/CAM color */}
+        {/* HD / CAM Badge */}
         {quality && (
           <div
-            className={`absolute top-2 left-2 px-2 py-1 text-[10px] font-bold rounded shadow text-white ${
-              quality === 'HD' ? 'bg-green-600/90' : 'bg-red-600/90'
-            }`}
+            className={cn(
+              'absolute top-2 left-2 px-2 py-0.5 text-[10px] font-bold rounded-full shadow-sm backdrop-blur-md',
+              quality === 'HD'
+                ? 'bg-gradient-to-r from-green-500 via-green-400 to-green-600 text-white/90'
+                : 'bg-gradient-to-r from-red-500 via-red-400 to-red-600 text-white/90'
+            )}
           >
             {quality}
           </div>
         )}
 
-        {/* Details Button - Centered */}
+        {/* IMDB Score */}
+        <div className="absolute top-2 right-2 bg-black/70 text-yellow-400 text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+          <Star className="w-3 h-3 fill-yellow-400" />
+          {vote_average.toFixed(1)}
+        </div>
+
+        {/* Details Button */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
           <div className="flex justify-center">
             <button
@@ -119,56 +91,51 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           </div>
         </div>
 
-        {/* Dark gradient overlay */}
+        {/* Image Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
       </div>
 
-      {/* Bottom Info Section */}
-      <div className="px-3 pb-3 pt-2 text-white text-sm space-y-1">
-        {/* Title */}
-        <h3 className="text-center text-sm font-medium text-white line-clamp-1">
-          {media.title || media.name}
-        </h3>
+      {/* Hover Border Effect */}
+      <div
+        className="absolute inset-0 rounded-xl pointer-events-none transition-all duration-300"
+        style={{
+          boxShadow: showPopup
+            ? '0 0 8px 1px rgba(255, 255, 255, 0.3)'
+            : 'none',
+        }}
+      />
 
-        {/* Genres and Runtime */}
-        <div className="flex justify-between items-end text-xs">
-          <p className="text-white/70 line-clamp-1 max-w-[60%] pl-[5%]">{genreNames?.join(', ') || '—'}</p>
-          {runtimeMinutes && (
-            <p className="text-white/60 text-xs text-right min-w-[35%]">{runtimeMinutes} min</p>
-          )}
+      {/* Metadata (Title, Genre, etc) */}
+      <div className="absolute bottom-12 px-2 w-full z-10 text-white text-xs space-y-1">
+        {/* Title */}
+        <div className="text-sm font-semibold text-center leading-snug truncate">
+          {title}
         </div>
 
-        {/* Release Month + Year */}
-        <p className="text-center text-white/50 text-[11px] pt-1">{formattedMonthYear}</p>
-      </div>
+        {/* Genre */}
+        <div className="flex justify-start gap-1 flex-wrap pl-[5%]">
+          {genres.map((genre) => (
+            <span
+              key={genre}
+              className="bg-white/10 px-2 py-0.5 rounded-full text-[10px]"
+            >
+              {genre}
+            </span>
+          ))}
+        </div>
 
-      {/* Hover Popup */}
-      <AnimatePresence>
-        {showPopup && (
-          <motion.div
-            key="popup"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.2 }}
-            className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-[320px] max-w-full rounded-lg bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
-            onMouseEnter={() => setShowPopup(true)}
-            onMouseLeave={() => setShowPopup(false)}
-          >
-            <h4 className="font-bold text-lg mb-1">{media.title || media.name}</h4>
-            <p className="text-xs mb-2 text-white/70">Release: {fullReleaseDate || 'Unknown'}</p>
-            <p className="text-xs mb-2 text-white/70">Genres: {genreNames?.join(', ') || 'Unknown'}</p>
-            {media.vote_average > 0 && (
-              <p className="flex items-center text-amber-400 mb-2">
-                <Star className="h-4 w-4 mr-1 fill-amber-400" /> {media.vote_average.toFixed(1)}
-              </p>
-            )}
-            <p className="text-xs max-h-28 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-              {media.overview || 'No description available.'}
-            </p>
-          </motion.div>
+        {/* Runtime */}
+        {runtime && (
+          <div className="absolute right-2 bottom-1 text-[10px] text-gray-300">
+            {runtime} min
+          </div>
         )}
-      </AnimatePresence>
+
+        {/* Release Date */}
+        <div className="text-[10px] text-center text-gray-400 mt-1">
+          {fullDate}
+        </div>
+      </div>
     </div>
   );
 };
