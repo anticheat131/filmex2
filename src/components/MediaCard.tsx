@@ -90,13 +90,13 @@ const MediaCard = ({ media, className, smaller = false }: MediaCardProps) => {
           </span>
         )}
 
-        {/* Details Button Inside Image */}
+        {/* Details Button - centered inside image */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             handleClick();
           }}
-          className="absolute bottom-3 left-3 text-xs font-semibold px-3 py-1 rounded-md bg-white text-black hover:bg-gray-200 transition"
+          className="absolute bottom-3 left-1/2 transform -translate-x-1/2 text-xs font-semibold px-3 py-1 rounded-md bg-white text-black hover:bg-gray-200 transition"
         >
           Details <ArrowRight className="inline w-3 h-3 ml-1" />
         </button>
