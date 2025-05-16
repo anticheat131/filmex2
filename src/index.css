@@ -294,7 +294,8 @@ body {
   margin-right: auto;
   padding-left: 1rem;
   padding-right: 1rem;
-
+ border-left: 1px solid rgb(57 55 55)!important;
+    border-right: 1px solid rgb(57 55 55)!important;
 }
 @media (min-width: 768px) {
   .custom-md-no-padding.md\:px-8 {
@@ -321,8 +322,8 @@ body {
 }
 @media (min-width: 768px) {
     .md\:mt-12 {
-        margin-top: 1.2rem
-19.2px
+        margin-top: 1.2rem !important;
+
 ;
     }
 }
