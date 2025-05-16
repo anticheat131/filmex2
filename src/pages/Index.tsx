@@ -127,9 +127,7 @@ const Index = () => {
           <RowSkeleton />
         </div>
       ) : (
-        <div
-          className="mx-auto mt-8 md:mt-12 transition-opacity duration-300 px-8 max-w-[1600px] border-l border-r border-[#393737]"
-        >
+        <div className="w-full px-4 md:px-12 xl:px-24 2xl:px-36 mt-8 md:mt-12 transition-opacity duration-300 border-l border-r border-[#393737]">
           <div
             className={`transition-opacity duration-300 ${
               contentVisible ? 'opacity-100' : 'opacity-0'
