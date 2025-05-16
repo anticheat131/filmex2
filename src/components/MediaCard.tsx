@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Media } from '@/utils/types';
 import { getImageUrl } from '@/utils/services/tmdb';
@@ -21,6 +21,7 @@ const genreMap: Record<number, string> = {
 const MediaCard = ({ media, className }: MediaCardProps) => {
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
+  const [quality, setQuality] = useState<'HD' | 'CAM' | null>(null);
 
   const mediaId = media.media_id || media.id;
   const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
@@ -32,6 +33,30 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
   const genres = (media.genre_ids || []).map(id => genreMap[id]).filter(Boolean).slice(0, 2).join(', ');
   const runtime = media.runtime ? `${media.runtime} min` : '';
   const score = media.vote_average?.toFixed(1);
+
+  useEffect(() => {
+    const fetchReleaseType = async () => {
+      if (media.media_type !== 'movie') return;
+
+      try {
+        const res = await fetch(
+          `https://api.themoviedb.org/3/movie/${mediaId}/release_dates?api_key=${import.meta.env.VITE_TMDB_API_KEY}`
+        );
+        const data = await res.json();
+        const usRelease = data.results?.find((r: any) => r.iso_3166_1 === 'US');
+        const types = usRelease?.release_dates?.map((r: any) => r.type) || [];
+
+        // If Digital (4, 5, 6, etc) -> HD, else CAM
+        const isHD = types.some((t: number) => ![2, 3].includes(t));
+        setQuality(isHD ? 'HD' : 'CAM');
+      } catch (err) {
+        console.error('Failed to fetch release types:', err);
+        setQuality(null); // Fallback: don't show anything
+      }
+    };
+
+    fetchReleaseType();
+  }, [mediaId, media.media_type]);
 
   return (
     <div
@@ -52,6 +77,11 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
         {score && (
           <div className="absolute top-2 right-2 bg-black/80 border border-white/20 text-white px-2 py-1 text-xs font-semibold rounded-sm z-10">
             IMDb {score}
+          </div>
+        )}
+        {quality && (
+          <div className={`absolute top-2 left-2 px-2 py-1 text-[11px] font-semibold rounded bg-black/70 text-white`}>
+            {quality}
           </div>
         )}
       </div>
