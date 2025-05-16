@@ -42,7 +42,7 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
   return (
     <div
       className={cn(
-        'relative w-[180px] md:w-[210px] lg:w-[230px] aspect-[2/3.6] rounded-[6px] border border-transparent bg-zinc-900 shadow-md overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-[1.05] hover:border-white/20',
+        'relative w-[180px] md:w-[210px] lg:w-[230px] aspect-[2/3.5] rounded-sm border border-transparent bg-zinc-900 shadow-md overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-[1.05] hover:border-white/20',
         className
       )}
       onClick={handleDetailsClick}
@@ -53,42 +53,47 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
       <img
         src={posterUrl}
         alt={title}
-        className="w-full h-full object-cover rounded-[6px]"
+        className="w-full h-full object-cover rounded-sm"
         loading="lazy"
       />
 
-      {/* Bottom-left info bar */}
-      <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 rounded-sm px-2 py-1 max-w-[calc(100%-1rem)]">
-        <div className="flex items-center gap-1">
-          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-          <span className="text-white font-semibold text-xs leading-none">{rating}</span>
-        </div>
-        <p className="text-white text-xs font-semibold truncate max-w-[150px] leading-tight">{title}</p>
-        <p className="text-white/60 text-xs leading-tight">{releaseYear}</p>
-      </div>
-
-      {/* Buttons overlay on hover */}
+      {/* Overlay fade on hover */}
       <div
         className={cn(
-          'absolute bottom-0 left-0 right-0 z-40 flex justify-center gap-2 py-2 bg-black bg-opacity-90 border-t border-white/10 transition-transform duration-300',
-          isHovered ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-full opacity-0 pointer-events-none'
+          'absolute inset-0 bg-black bg-opacity-60 transition-opacity duration-300',
+          isHovered ? 'opacity-60' : 'opacity-0'
         )}
-      >
-        <button
-          onClick={handleDetailsClick}
-          className="flex items-center gap-1 px-4 py-1 border border-white rounded-none text-white text-xs font-semibold hover:bg-white hover:text-black transition"
-        >
-          Details
-          <ArrowRight className="w-3 h-3" />
-        </button>
+      />
 
-        <button
-          onClick={handleWatchClick}
-          className="flex items-center gap-1 px-4 py-1 bg-white rounded-none text-black text-xs font-semibold hover:bg-gray-200 transition"
-        >
-          <Play className="w-4 h-4" />
-          Watch
-        </button>
+      {/* Bottom-left content */}
+      <div className="absolute bottom-2 left-2 z-30 flex flex-col gap-2 max-w-[calc(100%-0.5rem)]">
+        {/* Buttons stacked vertically on hover */}
+        {isHovered && (
+          <div className="flex flex-col gap-2 mb-1">
+            <button
+              onClick={handleDetailsClick}
+              className="flex items-center gap-1 px-3 py-1 border border-white text-white text-xs font-semibold rounded-none hover:bg-white hover:text-black transition"
+            >
+              Details <ArrowRight className="w-3 h-3" />
+            </button>
+            <button
+              onClick={handleWatchClick}
+              className="flex items-center gap-1 px-3 py-1 bg-white text-black text-xs font-semibold rounded-none hover:bg-gray-200 transition"
+            >
+              <Play className="w-4 h-4" /> Watch
+            </button>
+          </div>
+        )}
+
+        {/* Info always visible at bottom-left */}
+        <div className="bg-black bg-opacity-70 rounded px-2 py-1 max-w-full">
+          <div className="flex items-center gap-1">
+            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+            <span className="text-white font-semibold text-xs leading-none">{rating}</span>
+          </div>
+          <p className="text-white text-xs font-semibold truncate max-w-[150px] leading-tight">{title}</p>
+          <p className="text-white/60 text-xs leading-tight">{releaseYear}</p>
+        </div>
       </div>
     </div>
   );
