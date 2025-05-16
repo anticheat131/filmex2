@@ -36,7 +36,8 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
   return (
     <div
       className={cn(
-        'relative w-[240px] m-2 rounded-lg overflow-hidden bg-zinc-900 border border-white/10 shadow hover:shadow-accent/30 transition-all duration-300',
+        'relative w-[210px] rounded-lg overflow-hidden bg-zinc-900 border border-white/10 shadow hover:shadow-accent/30 transition-all duration-300',
+        'mx-auto', // centers the card
         className
       )}
     >
