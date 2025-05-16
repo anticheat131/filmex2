@@ -68,7 +68,8 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   return (
     <div
       className={cn(
-        'relative inline-block rounded-xl border border-white/10 bg-card shadow-lg transition-all duration-300 hover:shadow-accent/30 hover:border-accent cursor-pointer overflow-hidden',
+        'relative inline-block rounded-xl border border-white/10 bg-card shadow-lg transition-all duration-300 cursor-pointer overflow-hidden',
+        'hover:border-white hover:shadow-white/40',
         smaller ? 'scale-90 origin-top-left' : '',
         className
       )}
@@ -92,9 +93,13 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           </div>
         )}
 
-        {/* Quality Badge */}
+        {/* Quality Badge - Restored HD/CAM color */}
         {quality && (
-          <div className={`absolute top-2 left-2 px-2 py-1 text-[10px] font-bold rounded bg-${quality === 'HD' ? 'green' : 'red'}-600/90 text-white shadow`}>
+          <div
+            className={`absolute top-2 left-2 px-2 py-1 text-[10px] font-bold rounded shadow text-white ${
+              quality === 'HD' ? 'bg-green-600/90' : 'bg-red-600/90'
+            }`}
+          >
             {quality}
           </div>
         )}
@@ -127,7 +132,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
 
         {/* Genres and Runtime */}
         <div className="flex justify-between items-end text-xs">
-          <p className="text-white/70 line-clamp-1 max-w-[60%]">{genreNames?.join(', ') || '—'}</p>
+          <p className="text-white/70 line-clamp-1 max-w-[60%] pl-[5%]">{genreNames?.join(', ') || '—'}</p>
           {runtimeMinutes && (
             <p className="text-white/60 text-xs text-right min-w-[35%]">{runtimeMinutes} min</p>
           )}
