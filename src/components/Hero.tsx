@@ -65,19 +65,10 @@ const Hero = ({ media, className = '' }: HeroProps) => {
     setIsLoaded(false);
   }, [filteredMedia.length]);
 
-  const handleMediaClick = (media: Media) => {
-    trackMediaPreference(media.media_type as 'movie' | 'tv', 'select');
-    navigate(media.media_type === 'movie' ? `/movie/${media.id}` : `/tv/${media.id}`);
-  };
-
   const handlePlay = () => {
     const mediaType = featuredMedia.media_type;
     const id = featuredMedia.id;
-    if (mediaType === 'tv') {
-      navigate(`/watch/tv/${id}/1/1`);
-    } else {
-      navigate(`/watch/${mediaType}/${id}`);
-    }
+    navigate(mediaType === 'tv' ? `/watch/tv/${id}/1/1` : `/watch/${mediaType}/${id}`);
   };
 
   const handleMoreInfo = () => {
@@ -106,7 +97,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
 
   return (
     <section
-      className={`relative w-full h-[38vh] md:h-[45vh] overflow-hidden ${className}`}
+      className={`relative w-full h-[65vh] md:h-[80vh] overflow-hidden flex items-center justify-center text-center ${className}`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -119,9 +110,8 @@ const Hero = ({ media, className = '' }: HeroProps) => {
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: isLoaded ? 1 : 0, scale: isLoaded ? 1 : 1.05 }}
-          // Removed exit animation to prevent grey fade
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isLoaded ? 1 : 0 }}
           transition={{ duration: 0.6 }}
           className="absolute inset-0"
         >
@@ -132,56 +122,44 @@ const Hero = ({ media, className = '' }: HeroProps) => {
             onLoad={() => setIsLoaded(true)}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-          <div className="absolute inset-0 md:w-2/3 bg-gradient-to-r from-black/80 to-transparent" />
         </motion.div>
       </AnimatePresence>
 
-      <div className="absolute inset-0 flex items-end px-6 py-6 md:px-12 md:py-10 z-20">
-        <div className="max-w-2xl space-y-3 text-left">
-          <div className="flex gap-2 flex-wrap text-white text-xs font-semibold uppercase">
-            <span className="bg-accent/90 px-2 py-1 rounded">{featuredMedia.media_type === 'movie' ? 'Movie' : 'TV Show'}</span>
-            {releaseYear && (
-              <span className="bg-white/10 px-2 py-1 rounded flex items-center">
-                <Calendar className="h-3 w-3 mr-1" /> {releaseYear}
-              </span>
-            )}
-            <span className="bg-white/10 px-2 py-1 rounded">{quality}</span>
-            {featuredMedia.vote_average > 0 && (
-              <span className="bg-white/10 px-2 py-1 rounded flex items-center">
-                <Star className="h-3 w-3 mr-1 text-yellow-400 fill-yellow-400" />
-                {featuredMedia.vote_average.toFixed(1)}
-              </span>
-            )}
-            {genres.map((g, idx) => (
-              <span key={idx} className="bg-white/10 px-2 py-1 rounded">{g}</span>
-            ))}
-          </div>
-
-          <h1 className="text-3xl md:text-5xl font-bold text-white">{title}</h1>
-          <p className="text-white/90 text-sm md:text-base line-clamp-3">{featuredMedia.overview}</p>
-
-          <div className="flex gap-3 mt-4">
-            <Button onClick={handlePlay} className="bg-accent hover:bg-accent/90 text-white flex items-center gap-2">
-              <Play className="h-4 w-4" /> Play
-            </Button>
-            <Button
-              onClick={handleMoreInfo}
-              variant="outline"
-              className="border-white/30 bg-black/50 text-white hover:bg-black/70"
-            >
-              <Info className="h-4 w-4 mr-1" /> More Info
-            </Button>
-          </div>
+      <div className="relative z-20 max-w-4xl px-4">
+        <div className="text-white text-xs font-semibold uppercase flex flex-wrap gap-2 justify-center mb-4">
+          <span className="bg-accent/90 px-2 py-1 rounded">{featuredMedia.media_type === 'movie' ? 'Movie' : 'TV Show'}</span>
+          {releaseYear && (
+            <span className="bg-white/10 px-2 py-1 rounded flex items-center">
+              <Calendar className="h-3 w-3 mr-1" /> {releaseYear}
+            </span>
+          )}
+          <span className="bg-white/10 px-2 py-1 rounded">{quality}</span>
+          {featuredMedia.vote_average > 0 && (
+            <span className="bg-white/10 px-2 py-1 rounded flex items-center">
+              <Star className="h-3 w-3 mr-1 text-yellow-400 fill-yellow-400" />
+              {featuredMedia.vote_average.toFixed(1)}
+            </span>
+          )}
+          {genres.map((g, idx) => (
+            <span key={idx} className="bg-white/10 px-2 py-1 rounded">{g}</span>
+          ))}
         </div>
-      </div>
 
-      <div className="absolute bottom-4 right-6 z-30">
-        <button
-          onClick={() => setPaused(p => !p)}
-          className="bg-black/40 hover:bg-black/60 text-white px-3 py-1 rounded text-sm opacity-70 hover:opacity-90"
-        >
-          {paused ? 'Play ▶' : 'Pause ⏸'}
-        </button>
+        <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">{title}</h1>
+        <p className="text-white/90 text-base md:text-lg max-w-2xl mx-auto mb-6">{featuredMedia.overview}</p>
+
+        <div className="flex justify-center gap-4">
+          <Button onClick={handlePlay} className="bg-accent hover:bg-accent/90 text-white flex items-center gap-2 px-6 py-3 text-lg">
+            <Play className="h-5 w-5" /> Watch
+          </Button>
+          <Button
+            onClick={handleMoreInfo}
+            variant="outline"
+            className="border-white/30 bg-black/50 text-white hover:bg-black/70 px-6 py-3 text-lg"
+          >
+            <Info className="h-5 w-5 mr-2" /> Details
+          </Button>
+        </div>
       </div>
 
       {filteredMedia.length > 1 && (
