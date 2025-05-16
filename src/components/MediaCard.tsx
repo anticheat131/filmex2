@@ -31,14 +31,11 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   const mediaId = media.media_id || media.id;
   const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
 
-  // Get genre names
   const genreNames = media.genre_ids?.map(id => genreMap[id]).filter(Boolean).slice(0, 2);
-
-  // Calculate runtime for movies or TV shows
   const runtimeMinutes =
     media.media_type === 'movie'
       ? media.runtime
-      : media.media_type === 'tv' && Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0
+      : Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0
       ? media.episode_run_time[0]
       : undefined;
 
@@ -74,17 +71,8 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         const usRelease = data.results?.find((r: any) => r.iso_3166_1 === 'US');
         const types = usRelease?.release_dates?.map((r: any) => r.type) || [];
 
-        const now = new Date();
-        const release = new Date(media.release_date);
-        const diffInDays = Math.floor((now.getTime() - release.getTime()) / (1000 * 60 * 60 * 24));
-
-        if (types.length === 0) {
-          setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
-        } else if (types.every((t: number) => t === 2 || t === 3)) {
-          setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
-        } else {
-          setQuality('HD');
-        }
+        const isHD = types.some((t: number) => ![2, 3].includes(t));
+        setQuality(isHD ? 'HD' : 'CAM');
       } catch (e) {
         setQuality(null);
       }
@@ -156,7 +144,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
 
         <div className="flex justify-between items-end text-xs">
           <p className="text-white/70 line-clamp-1 max-w-[60%] pl-[5%]">{genreNames?.join(', ') || '—'}</p>
-          {runtimeMinutes && (
+          {typeof runtimeMinutes === 'number' && (
             <p className="text-white/60 text-xs text-right min-w-[35%]">{runtimeMinutes} min</p>
           )}
         </div>
