@@ -72,7 +72,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
 
   return (
     <section
-      className={`relative w-full h-[85vh] md:h-[90vh] overflow-hidden ${className}`}
+      className={`relative w-full h-[90vh] overflow-hidden ${className}`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -96,28 +96,30 @@ const Hero = ({ media, className = '' }: HeroProps) => {
             className="w-full h-full object-cover"
             onLoad={() => setIsLoaded(true)}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
         </motion.div>
       </AnimatePresence>
 
-      <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-16 text-white z-20">
-        <div className="max-w-3xl space-y-6">
-          <h1 className="text-4xl md:text-6xl font-bold drop-shadow-xl">
+      <div className="absolute inset-0 flex items-center justify-start px-6 md:px-16 z-20">
+        <div className="max-w-3xl bg-black/40 backdrop-blur-md p-8 rounded-2xl space-y-6">
+          <h1 className="text-4xl md:text-6xl font-extrabold text-white drop-shadow-xl leading-tight">
             {featuredMedia.title || featuredMedia.name}
           </h1>
-          <p className="text-white/90 text-base md:text-lg max-w-xl drop-shadow-md line-clamp-5">
+
+          <p className="text-white/90 text-base md:text-lg max-w-2xl line-clamp-6 drop-shadow-sm">
             {featuredMedia.overview}
           </p>
-          <div className="flex flex-wrap gap-4 pt-2">
+
+          <div className="flex gap-4 pt-2">
             <button
               onClick={handlePlay}
-              className="bg-white text-black px-6 py-2 rounded font-semibold text-sm hover:bg-white/90 transition"
+              className="bg-white text-black px-6 py-2 rounded-full font-semibold text-sm hover:bg-white/90 transition shadow-md shadow-white/10"
             >
               <Play className="inline-block w-4 h-4 mr-2" /> Watch
             </button>
             <button
               onClick={handleMoreInfo}
-              className="bg-white/10 text-white px-6 py-2 rounded border border-white/20 hover:bg-white/20 transition text-sm"
+              className="bg-white/10 text-white px-6 py-2 rounded-full border border-white/20 hover:bg-white/20 transition text-sm"
             >
               <Info className="inline-block w-4 h-4 mr-2" /> Details
             </button>
