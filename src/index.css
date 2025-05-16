@@ -288,9 +288,13 @@ body {
   background-image: url('https://c4.wallpaperflare.com/wallpaper/32/753/307/abstract-monochrome-minimalism-gray-wallpaper-preview.jpg'); /* place your image in public folder */
  
 }
-.main-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+.main-content {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-left: 1px solid #C0C0C0;  /* Silver/white border */
+  border-right: 1px solid #C0C0C0;
 }
+
