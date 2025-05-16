@@ -1,27 +1,4 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { cn } from "@/lib/utils";
-import { Media } from '@/utils/types';
-import { posterSizes } from '@/utils/api';
-import { getImageUrl } from '@/utils/services/tmdb';
-import { Star, ArrowRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { trackMediaPreference, trackMediaView } from '@/lib/analytics';
-
-interface MediaCardProps {
-  media: Media;
-  className?: string;
-  minimal?: boolean;
-  smaller?: boolean;
-}
-
-const genreMap: Record<number, string> = {
-  28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy',
-  80: 'Crime', 99: 'Documentary', 18: 'Drama', 10751: 'Family',
-  14: 'Fantasy', 36: 'History', 27: 'Horror', 10402: 'Music',
-  9648: 'Mystery', 10749: 'Romance', 878: 'Sci-Fi', 10770: 'TV Movie',
-  53: 'Thriller', 10752: 'War', 37: 'Western',
-};
+// ... (imports stay the same)
 
 const MediaCard = ({ media, className, smaller = false }: MediaCardProps) => {
   const [imageError, setImageError] = useState(false);
@@ -39,7 +16,7 @@ const MediaCard = ({ media, className, smaller = false }: MediaCardProps) => {
     else quality = 'HD';
   }
 
-  const genreNames = media.genre_ids?.map(id => genreMap[id]).filter(Boolean).slice(0, 2); // Only show 2
+  const genreNames = media.genre_ids?.map(id => genreMap[id]).filter(Boolean).slice(0, 2);
   const runtimeMinutes = media.media_type === 'movie'
     ? media.runtime
     : Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0
@@ -98,7 +75,7 @@ const MediaCard = ({ media, className, smaller = false }: MediaCardProps) => {
           </span>
         )}
 
-        {/* Details Button - centered inside image */}
+        {/* Details Button - centered */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -124,7 +101,10 @@ const MediaCard = ({ media, className, smaller = false }: MediaCardProps) => {
         </div>
 
         {genreNames?.length > 0 && (
-          <p className="text-xs text-white/50 line-clamp-1 text-center">
+          <p
+            className="text-xs text-white/50 line-clamp-1 text-center"
+            style={{ alignSelf: 'flex-start', paddingLeft: '5%' }} // Shifted left
+          >
             {genreNames.join(', ')}
           </p>
         )}
