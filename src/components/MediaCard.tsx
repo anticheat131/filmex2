@@ -3,17 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Media } from '@/utils/types';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { posterSizes } from '@/utils/api';
-import { Star } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { trackMediaPreference, trackMediaView } from '@/lib/analytics';
+import { Star, Play, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface MediaCardProps {
-  media: Media;
-  className?: string;
-  minimal?: boolean;
-  smaller?: boolean;
-}
 
 const genreMap: Record<number, string> = {
   28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
@@ -22,114 +13,89 @@ const genreMap: Record<number, string> = {
   10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western',
 };
 
-const MediaCard = ({ media, className, minimal = false, smaller = false }: MediaCardProps) => {
-  const [imageError, setImageError] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
+interface MediaCardProps {
+  media: Media;
+  className?: string;
+}
+
+const MediaCard = ({ media, className }: MediaCardProps) => {
+  const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
 
-  const mediaId = media.media_id || media.id;
-  const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
+  const title = media.title || media.name || 'Untitled';
+  const posterUrl = getImageUrl(media.poster_path, posterSizes.medium) || '/placeholder.svg';
+  const rating = media.vote_average ? media.vote_average.toFixed(1) : 'N/A';
+  const releaseYear = (media.release_date || media.first_air_date || '').slice(0, 4);
+  const genres = (media.genre_ids || []).map(id => genreMap[id]).filter(Boolean).slice(0, 2).join(', ');
+  const runtime = media.runtime || (media.episode_run_time?.[0] ?? null);
+  const runtimeText = runtime ? `${runtime} min` : '';
 
-  const quality = media.quality?.toUpperCase() ||
-    (typeof media.hd === 'boolean' ? (media.hd ? 'HD' : 'CAM') :
-      (media.video_source?.toLowerCase().includes('cam') ? 'CAM' : 'HD'));
+  const handleDetailsClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const mediaType = media.media_type === 'tv' ? 'tv' : 'movie';
+    navigate(`/${mediaType}/${media.id}`);
+  };
 
-  const genreNames = (media.genre_ids || []).map(id => genreMap[id]).filter(Boolean).slice(0, 2);
-  const runtimeMinutes = media.media_type === 'movie'
-    ? media.runtime
-    : Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0
-      ? media.episode_run_time[0]
-      : undefined;
-  const durationText = runtimeMinutes ? `${runtimeMinutes} min` : '';
-  const fullReleaseDate = media.media_type === 'movie' ? media.release_date : media.first_air_date;
-
-  const handleClick = async () => {
-    await Promise.all([
-      trackMediaPreference(media.media_type, 'select'),
-      trackMediaView({
-        mediaType: media.media_type as 'movie' | 'tv',
-        mediaId: media.id.toString(),
-        title: media.title || media.name || '',
-      }),
-    ]);
-    navigate(detailPath);
+  const handleWatchClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const mediaType = media.media_type === 'tv' ? 'tv' : 'movie';
+    navigate(`/watch/${mediaType}/${media.id}${mediaType === 'tv' ? '/1/1' : ''}`);
   };
 
   return (
     <div
       className={cn(
-        'relative inline-block rounded-lg border border-white/10 bg-card shadow-md hover:shadow-accent/30 hover:border-accent transition-all duration-300 cursor-pointer',
-        'w-[220px]', // Increased size ~20%
+        'm-2 relative w-[210px] md:w-[240px] aspect-[2/3.2] rounded-[6px] border border-transparent bg-zinc-900 shadow-md overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-[1.05] hover:border-white/20',
         className
       )}
-      onClick={handleClick}
-      onMouseEnter={() => setShowPopup(true)}
-      onMouseLeave={() => setShowPopup(false)}
+      onClick={handleDetailsClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative rounded-t-lg overflow-hidden aspect-[2/3]">
-        <img
-          src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium) || '/placeholder.svg'}
-          alt={media.title || media.name || 'Media Poster'}
-          className="object-cover w-full h-full transition-transform duration-500"
-          onError={() => setImageError(true)}
-        />
+      {/* Poster */}
+      <img
+        src={posterUrl}
+        alt={title}
+        className="w-full h-full object-cover rounded-[6px]"
+        loading="lazy"
+      />
 
-        {/* Quality label */}
-        {quality && (
-          <span className={`absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded backdrop-blur-sm ${quality === 'HD' ? 'bg-green-600/90' : 'bg-red-600/90'} text-white`}>
-            {quality}
-          </span>
-        )}
-
-        {/* Dark hover overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+      {/* Score badge */}
+      <div className="absolute top-2 right-2 z-10">
+        <div className="bg-black/70 backdrop-blur-sm text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
+          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+          <span>{rating}</span>
+        </div>
       </div>
 
-      {/* Always visible metadata section */}
-      <div className="p-3 space-y-1 text-white">
-        <h3 className="text-base font-semibold line-clamp-1">{media.title || media.name}</h3>
-
-        <p className="text-xs text-white/70 line-clamp-1">
-          {(media.release_date || media.first_air_date || '').slice(0, 4)}
-          {genreNames.length > 0 && ` · ${genreNames.join(', ')}`}
-          {durationText && ` · ${durationText}`}
-        </p>
-
-        {media.vote_average > 0 && (
-          <div className="flex items-center gap-1 text-amber-400 text-sm">
-            <Star className="h-4 w-4 fill-amber-400" />
-            {media.vote_average.toFixed(1)}
-          </div>
-        )}
+      {/* Always-visible info block at bottom */}
+      <div className="absolute bottom-0 left-0 w-full px-3 py-2 bg-gradient-to-t from-black via-black/60 to-transparent z-10">
+        <h3 className="text-sm font-bold text-white truncate">{title}</h3>
+        <p className="text-xs text-white/80">{releaseYear} • {genres}{runtimeText && ` • ${runtimeText}`}</p>
       </div>
 
-      {/* Popup (hover) - kept for desktop extra info */}
-      <AnimatePresence>
-        {showPopup && (
-          <motion.div
-            key="popup"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.2 }}
-            className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-[320px] max-w-full rounded-lg bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
-            onMouseEnter={() => setShowPopup(true)}
-            onMouseLeave={() => setShowPopup(false)}
-          >
-            <h4 className="font-bold text-lg mb-1">{media.title || media.name}</h4>
-            <p className="text-xs mb-2 text-white/70">Release: {fullReleaseDate || 'Unknown'}</p>
-            <p className="text-xs mb-2 text-white/70">Genres: {genreNames.join(', ') || 'Unknown'}</p>
-            {media.vote_average > 0 && (
-              <p className="flex items-center text-amber-400 mb-2">
-                <Star className="h-4 w-4 mr-1 fill-amber-400" /> {media.vote_average.toFixed(1)}
-              </p>
-            )}
-            <p className="text-xs max-h-28 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-              {media.overview || 'No description available.'}
-            </p>
-          </motion.div>
+      {/* Buttons on hover */}
+      <div
+        className={cn(
+          'absolute top-2 left-2 z-20 flex gap-2 transition-opacity duration-300',
+          isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
         )}
-      </AnimatePresence>
+      >
+        <button
+          onClick={handleDetailsClick}
+          className="flex items-center gap-1 px-3 py-1 border border-white text-white text-xs font-medium bg-black/70 hover:bg-white hover:text-black transition rounded-sm"
+        >
+          Details
+          <ArrowRight className="w-3 h-3" />
+        </button>
+        <button
+          onClick={handleWatchClick}
+          className="flex items-center gap-1 px-3 py-1 bg-white text-black text-xs font-medium hover:bg-gray-200 transition rounded-sm"
+        >
+          <Play className="w-4 h-4" />
+          Watch
+        </button>
+      </div>
     </div>
   );
 };
