@@ -111,14 +111,15 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   return (
     <div
       className={cn(
-        'relative inline-block cursor-pointer rounded-lg border border-white/10 bg-card shadow-lg transition-all duration-300 hover:shadow-accent/30 hover:border-accent',
+        'relative inline-block rounded-lg border border-white/10 bg-card shadow-lg transition-all duration-300 hover:shadow-accent/30 hover:border-accent cursor-pointer',
         smaller ? 'scale-90 origin-top-left' : '',
         className
       )}
       style={{ transformOrigin: 'top left' }}
+      onClick={handleClick}
+      // Wrap hover for both card and popup:
       onMouseEnter={() => setShowPopup(true)}
       onMouseLeave={() => setShowPopup(false)}
-      onClick={handleClick}
     >
       <div className="relative rounded-t-lg overflow-hidden aspect-[2/3]">
         <img
@@ -164,9 +165,8 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
             </span>
           )}
         </div>
-      </div>
 
-      {/* Popup */}
+      {/* Popup container, absolute and above card */}
       <AnimatePresence>
         {showPopup && (
           <motion.div
@@ -174,8 +174,8 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.25 }}
-            className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-[300px] max-w-full rounded-lg bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
+            transition={{ duration: 0.2 }}
+            className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-[320px] max-w-full rounded-lg bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
             onMouseEnter={() => setShowPopup(true)}
             onMouseLeave={() => setShowPopup(false)}
           >
@@ -193,6 +193,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 };
