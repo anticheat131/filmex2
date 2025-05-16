@@ -48,9 +48,19 @@ const Navbar = () => {
   };
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isScrolled ? 'nav-scrolled' : 'nav-transparent'
-    }`}>
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled ? 'nav-scrolled' : 'nav-transparent'
+      }`}
+      style={{
+        backgroundColor: 'rgba(15, 15, 15, 0.95)', // darker semi-transparent black
+        borderBottom: '2px solid rgb(57 55 55)',
+        // Stretch border full width:
+        boxSizing: 'border-box',
+        // Make sure header takes full viewport width
+        width: '100vw',
+      }}
+    >
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo area - always visible */}
