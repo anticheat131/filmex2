@@ -36,7 +36,7 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
   return (
     <div
       className={cn(
-        'relative w-[230px] rounded-lg overflow-hidden bg-zinc-900 border border-white/10 shadow hover:shadow-accent/30 transition-all duration-300',
+        'relative w-[240px] m-2 rounded-lg overflow-hidden bg-zinc-900 border border-white/10 shadow hover:shadow-accent/30 transition-all duration-300',
         className
       )}
     >
@@ -57,7 +57,7 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
       </div>
 
       {/* Bottom Section: Actions + Metadata */}
-      <div className="flex flex-col px-3 py-3 space-y-2">
+      <div className="flex flex-col px-3 py-3 space-y-3">
         {/* Buttons */}
         <div className="flex gap-2">
           <button
