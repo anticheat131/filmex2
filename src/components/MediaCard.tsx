@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Media } from '@/utils/types';
 import { posterSizes } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
-import { Star } from 'lucide-react';
+import { Star, ArrowRight, Play } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trackMediaPreference, trackMediaView } from '@/lib/analytics';
 
@@ -117,11 +117,10 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
       )}
       style={{ transformOrigin: 'top left' }}
       onClick={handleClick}
-      // Wrap hover for both card and popup:
       onMouseEnter={() => setShowPopup(true)}
       onMouseLeave={() => setShowPopup(false)}
     >
-      <div className="relative rounded-t-lg overflow-hidden aspect-[2/3]">
+      <div className="relative rounded-t-lg overflow-hidden aspect-[2/3] group">
         <img
           src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium) || '/placeholder.svg'}
           alt={media.title || media.name || 'Media Poster'}
@@ -130,6 +129,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           onError={handleImageError}
         />
 
+        {/* Quality badge top-left */}
         {quality && (
           <span
             className={`absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded backdrop-blur-sm ${
@@ -140,59 +140,87 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           </span>
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
-      </div>
-
-      <div className="p-3 space-y-1 text-white">
-        <h3 className="text-base font-semibold line-clamp-1">{media.title || media.name}</h3>
-
-        {genreNames && genreNames.length > 0 && (
-          <p className="text-xs text-white/70 line-clamp-1">
-            {genreNames.join(', ')}
-          </p>
+        {/* IMDb Score top-right */}
+        {media.vote_average > 0 && (
+          <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-lg text-amber-400 font-semibold text-sm shadow-md">
+            <Star className="h-4 w-4 fill-amber-400" />
+            <span>{media.vote_average.toFixed(1)}</span>
+          </div>
         )}
 
+        {/* Overlay gradient for buttons and title */}
+        <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/90 via-transparent to-transparent px-3 pb-3 pt-6 rounded-b-lg flex flex-col gap-2">
+          {/* Title */}
+          <h3 className="text-white text-lg font-bold line-clamp-1">{media.title || media.name}</h3>
+
+          {/* Buttons container */}
+          <div className="flex gap-3">
+            <button
+              type="button"
+              className="flex items-center gap-1 border border-white/70 rounded-md px-3 py-1 text-sm text-white hover:border-accent hover:text-accent transition-colors"
+              onClick={e => {
+                e.stopPropagation();
+                navigate(detailPath);
+              }}
+            >
+              Details <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              className="flex items-center gap-1 border border-white/70 rounded-md px-3 py-1 text-sm text-white hover:border-accent hover:text-accent transition-colors"
+              onClick={e => {
+                e.stopPropagation();
+                // Assume Watch path or player
+                navigate(`${detailPath}/watch`);
+              }}
+            >
+              <Play className="w-4 h-4" /> Watch
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Card bottom content: year and genres */}
+      <div className="p-3 space-y-1 text-white">
         <div className="flex justify-between items-center text-sm text-white/70 mt-1">
           <span>
             {media.media_type === 'movie'
               ? media.release_date?.slice(0, 4)
               : media.first_air_date?.slice(0, 4)}{durationText ? ` · ${durationText}` : ''}
           </span>
-          {media.vote_average > 0 && (
-            <span className="flex items-center gap-1 text-amber-400">
-              <Star className="h-4 w-4 fill-amber-400" />
-              {media.vote_average.toFixed(1)}
-            </span>
-          )}
+          {/* Removed vote_average here because it's in top-right */}
         </div>
-
-      {/* Popup container, absolute and above card */}
-      <AnimatePresence>
-        {showPopup && (
-          <motion.div
-            key="popup"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.2 }}
-            className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-[320px] max-w-full rounded-lg bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
-            onMouseEnter={() => setShowPopup(true)}
-            onMouseLeave={() => setShowPopup(false)}
-          >
-            <h4 className="font-bold text-lg mb-1">{media.title || media.name}</h4>
-            <p className="text-xs mb-2 text-white/70">Release: {fullReleaseDate || 'Unknown'}</p>
-            <p className="text-xs mb-2 text-white/70">Genres: {genreNames?.join(', ') || 'Unknown'}</p>
-            {media.vote_average > 0 && (
-              <p className="flex items-center text-amber-400 mb-2">
-                <Star className="h-4 w-4 mr-1 fill-amber-400" /> {media.vote_average.toFixed(1)}
-              </p>
-            )}
-            <p className="text-xs max-h-28 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-              {media.overview || 'No description available.'}
-            </p>
-          </motion.div>
+        {genreNames && genreNames.length > 0 && (
+          <p className="text-xs text-white/70 line-clamp-1">{genreNames.join(', ')}</p>
         )}
-      </AnimatePresence>
+
+        {/* Popup container */}
+        <AnimatePresence>
+          {showPopup && (
+            <motion.div
+              key="popup"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-[320px] max-w-full rounded-lg bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
+              onMouseEnter={() => setShowPopup(true)}
+              onMouseLeave={() => setShowPopup(false)}
+            >
+              <h4 className="font-bold text-lg mb-1">{media.title || media.name}</h4>
+              <p className="text-xs mb-2 text-white/70">Release: {fullReleaseDate || 'Unknown'}</p>
+              <p className="text-xs mb-2 text-white/70">Genres: {genreNames?.join(', ') || 'Unknown'}</p>
+              {media.vote_average > 0 && (
+                <p className="flex items-center text-amber-400 mb-2">
+                  <Star className="h-4 w-4 mr-1 fill-amber-400" /> {media.vote_average.toFixed(1)}
+                </p>
+              )}
+              <p className="text-xs max-h-28 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+                {media.overview || 'No description available.'}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
