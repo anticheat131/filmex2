@@ -4,12 +4,11 @@ import { Media } from '@/utils/types';
 import { backdropSizes } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { Button } from '@/components/ui/button';
-import { Play, Info, Star, Calendar, Video } from 'lucide-react';
+import { Play, Info, Star, Calendar } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaPreferences } from '@/hooks/use-media-preferences';
 import { trackMediaPreference } from '@/lib/analytics';
-import useKeyPress from '@/hooks/use-key-press';
 
 interface HeroProps {
   media: Media[];
@@ -122,8 +121,8 @@ const Hero = ({ media, className = '' }: HeroProps) => {
           key={currentIndex}
           initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: isLoaded ? 1 : 0, scale: isLoaded ? 1 : 1.05 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.6 }}
+          exit={{ opacity: 1, scale: 1.05 }} // no fade out, instant switch
+          transition={{ duration: 0.4 }}
           className="absolute inset-0"
         >
           <img
