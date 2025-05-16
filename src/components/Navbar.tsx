@@ -19,11 +19,7 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -31,12 +27,7 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    
+    document.body.style.overflow = isMobileMenuOpen ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
@@ -52,74 +43,76 @@ const Navbar = () => {
         isScrolled ? 'nav-scrolled' : 'nav-transparent'
       }`}
       style={{
-        backgroundColor: 'rgb(9, 9, 11)', // darker black background
-        borderBottom: '1px solid rgb(57 55 55)', // 1px bottom border
+        backgroundColor: 'rgb(9, 9, 11)',
+        borderBottom: '1px solid rgb(57 55 55)',
         width: '100vw',
         boxSizing: 'border-box',
       }}
     >
-      <div className="container mx-auto px-4" style={{ paddingTop: '11.4px', paddingBottom: '11.4px' }}>
-        {/* Padding reduced by ~1% from original py-3 (12px) */}
-        <div className="flex items-center justify-between" style={{ marginTop: '-1px' }}>
-          {/* Slightly pull content up by 1px */}
-
+      <div
+        className="container mx-auto px-4"
+        style={{
+          paddingTop: '10px',
+          paddingBottom: '10px',
+        }}
+      >
+        <div
+          className="flex items-center justify-between"
+          style={{ marginTop: '-2px' }}
+        >
           {/* Logo */}
           <div className="flex items-center">
             <Logo />
           </div>
-          
-          {/* Desktop nav links */}
+
+          {/* Nav Links (Desktop only) */}
           <div className="hidden md:flex items-center justify-center ml-8">
             <NavLinks />
           </div>
 
-          {/* Right controls */}
+          {/* Right Side */}
           <div className="flex items-center gap-3">
-            {/* Desktop search */}
+            {/* Desktop Search */}
             <div className="hidden md:block">
               <SearchBar />
             </div>
-            
-            {/* Mobile search collapsed */}
+
+            {/* Mobile Search Collapsed */}
             {isMobile && !isSearchExpanded && (
-              <SearchBar 
-                isMobile 
-                expanded={isSearchExpanded} 
+              <SearchBar
+                isMobile
+                expanded={isSearchExpanded}
                 onToggleExpand={toggleSearch}
               />
             )}
 
-            {/* Mobile search expanded */}
+            {/* Mobile Search Expanded */}
             {isMobile && isSearchExpanded && (
               <div className="absolute inset-x-0 top-0 p-3 bg-black/95 backdrop-blur-xl z-50 flex items-center">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={toggleSearch}
                   className="mr-2 text-white hover:bg-white/10"
                 >
                   <Menu className="h-6 w-6" />
                 </Button>
-                <SearchBar 
-                  isMobile 
-                  expanded={true} 
-                  onToggleExpand={toggleSearch} 
+                <SearchBar
+                  isMobile
+                  expanded
+                  onToggleExpand={toggleSearch}
                   className="flex-1"
                   onSearch={toggleSearch}
                 />
               </div>
             )}
-            
-            {/* User menu or auth buttons */}
+
+            {/* User Menu or Auth */}
             {!isSearchExpanded && (
               <>
-                {user ? (
-                  <UserMenu />
-                ) : (
-                  <AuthButtons />
-                )}
-                
-                {/* Mobile menu button */}
+                {user ? <UserMenu /> : <AuthButtons />}
+
+                {/* Mobile Menu Button */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -134,10 +127,10 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-      
-      {/* Mobile menu */}
-      <MobileMenu 
-        isOpen={isMobileMenuOpen} 
+
+      {/* Mobile Menu Overlay */}
+      <MobileMenu
+        isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
       />
     </header>
