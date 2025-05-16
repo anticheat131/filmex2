@@ -68,8 +68,8 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   return (
     <div
       className={cn(
-        'relative inline-block rounded-xl border border-white/20 bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
-        'hover:border-white hover:shadow-white/20',
+        'relative inline-block rounded-xl border border-white/10 bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
+        'hover:border-white/30 hover:shadow-white/10',
         smaller ? 'scale-90 origin-top-left' : '',
         className
       )}
