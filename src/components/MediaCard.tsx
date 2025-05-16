@@ -39,7 +39,7 @@ const MediaCard = ({ media, className, smaller = false }: MediaCardProps) => {
     else quality = 'HD';
   }
 
-  const genreNames = media.genre_ids?.map(id => genreMap[id]).filter(Boolean).slice(0, 3);
+  const genreNames = media.genre_ids?.map(id => genreMap[id]).filter(Boolean).slice(0, 2); // Only show 2
   const runtimeMinutes = media.media_type === 'movie'
     ? media.runtime
     : Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0
