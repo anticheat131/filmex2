@@ -51,22 +51,22 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
       <img
         src={posterUrl}
         alt={title}
-        className="w-full h-auto object-cover aspect-[2/3] rounded-t-lg"
+        className="w-full h-auto object-cover aspect-[2/3] rounded-lg"
         loading="lazy"
       />
 
       {/* Rating badge */}
       {media.vote_average > 0 && (
-        <div className="absolute top-2 right-2 bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+        <div className="absolute top-2 right-2 bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 z-10">
           <Star className="w-3 h-3 fill-yellow-400 text-black" />
           {rating}
         </div>
       )}
 
-      {/* Info below poster */}
-      <div className="p-3 space-y-1 text-white">
-        <h3 className="text-sm font-semibold leading-snug line-clamp-2">{title}</h3>
-        <p className="text-xs text-white/70">
+      {/* Info Overlay */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 py-4 z-10">
+        <h3 className="text-white text-sm font-semibold leading-tight line-clamp-2">{title}</h3>
+        <p className="text-xs text-white/70 mt-0.5">
           {releaseYear}
           {genres && ` • ${genres}`}
           {runtimeText && ` • ${runtimeText}`}
