@@ -4,7 +4,7 @@ import { Media } from '@/utils/types';
 import { backdropSizes } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { Button } from '@/components/ui/button';
-import { Play, Info, Star, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Info, Star, Calendar } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaPreferences } from '@/hooks/use-media-preferences';
@@ -16,11 +16,25 @@ interface HeroProps {
 }
 
 const genreMap: Record<number, string> = {
-  28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy',
-  80: 'Crime', 99: 'Documentary', 18: 'Drama', 10751: 'Family',
-  14: 'Fantasy', 36: 'History', 27: 'Horror', 10402: 'Music',
-  9648: 'Mystery', 10749: 'Romance', 878: 'Sci-Fi', 10770: 'TV Movie',
-  53: 'Thriller', 10752: 'War', 37: 'Western',
+  28: 'Action',
+  12: 'Adventure',
+  16: 'Animation',
+  35: 'Comedy',
+  80: 'Crime',
+  99: 'Documentary',
+  18: 'Drama',
+  10751: 'Family',
+  14: 'Fantasy',
+  36: 'History',
+  27: 'Horror',
+  10402: 'Music',
+  9648: 'Mystery',
+  10749: 'Romance',
+  878: 'Sci-Fi',
+  10770: 'TV Movie',
+  53: 'Thriller',
+  10752: 'War',
+  37: 'Western',
 };
 
 const Hero = ({ media, className = '' }: HeroProps) => {
@@ -47,12 +61,6 @@ const Hero = ({ media, className = '' }: HeroProps) => {
 
   const goToNext = useCallback(() => {
     setCurrentIndex(prev => (prev + 1) % filteredMedia.length);
-    setProgress(0);
-    setIsLoaded(false);
-  }, [filteredMedia.length]);
-
-  const goToPrev = useCallback(() => {
-    setCurrentIndex(prev => (prev - 1 + filteredMedia.length) % filteredMedia.length);
     setProgress(0);
     setIsLoaded(false);
   }, [filteredMedia.length]);
@@ -98,7 +106,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
 
   return (
     <section
-      className={`relative w-full h-[40vh] md:h-[45vh] overflow-hidden ${className}`}
+      className={`relative w-full h-[30vh] md:h-[35vh] overflow-hidden ${className}`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -122,7 +130,74 @@ const Hero = ({ media, className = '' }: HeroProps) => {
             className="w-full h-full object-cover"
             onLoad={() => setIsLoaded(true)}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
-          <div className="absolute inset-0 md:w-2/3 bg-gradient-to-r from-black/90 to-transparent" />
+          {/* Darker gradient overlay like mapple.tv */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/70 to-transparent" />
         </motion.div>
-      </AnimatePresence
+      </AnimatePresence>
+
+      {/* Left-aligned content container */}
+      <div className="absolute inset-y-0 left-0 flex flex-col justify-center max-w-3xl px-6 md:px-16 z-20 text-white">
+        <div className="flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-wide mb-3 opacity-90">
+          <span className="bg-accent/90 px-3 py-1 rounded-md">{featuredMedia.media_type === 'movie' ? 'Movie' : 'TV Show'}</span>
+          {releaseYear && (
+            <span className="bg-white/20 px-3 py-1 rounded-md flex items-center">
+              <Calendar className="h-4 w-4 mr-1" /> {releaseYear}
+            </span>
+          )}
+          <span className="bg-white/20 px-3 py-1 rounded-md">{quality}</span>
+          {featuredMedia.vote_average > 0 && (
+            <span className="bg-white/20 px-3 py-1 rounded-md flex items-center">
+              <Star className="h-4 w-4 mr-1 text-yellow-400 fill-yellow-400" />
+              {featuredMedia.vote_average.toFixed(1)}
+            </span>
+          )}
+          {genres.map((g, idx) => (
+            <span key={idx} className="bg-white/20 px-3 py-1 rounded-md">
+              {g}
+            </span>
+          ))}
+        </div>
+
+        <h1 className="text-4xl md:text-6xl font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] max-w-xl leading-tight mb-3">
+          {title}
+        </h1>
+        <p className="max-w-xl text-white/80 text-sm md:text-base mb-6 line-clamp-3">{featuredMedia.overview}</p>
+
+        <div className="flex gap-5">
+          <Button onClick={handlePlay} className="bg-accent hover:bg-accent/90 text-white flex items-center gap-2 px-6 py-3 text-lg font-semibold">
+            <Play className="h-5 w-5" /> Play
+          </Button>
+          <Button
+            onClick={handleMoreInfo}
+            variant="outline"
+            className="border-white/40 bg-black/40 text-white hover:bg-black/70 px-6 py-3 text-lg font-semibold"
+          >
+            <Info className="h-5 w-5 mr-2" /> More Info
+          </Button>
+        </div>
+      </div>
+
+      {/* Pause/play toggle at bottom right with subtle style */}
+      <div className="absolute bottom-4 right-6 z-30">
+        <button
+          onClick={() => setPaused(p => !p)}
+          className="bg-black/30 hover:bg-black/50 text-white px-4 py-2 rounded-md text-sm opacity-60 hover:opacity-90 transition"
+        >
+          {paused ? 'Play ▶' : 'Pause ⏸'}
+        </button>
+      </div>
+
+      {/* Thinner progress bar at bottom with subtle colors */}
+      {filteredMedia.length > 1 && (
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-20">
+          <div
+            className="h-full bg-accent transition-all duration-100 rounded-r-md"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
+    </section>
+  );
+};
+
+export default Hero;
