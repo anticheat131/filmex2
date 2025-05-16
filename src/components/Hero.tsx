@@ -121,8 +121,8 @@ const Hero = ({ media, className = '' }: HeroProps) => {
           key={currentIndex}
           initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: isLoaded ? 1 : 0, scale: isLoaded ? 1 : 1.05 }}
-          exit={{ opacity: 1, scale: 1.05 }} // no fade out, instant switch
-          transition={{ duration: 0.4 }}
+          // Removed exit animation to prevent grey fade
+          transition={{ duration: 0.6 }}
           className="absolute inset-0"
         >
           <img
