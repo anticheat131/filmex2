@@ -4,7 +4,7 @@ import { Media } from '@/utils/types';
 import { backdropSizes } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { Button } from '@/components/ui/button';
-import { Play, Info } from 'lucide-react';
+import { Play, Info, Star, Calendar } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaPreferences } from '@/hooks/use-media-preferences';
@@ -65,12 +65,6 @@ const Hero = ({ media, className = '' }: HeroProps) => {
     setIsLoaded(false);
   }, [filteredMedia.length]);
 
-  const goToPrev = useCallback(() => {
-    setCurrentIndex(prev => (prev - 1 + filteredMedia.length) % filteredMedia.length);
-    setProgress(0);
-    setIsLoaded(false);
-  }, [filteredMedia.length]);
-
   const handleMediaClick = (media: Media) => {
     trackMediaPreference(media.media_type as 'movie' | 'tv', 'select');
     navigate(media.media_type === 'movie' ? `/movie/${media.id}` : `/tv/${media.id}`);
@@ -112,7 +106,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
 
   return (
     <section
-      className={`relative w-full h-[180px] md:h-[250px] overflow-hidden select-none ${className}`}
+      className={`relative w-full h-[38vh] md:h-[45vh] overflow-hidden ${className}`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -127,6 +121,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
           key={currentIndex}
           initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: isLoaded ? 1 : 0, scale: isLoaded ? 1 : 1.05 }}
+          // Removed exit animation to prevent grey fade
           transition={{ duration: 0.6 }}
           className="absolute inset-0"
         >
@@ -136,77 +131,63 @@ const Hero = ({ media, className = '' }: HeroProps) => {
             className="w-full h-full object-cover"
             onLoad={() => setIsLoaded(true)}
           />
-          {/* Mapple.tv style dark gradient left to right */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/90 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+          <div className="absolute inset-0 md:w-2/3 bg-gradient-to-r from-black/80 to-transparent" />
         </motion.div>
       </AnimatePresence>
 
-      {/* Left text block */}
-      <div className="absolute inset-y-0 left-0 flex flex-col justify-center max-w-4xl px-8 md:px-20 z-20 text-white">
-        <h1 className="uppercase font-extrabold text-3xl md:text-5xl tracking-tight leading-tight mb-2">
-          {title}
-        </h1>
-        <div className="flex gap-6 text-sm font-light opacity-80 mb-3 flex-wrap">
-          <span>{genres.join(', ')}</span>
-          {releaseYear && <span>{releaseYear}</span>}
-          <span>{quality}</span>
-        </div>
-        <p className="max-w-xl text-white/70 text-sm md:text-base line-clamp-3">
-          {featuredMedia.overview}
-        </p>
+      <div className="absolute inset-0 flex items-end px-6 py-6 md:px-12 md:py-10 z-20">
+        <div className="max-w-2xl space-y-3 text-left">
+          <div className="flex gap-2 flex-wrap text-white text-xs font-semibold uppercase">
+            <span className="bg-accent/90 px-2 py-1 rounded">{featuredMedia.media_type === 'movie' ? 'Movie' : 'TV Show'}</span>
+            {releaseYear && (
+              <span className="bg-white/10 px-2 py-1 rounded flex items-center">
+                <Calendar className="h-3 w-3 mr-1" /> {releaseYear}
+              </span>
+            )}
+            <span className="bg-white/10 px-2 py-1 rounded">{quality}</span>
+            {featuredMedia.vote_average > 0 && (
+              <span className="bg-white/10 px-2 py-1 rounded flex items-center">
+                <Star className="h-3 w-3 mr-1 text-yellow-400 fill-yellow-400" />
+                {featuredMedia.vote_average.toFixed(1)}
+              </span>
+            )}
+            {genres.map((g, idx) => (
+              <span key={idx} className="bg-white/10 px-2 py-1 rounded">{g}</span>
+            ))}
+          </div>
 
-        <div className="flex gap-6 mt-6">
-          <Button
-            onClick={handlePlay}
-            className="bg-accent px-8 py-2 text-lg font-semibold flex items-center gap-2 hover:bg-accent/90"
-          >
-            <Play className="h-5 w-5" /> Play
-          </Button>
-          <Button
-            onClick={handleMoreInfo}
-            variant="outline"
-            className="border-white/50 text-white px-8 py-2 text-lg font-semibold flex items-center gap-2 hover:bg-white/70"
-          >
-            <Info className="h-5 w-5" /> More Info
-          </Button>
+          <h1 className="text-3xl md:text-5xl font-bold text-white">{title}</h1>
+          <p className="text-white/90 text-sm md:text-base line-clamp-3">{featuredMedia.overview}</p>
+
+          <div className="flex gap-3 mt-4">
+            <Button onClick={handlePlay} className="bg-accent hover:bg-accent/90 text-white flex items-center gap-2">
+              <Play className="h-4 w-4" /> Play
+            </Button>
+            <Button
+              onClick={handleMoreInfo}
+              variant="outline"
+              className="border-white/30 bg-black/50 text-white hover:bg-black/70"
+            >
+              <Info className="h-4 w-4 mr-1" /> More Info
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Pause/play button bottom right */}
-      <button
-        onClick={() => setPaused(p => !p)}
-        className="absolute bottom-4 right-8 z-30 bg-black/40 hover:bg-black/60 text-white rounded-md px-4 py-1 text-sm transition opacity-60 hover:opacity-90 select-none"
-      >
-        {paused ? 'Play ▶' : 'Pause ⏸'}
-      </button>
+      <div className="absolute bottom-4 right-6 z-30">
+        <button
+          onClick={() => setPaused(p => !p)}
+          className="bg-black/40 hover:bg-black/60 text-white px-3 py-1 rounded text-sm opacity-70 hover:opacity-90"
+        >
+          {paused ? 'Play ▶' : 'Pause ⏸'}
+        </button>
+      </div>
 
-      {/* Left Nav Arrow */}
-      <button
-        onClick={goToPrev}
-        className="absolute top-0 left-0 h-full w-12 flex items-center justify-center bg-black/30 hover:bg-black/50 text-white opacity-70 hover:opacity-100 transition select-none"
-        aria-label="Previous slide"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
-
-      {/* Right Nav Arrow */}
-      <button
-        onClick={goToNext}
-        className="absolute top-0 right-0 h-full w-12 flex items-center justify-center bg-black/30 hover:bg-black/50 text-white opacity-70 hover:opacity-100 transition select-none"
-        aria-label="Next slide"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
-        </svg>
-      </button>
-
-      {/* Thin progress bar bottom */}
       {filteredMedia.length > 1 && (
-        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/10 z-20 rounded-r-md">
+        <div className="absolute bottom-1.5 left-0 right-0 h-1 bg-white/20 z-20">
           <div
-            className="h-full bg-accent rounded-r-md transition-all duration-100"
+            className="h-full bg-accent transition-all duration-100"
             style={{ width: `${progress}%` }}
           />
         </div>
