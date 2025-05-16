@@ -85,8 +85,16 @@ const MediaCard = ({ media, className, smaller = false }: MediaCardProps) => {
 
         {/* Quality Tag */}
         {quality && (
-          <span className={`absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded backdrop-blur-sm ${quality === 'HD' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
+          <span className="absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded backdrop-blur-sm bg-green-600/90 text-white">
             {quality}
+          </span>
+        )}
+
+        {/* IMDb Rating Badge */}
+        {media.vote_average > 0 && (
+          <span className="absolute top-2 right-2 px-2 py-1 text-xs font-semibold flex items-center gap-1 rounded-md bg-gradient-to-br from-yellow-400 to-yellow-500 text-black shadow-sm">
+            <Star className="w-3.5 h-3.5 fill-black" />
+            {media.vote_average.toFixed(1)}
           </span>
         )}
 
@@ -107,23 +115,14 @@ const MediaCard = ({ media, className, smaller = false }: MediaCardProps) => {
 
       {/* Info Section */}
       <div className="relative p-3 pt-4 text-white flex flex-col items-center gap-1">
-        {/* Title */}
         <h3 className="text-sm font-semibold text-white/90 text-center line-clamp-1">
           {media.title || media.name}
         </h3>
 
-        {/* Year + TMDB */}
         <div className="flex justify-center items-center gap-3 text-xs text-white/70">
           {releaseYear && <span>{releaseYear}</span>}
-          {media.vote_average > 0 && (
-            <span className="flex items-center text-amber-400">
-              <Star className="w-4 h-4 mr-1 fill-amber-400" />
-              {media.vote_average.toFixed(1)}
-            </span>
-          )}
         </div>
 
-        {/* Genres */}
         {genreNames?.length > 0 && (
           <p className="text-xs text-white/50 line-clamp-1 text-center">
             {genreNames.join(', ')}
