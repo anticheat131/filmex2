@@ -65,7 +65,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
   return (
     <section
       className={`
-        relative w-full h-[80vh] md:h-[90vh] overflow-hidden bg-black ${className}
+        relative w-full h-[72vh] md:h-[81vh] overflow-hidden bg-black ${className}
       `}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
@@ -106,14 +106,14 @@ const Hero = ({ media, className = '' }: HeroProps) => {
           <Button
             onClick={handleMoreInfo}
             variant="outline"
-            className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-6 py-3 rounded-full font-semibold text-sm shadow-md hover:bg-white/100 hover:border-white"
+            className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-6 py-3 rounded-md font-semibold text-sm shadow-md hover:bg-white/100 hover:border-white"
           >
             Details
             <ArrowRight className="w-4 h-4" />
           </Button>
           <Button
             onClick={handlePlay}
-            className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-full font-semibold text-sm shadow-md hover:bg-gray-900"
+            className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-md font-semibold text-sm shadow-md hover:bg-gray-900"
           >
             <Play className="w-5 h-5 text-white" />
             Watch
