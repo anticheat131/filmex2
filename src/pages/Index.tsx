@@ -51,6 +51,7 @@ const Index = () => {
       };
     });
 
+  // Fetch slider media: popular new movies + TV shows combined & sorted by release date descending
   useEffect(() => {
     const fetchSliderMedia = async () => {
       try {
@@ -76,6 +77,7 @@ const Index = () => {
     fetchSliderMedia();
   }, []);
 
+  // Fetch other homepage data as before
   useEffect(() => {
     const fetchPrimaryData = async () => {
       try {
@@ -135,22 +137,22 @@ const Index = () => {
           <RowSkeleton />
         </div>
       ) : (
-        // Wrap main content in container with left & right borders here
+        // Main content container with left/right borders and max-width
         <div
           className="mx-auto mt-8 md:mt-12 transition-opacity duration-300 px-6"
           style={{
             maxWidth: '1280px',
-            borderLeft: '1px solid #c0c0c0',
-            borderRight: '1px solid #c0c0c0',
+            borderLeft: '2px solid rgb(57 55 55)',
+            borderRight: '2px solid rgb(57 55 55)',
           }}
         >
           <div
-            className={`${contentVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+            className={`transition-opacity duration-300 ${
+              contentVisible ? 'opacity-100' : 'opacity-0'
+            }`}
           >
             <div className="pt-16">{/* Padding-top for navbar */}
-              {sliderMedia.length > 0 && (
-                <Hero media={sliderMedia} className="hero" />
-              )}
+              {sliderMedia.length > 0 && <Hero media={sliderMedia} className="hero" />}
             </div>
 
             {user && <ContinueWatching />}
