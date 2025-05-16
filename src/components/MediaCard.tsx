@@ -42,7 +42,7 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
   return (
     <div
       className={cn(
-        'relative rounded-md border border-transparent bg-zinc-900 shadow-md overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.04] hover:border-white/20',
+        'relative rounded-md border border-transparent bg-zinc-900 shadow-md overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-[1.04] hover:border-white/20',
         className
       )}
       onClick={handleDetailsClick}
@@ -59,7 +59,7 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
 
       {/* Bottom-left overlay: rating, title, year */}
       <div className="absolute left-3 bottom-3 z-20 bg-black/70 rounded-md px-2 py-1 max-w-[calc(100%-2rem)]">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
           <span className="text-white font-semibold text-sm">{rating}</span>
         </div>
@@ -67,26 +67,29 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
         <p className="text-white/60 text-xs">{releaseYear}</p>
       </div>
 
-      {/* Bottom buttons container */}
-      {isHovered && (
-        <div className="absolute bottom-0 left-0 right-0 bg-black/80 bg-opacity-90 flex justify-center gap-3 py-2 z-30 border-t border-white/10">
-          <button
-            onClick={handleDetailsClick}
-            className="flex items-center gap-1 px-4 py-1 border border-white/60 rounded-md text-white text-sm hover:bg-white/10 transition"
-          >
-            Details
-            <ArrowRight className="w-4 h-4" />
-          </button>
+      {/* Buttons overlay on hover */}
+      <div
+        className={cn(
+          'absolute inset-x-0 bottom-0 z-30 flex justify-center gap-3 py-2 bg-black/80 bg-opacity-90 border-t border-white/10 transition-opacity duration-300',
+          isHovered ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        )}
+      >
+        <button
+          onClick={handleDetailsClick}
+          className="flex items-center gap-1 px-5 py-1 border border-white/60 rounded-none text-white text-sm hover:bg-white/10 transition"
+        >
+          Details
+          <ArrowRight className="w-4 h-4" />
+        </button>
 
-          <button
-            onClick={handleWatchClick}
-            className="flex items-center gap-1 px-4 py-1 border border-white/60 rounded-md text-white text-sm hover:bg-white/10 transition"
-          >
-            <Play className="w-4 h-4" />
-            Watch
-          </button>
-        </div>
-      )}
+        <button
+          onClick={handleWatchClick}
+          className="flex items-center gap-1 px-5 py-1 border border-white/60 rounded-none text-white text-sm hover:bg-white/10 transition"
+        >
+          <Play className="w-4 h-4" />
+          Watch
+        </button>
+      </div>
     </div>
   );
 };
