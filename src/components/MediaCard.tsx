@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import { Media } from '@/utils/types';
 import { posterSizes } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
-import { Star, Info } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Star } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { trackMediaPreference, trackMediaView } from '@/lib/analytics';
 
 interface MediaCardProps {
@@ -109,16 +109,16 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   }
 
   return (
-    <div 
+    <div
       className={cn(
-        'relative group cursor-pointer overflow-visible rounded-lg border border-white/10 bg-card shadow-lg transition-all duration-300 hover:shadow-accent/30 hover:border-accent',
+        'relative inline-block cursor-pointer rounded-lg border border-white/10 bg-card shadow-lg transition-all duration-300 hover:shadow-accent/30 hover:border-accent',
         smaller ? 'scale-90 origin-top-left' : '',
         className
       )}
       style={{ transformOrigin: 'top left' }}
-      onClick={handleClick}
       onMouseEnter={() => setShowPopup(true)}
       onMouseLeave={() => setShowPopup(false)}
+      onClick={handleClick}
     >
       <div className="relative rounded-t-lg overflow-hidden aspect-[2/3]">
         <img
@@ -139,7 +139,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           </span>
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
       </div>
 
       <div className="p-3 space-y-1 text-white">
@@ -164,31 +164,34 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
             </span>
           )}
         </div>
-      </div>
 
-      {showPopup && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 10 }}
-          transition={{ duration: 0.25 }}
-          className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-[300px] max-w-full rounded-lg bg-black/90 p-4 shadow-lg text-white"
-          onMouseEnter={() => setShowPopup(true)}  // keep popup if hovering popup
-          onMouseLeave={() => setShowPopup(false)}
-        >
-          <h4 className="font-bold text-lg mb-1">{media.title || media.name}</h4>
-          <p className="text-xs mb-2 text-white/70">Release: {fullReleaseDate || 'Unknown'}</p>
-          <p className="text-xs mb-2 text-white/70">Genres: {genreNames?.join(', ') || 'Unknown'}</p>
-          {media.vote_average > 0 && (
-            <p className="flex items-center text-amber-400 mb-2">
-              <Star className="h-4 w-4 mr-1 fill-amber-400" /> {media.vote_average.toFixed(1)}
+      {/* Popup */}
+      <AnimatePresence>
+        {showPopup && (
+          <motion.div
+            key="popup"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.25 }}
+            className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-[300px] max-w-full rounded-lg bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
+            onMouseEnter={() => setShowPopup(true)}
+            onMouseLeave={() => setShowPopup(false)}
+          >
+            <h4 className="font-bold text-lg mb-1">{media.title || media.name}</h4>
+            <p className="text-xs mb-2 text-white/70">Release: {fullReleaseDate || 'Unknown'}</p>
+            <p className="text-xs mb-2 text-white/70">Genres: {genreNames?.join(', ') || 'Unknown'}</p>
+            {media.vote_average > 0 && (
+              <p className="flex items-center text-amber-400 mb-2">
+                <Star className="h-4 w-4 mr-1 fill-amber-400" /> {media.vote_average.toFixed(1)}
+              </p>
+            )}
+            <p className="text-xs max-h-28 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+              {media.overview || 'No description available.'}
             </p>
-          )}
-          <p className="text-xs max-h-28 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-            {media.overview || 'No description available.'}
-          </p>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
