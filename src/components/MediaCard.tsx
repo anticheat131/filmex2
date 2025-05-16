@@ -16,20 +16,10 @@ const genreMap: Record<number, string> = {
 };
 
 interface MediaCardProps {
-  media: Media & { release_type_id?: number }; // added release_type_id here
+  media: Media;
   className?: string;
   minimal?: boolean;
   smaller?: boolean;
-}
-
-function getQualityLabel(releaseTypeId?: number): 'CAM' | 'HD' | null {
-  if (releaseTypeId === 2 || releaseTypeId === 3) {
-    return 'CAM';
-  }
-  if (releaseTypeId) {
-    return 'HD';
-  }
-  return null;
 }
 
 const MediaCard = ({ media, className, minimal = false, smaller = false }: MediaCardProps) => {
@@ -42,7 +32,13 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   const mediaId = media.media_id || media.id;
   const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
 
-  const quality = getQualityLabel(media.release_type_id);
+  // TEST ONLY: hardcode release_type_id to test badge
+  const testReleaseTypeId = 3; // 2 or 3 = CAM, others = HD
+
+  const quality = (() => {
+    if (testReleaseTypeId === 2 || testReleaseTypeId === 3) return 'CAM';
+    return 'HD';
+  })();
 
   const genreNames = media.genre_ids
     ?.map(id => genreMap[id])
@@ -103,7 +99,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           </div>
         )}
 
-        {/* Quality Badge */}
+        {/* Quality Badge - left top, CAM or HD from test logic */}
         {quality && (
           <div
             className={`absolute top-2 left-2 px-3 py-1 text-[11px] font-semibold rounded-lg shadow-md text-white
