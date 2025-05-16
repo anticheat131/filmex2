@@ -49,7 +49,6 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
       : undefined;
 
   const durationText = runtimeMinutes ? `${runtimeMinutes} min` : undefined;
-
   const fullReleaseDate = media.media_type === 'movie' ? media.release_date : media.first_air_date;
 
   const handleClick = async () => {
@@ -63,27 +62,6 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
     ]);
     navigate(detailPath);
   };
-
-  if (minimal) {
-    return (
-      <Link to={detailPath} className={cn("block h-full", className)}>
-        <div className="relative h-full rounded-lg overflow-hidden shadow-md border border-white/10 hover:border-accent transition-colors">
-          <img
-            src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium) || '/placeholder.svg'}
-            alt={media.title || media.name || 'Media Poster'}
-            className="object-cover w-full h-full"
-            loading="lazy"
-            onError={handleImageError}
-          />
-          {quality && (
-            <span className={`absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded backdrop-blur-sm ${quality === 'HD' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
-              {quality}
-            </span>
-          )}
-        </div>
-      </Link>
-    );
-  }
 
   return (
     <div
@@ -117,24 +95,27 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
       </div>
 
-      {/* Details Button */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          handleClick();
-        }}
-        className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs font-semibold px-3 py-1 rounded-md bg-white text-black hover:bg-gray-200 transition"
-      >
-        Details <ArrowRight className="inline w-3 h-3 ml-1" />
-      </button>
+      {/* Info Section */}
+      <div className="p-3 pt-4 text-white">
 
-      {/* Info */}
-      <div className="p-3 pt-6 text-white">
+        {/* Details Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClick();
+          }}
+          className="mb-2 flex items-center justify-center text-xs font-semibold px-3 py-1 rounded-md bg-white text-black hover:bg-gray-200 transition"
+        >
+          Details <ArrowRight className="inline w-3 h-3 ml-1" />
+        </button>
+
         {/* Title */}
-        <h3 className="text-sm font-medium text-white/90 line-clamp-1">{media.title || media.name}</h3>
+        <h3 className="text-sm font-medium text-white/90 line-clamp-1 mb-1">
+          {media.title || media.name}
+        </h3>
 
         {/* Year, Duration, Rating */}
-        <div className="flex justify-between items-center text-xs text-white/70 mt-1">
+        <div className="flex justify-between items-center text-xs text-white/70 mb-1">
           <span>
             {(media.release_date || media.first_air_date)?.slice(0, 4)}
             {durationText ? ` · ${durationText}` : ''}
@@ -149,7 +130,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
 
         {/* Genres */}
         {genreNames && genreNames.length > 0 && (
-          <p className="text-xs text-white/50 line-clamp-1 mt-1">
+          <p className="text-xs text-white/50 line-clamp-1">
             {genreNames.join(', ')}
           </p>
         )}
