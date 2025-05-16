@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useState } from 'react';
 
-// Extend Media type to include optional string ID and timestamp
 interface ExtendedMedia extends Omit<Media, 'id'> {
   id: string | number;
   media_id: number;
@@ -32,7 +31,7 @@ const MediaGrid = ({
   listView = false,
   selectable = false,
   onDelete,
-  onDeleteSelected
+  onDeleteSelected,
 }: MediaGridProps) => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectMode, setSelectMode] = useState(false);
@@ -50,14 +49,14 @@ const MediaGrid = ({
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.05
-      }
-    }
+        staggerChildren: 0.05,
+      },
+    },
   };
 
   const item: Variants = {
     hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
+    show: { opacity: 1, y: 0 },
   };
 
   const toggleSelectMode = () => {
@@ -66,20 +65,19 @@ const MediaGrid = ({
   };
 
   const handleSelect = (docId: string) => {
-    setSelectedItems(prev => {
-      if (prev.includes(docId)) {
-        return prev.filter(item => item !== docId);
-      }
-      return [...prev, docId];
-    });
+    setSelectedItems((prev) =>
+      prev.includes(docId)
+        ? prev.filter((item) => item !== docId)
+        : [...prev, docId]
+    );
   };
 
   const handleSelectAll = () => {
-    if (selectedItems.length === media.length) {
-      setSelectedItems([]);
-    } else {
-      setSelectedItems(media.map(item => item.docId!).filter(Boolean));
-    }
+    setSelectedItems(
+      selectedItems.length === media.length
+        ? []
+        : media.map((item) => item.docId!).filter(Boolean)
+    );
   };
 
   const renderTimestamp = (media: ExtendedMedia) => {
@@ -94,6 +92,7 @@ const MediaGrid = ({
 
   const renderSelectionButtons = () => {
     if (!selectable) return null;
+
     return (
       <div className="flex gap-2 mb-4">
         <Button
@@ -104,6 +103,7 @@ const MediaGrid = ({
         >
           {selectMode ? 'Cancel Selection' : 'Select Items'}
         </Button>
+
         {selectMode && (
           <>
             <Button
@@ -119,6 +119,7 @@ const MediaGrid = ({
               )}
               {selectedItems.length === media.length ? 'Deselect All' : 'Select All'}
             </Button>
+
             {selectedItems.length > 0 && onDeleteSelected && (
               <Button
                 variant="destructive"
@@ -203,7 +204,7 @@ const MediaGrid = ({
         </motion.div>
       ) : (
         <motion.div
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-12"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-10 gap-y-14"
           variants={container}
           initial="hidden"
           animate="show"
@@ -232,7 +233,7 @@ const MediaGrid = ({
                   <Trash2 className="h-4 w-4 text-white/70 hover:text-red-500" />
                 </Button>
               )}
-              <MediaCard media={{ ...mediaItem, id: mediaItem.media_id }} className="w-full" />
+              <MediaCard media={{ ...mediaItem, id: mediaItem.media_id }} />
             </motion.div>
           ))}
         </motion.div>
