@@ -31,11 +31,14 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   const mediaId = media.media_id || media.id;
   const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
 
+  // Get genre names
   const genreNames = media.genre_ids?.map(id => genreMap[id]).filter(Boolean).slice(0, 2);
+
+  // Calculate runtime for movies or TV shows
   const runtimeMinutes =
     media.media_type === 'movie'
       ? media.runtime
-      : Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0
+      : media.media_type === 'tv' && Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0
       ? media.episode_run_time[0]
       : undefined;
 
