@@ -32,7 +32,10 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   const mediaId = media.media_id || media.id;
   const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
 
-  const quality = media.quality?.toUpperCase() || (media.hd ? 'HD' : 'CAM');
+  // Determine HD or CAM status based on video_source or fallback fields
+  const quality = media.video_source?.toLowerCase().includes('cam')
+    ? 'CAM'
+    : 'HD';
 
   const genreNames = media.genre_ids
     ?.map(id => genreMap[id])
@@ -93,7 +96,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           </div>
         )}
 
-        {/* Quality Badge - More professional style */}
+        {/* Quality Badge - Top Left */}
         {quality && (
           <div
             className={`absolute top-2 left-2 px-3 py-1 text-[11px] font-semibold rounded-lg shadow-md text-white
