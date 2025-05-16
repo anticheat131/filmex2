@@ -15,3 +15,9 @@ export const getImageUrl = (path: string | null, size: string): string | null =>
   if (!path) return null;
   return `${TMDB.IMAGE_BASE_URL}/${size}${path}`;
 };
+
+// NEW: Fetch full media details (needed for runtime, etc.)
+export const getMediaDetails = async (mediaType: 'movie' | 'tv', mediaId: number) => {
+  const response = await tmdb.get(`/${mediaType}/${mediaId}`);
+  return response.data;
+};
