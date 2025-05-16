@@ -133,14 +133,7 @@ const Index = () => {
           <RowSkeleton />
         </div>
       ) : (
-        <div
-          className="mx-auto mt-8 md:mt-12 transition-opacity duration-300 px-8"
-          style={{
-            maxWidth: '1600px',
-            borderLeft: '2px solid rgb(57 55 55)',
-            borderRight: '2px solid rgb(57 55 55)',
-          }}
-        >
+        <div className="mx-auto mt-8 md:mt-12 transition-opacity duration-300 px-8 max-w-[1600px] border-l border-r border-[#393737]">
           <div
             className={`transition-opacity duration-300 ${
               contentVisible ? 'opacity-100' : 'opacity-0'
