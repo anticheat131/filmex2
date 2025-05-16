@@ -11,17 +11,15 @@ const Logo = () => {
     >
       <span
         className="text-2xl tracking-wider font-semibold text-gray-400 relative overflow-hidden"
-        style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
       >
         Filmex
         <span
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shine"
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/70 to-transparent animate-shine"
           style={{
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            pointerEvents: 'none',
             mixBlendMode: 'screen',
+            pointerEvents: 'none',
+            opacity: 0.6,
           }}
         />
       </span>
