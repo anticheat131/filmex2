@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Media } from '@/utils/types';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { posterSizes } from '@/utils/api';
 import { cn } from '@/lib/utils';
+import { Star } from 'lucide-react';
 
 interface MediaCardProps {
   media: Media;
@@ -18,14 +19,20 @@ const genreMap: Record<number, string> = {
 };
 
 const MediaCard = ({ media, className }: MediaCardProps) => {
-  const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
 
   const title = media.title || media.name || 'Untitled';
   const posterUrl = getImageUrl(media.poster_path, posterSizes.medium) || '/placeholder.svg';
   const rating = media.vote_average ? media.vote_average.toFixed(1) : 'N/A';
   const releaseYear = (media.release_date || media.first_air_date || '').slice(0, 4);
-  const genres = (media.genre_ids || []).map(id => genreMap[id]).filter(Boolean).slice(0, 2).join(', ');
+  const genres = (media.genre_ids || [])
+    .map(id => genreMap[id])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join(', ');
+
+  const runtime = media.runtime || (Array.isArray(media.episode_run_time) ? media.episode_run_time[0] : undefined);
+  const runtimeText = runtime ? `${runtime} min` : '';
 
   const handleClick = () => {
     const mediaType = media.media_type === 'tv' ? 'tv' : 'movie';
@@ -35,39 +42,36 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-lg shadow-md bg-zinc-900 group transition-transform duration-300 hover:scale-[1.03]',
+        'relative overflow-hidden rounded-lg bg-zinc-900 shadow-md hover:shadow-lg cursor-pointer group transition-transform duration-300 hover:scale-[1.03]',
         className
       )}
       onClick={handleClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Poster */}
       <img
         src={posterUrl}
         alt={title}
-        className="w-full h-full object-cover aspect-[2/3]"
+        className="w-full h-auto object-cover aspect-[2/3] rounded-t-lg"
         loading="lazy"
       />
 
-      {/* Circular IMDb score */}
+      {/* Rating badge */}
       {media.vote_average > 0 && (
-        <div className="absolute top-2 right-2 z-10">
-          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-yellow-400 text-black text-xs font-bold shadow">
-            {rating}
-          </div>
+        <div className="absolute top-2 right-2 bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+          <Star className="w-3 h-3 fill-yellow-400 text-black" />
+          {rating}
         </div>
       )}
 
-      {/* Hover overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-      {/* Hover info */}
-      {isHovered && (
-        <div className="absolute bottom-0 w-full p-3 text-white z-10 transition-opacity duration-300 opacity-100">
-          <h3 className="text-sm font-semibold line-clamp-2">{title}</h3>
-          <p className="text-xs text-white/70 mt-1">{releaseYear} • {genres}</p>
-        </div>
-      )}
+      {/* Info below poster */}
+      <div className="p-3 space-y-1 text-white">
+        <h3 className="text-sm font-semibold leading-snug line-clamp-2">{title}</h3>
+        <p className="text-xs text-white/70">
+          {releaseYear}
+          {genres && ` • ${genres}`}
+          {runtimeText && ` • ${runtimeText}`}
+        </p>
+      </div>
     </div>
   );
 };
