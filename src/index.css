@@ -331,3 +331,6 @@ body {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
 }
+.bg-accent {
+    background-color: hsl(240deg 10% 3.92%);
+}
