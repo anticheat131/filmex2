@@ -7,10 +7,41 @@ const Logo = () => {
       to="/"
       className="flex items-center font-semibold relative py-1 select-none"
       aria-label="Filmex Home"
+      style={{ fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}
     >
-      <span className="text-2xl font-semibold text-gray-400 tracking-wider" style={{ fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
+      <span
+        className="text-2xl tracking-wider font-semibold text-gray-400 relative overflow-hidden"
+        style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+      >
         Filmex
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shine"
+          style={{
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            pointerEvents: 'none',
+            mixBlendMode: 'screen',
+          }}
+        />
       </span>
+
+      <style>
+        {`
+          @keyframes shine {
+            0% {
+              transform: translateX(-100%);
+            }
+            100% {
+              transform: translateX(100%);
+            }
+          }
+          .animate-shine {
+            animation: shine 2.5s infinite;
+            will-change: transform;
+          }
+        `}
+      </style>
     </Link>
   );
 };
