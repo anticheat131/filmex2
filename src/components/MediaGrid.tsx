@@ -204,7 +204,7 @@ const MediaGrid = ({
         </motion.div>
       ) : (
         <motion.div
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-10 gap-y-14"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-14 gap-y-20"
           variants={container}
           initial="hidden"
           animate="show"
