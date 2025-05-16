@@ -48,6 +48,11 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
 
   const fullReleaseDate = media.media_type === 'movie' ? media.release_date : media.first_air_date;
 
+  const releaseDate = new Date(fullReleaseDate || '');
+  const formattedMonthYear = !isNaN(releaseDate.getTime())
+    ? `${releaseDate.toLocaleString('default', { month: 'long' })} ${releaseDate.getFullYear()}`
+    : 'Unknown';
+
   const handleClick = async () => {
     await Promise.all([
       trackMediaPreference(media.media_type, 'select'),
@@ -120,17 +125,16 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           {media.title || media.name}
         </h3>
 
+        {/* Genres and Runtime */}
         <div className="flex justify-between items-end text-xs">
-          {/* Genres */}
-          <p className="text-white/70 line-clamp-1 max-w-[65%]">
-            {genreNames?.join(', ') || '—'}
-          </p>
-
-          {/* Runtime */}
+          <p className="text-white/70 line-clamp-1 max-w-[60%]">{genreNames?.join(', ') || '—'}</p>
           {runtimeMinutes && (
             <p className="text-white/60 text-xs text-right min-w-[35%]">{runtimeMinutes} min</p>
           )}
         </div>
+
+        {/* Release Month + Year */}
+        <p className="text-center text-white/50 text-[11px] pt-1">{formattedMonthYear}</p>
       </div>
 
       {/* Hover Popup */}
