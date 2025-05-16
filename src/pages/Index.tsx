@@ -34,7 +34,6 @@ const Index = () => {
   const applyQuality = (items: Media[]) =>
     items.map(item => {
       let quality = 'HD';
-
       if (typeof item.hd === 'boolean') {
         quality = item.hd ? 'HD' : 'CAM';
       } else if (item.video_source && typeof item.video_source === 'string') {
@@ -42,11 +41,7 @@ const Index = () => {
       } else if (!item.backdrop_path) {
         quality = 'CAM';
       }
-
-      return {
-        ...item,
-        quality,
-      };
+      return { ...item, quality };
     });
 
   useEffect(() => {
@@ -133,7 +128,9 @@ const Index = () => {
           <RowSkeleton />
         </div>
       ) : (
-        <div className="mx-auto mt-8 md:mt-12 transition-opacity duration-300 px-8 max-w-[1600px] border-l border-r border-[#393737]">
+        <div
+          className="mx-auto mt-8 md:mt-12 transition-opacity duration-300 px-8 max-w-[1600px] border-l border-r border-[#393737]"
+        >
           <div
             className={`transition-opacity duration-300 ${
               contentVisible ? 'opacity-100' : 'opacity-0'
