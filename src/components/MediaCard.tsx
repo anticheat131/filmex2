@@ -1,99 +1,198 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { cn } from "@/lib/utils";
 import { Media } from '@/utils/types';
-import { getImageUrl } from '@/utils/services/tmdb';
 import { posterSizes } from '@/utils/api';
-import { Star, Play, ArrowRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-
-const genreMap: Record<number, string> = {
-  28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
-  99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
-  27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance', 878: 'Sci-Fi',
-  10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western',
-};
+import { getImageUrl } from '@/utils/services/tmdb';
+import { Star } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { trackMediaPreference, trackMediaView } from '@/lib/analytics';
 
 interface MediaCardProps {
   media: Media;
   className?: string;
+  minimal?: boolean;
+  smaller?: boolean;
 }
 
-const MediaCard = ({ media, className }: MediaCardProps) => {
-  const [isHovered, setIsHovered] = useState(false);
+const genreMap: Record<number, string> = {
+  28: 'Action',
+  12: 'Adventure',
+  16: 'Animation',
+  35: 'Comedy',
+  80: 'Crime',
+  99: 'Documentary',
+  18: 'Drama',
+  10751: 'Family',
+  14: 'Fantasy',
+  36: 'History',
+  27: 'Horror',
+  10402: 'Music',
+  9648: 'Mystery',
+  10749: 'Romance',
+  878: 'Sci-Fi',
+  10770: 'TV Movie',
+  53: 'Thriller',
+  10752: 'War',
+  37: 'Western',
+};
+
+const MediaCard = ({ media, className, minimal = false, smaller = false }: MediaCardProps) => {
+  const [imageError, setImageError] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
 
-  const title = media.title || media.name || 'Untitled';
-  const posterUrl = getImageUrl(media.poster_path, posterSizes.medium) || '/placeholder.svg';
-  const rating = media.vote_average ? media.vote_average.toFixed(1) : 'N/A';
-  const releaseYear = (media.release_date || media.first_air_date || '').slice(0, 4);
-  const genres = (media.genre_ids || []).map(id => genreMap[id]).filter(Boolean).slice(0, 2).join(', ');
-  const runtime = media.runtime ? `${media.runtime} min` : '';
+  const handleImageError = () => setImageError(true);
 
-  const handleDetailsClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const mediaType = media.media_type === 'tv' ? 'tv' : 'movie';
-    navigate(`/${mediaType}/${media.id}`);
+  const mediaId = media.media_id || media.id;
+  const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
+
+  let quality = media.quality?.toUpperCase();
+  if (!quality) {
+    if (typeof media.hd === 'boolean') quality = media.hd ? 'HD' : 'CAM';
+    else if (media.video_source?.toLowerCase().includes('cam')) quality = 'CAM';
+    else quality = 'HD';
+  }
+
+  const genreNames = media.genre_ids
+    ?.map(id => genreMap[id])
+    .filter(Boolean)
+    .slice(0, 3);
+
+  const runtimeMinutes = media.media_type === 'movie'
+    ? media.runtime
+    : media.media_type === 'tv' && Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0
+      ? media.episode_run_time[0]
+      : undefined;
+
+  const durationText = runtimeMinutes ? `${runtimeMinutes} min` : undefined;
+
+  const fullReleaseDate = media.media_type === 'movie'
+    ? media.release_date
+    : media.first_air_date;
+
+  const handleClick = async () => {
+    await Promise.all([
+      trackMediaPreference(media.media_type, 'select'),
+      trackMediaView({
+        mediaType: media.media_type as 'movie' | 'tv',
+        mediaId: media.id.toString(),
+        title: media.title || media.name || '',
+      }),
+    ]);
+    navigate(detailPath);
   };
 
-  const handleWatchClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const mediaType = media.media_type === 'tv' ? 'tv' : 'movie';
-    navigate(`/watch/${mediaType}/${media.id}${mediaType === 'tv' ? '/1/1' : ''}`);
-  };
+  if (minimal) {
+    return (
+      <Link to={detailPath} className={cn("block h-full", className)}>
+        <div className="relative h-full rounded-lg overflow-hidden shadow-md border border-white/10 hover:border-accent transition-colors">
+          <img
+            src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium) || '/placeholder.svg'}
+            alt={media.title || media.name || 'Media Poster'}
+            className="object-cover w-full h-full"
+            loading="lazy"
+            onError={handleImageError}
+          />
+          {quality && (
+            <span
+              className={`absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded backdrop-blur-sm ${
+                quality === 'HD' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'
+              }`}
+            >
+              {quality}
+            </span>
+          )}
+        </div>
+      </Link>
+    );
+  }
 
   return (
     <div
       className={cn(
-        'relative w-[220px] h-[330px] rounded-[6px] border border-transparent bg-zinc-900 shadow-md overflow-hidden cursor-pointer transition-transform duration-300 hover:scale-[1.05] hover:border-white/20',
+        'relative inline-block rounded-lg border border-white/10 bg-card shadow-lg transition-all duration-300 hover:shadow-accent/30 hover:border-accent cursor-pointer',
+        smaller ? 'scale-90 origin-top-left' : '',
         className
       )}
-      onClick={handleDetailsClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      style={{ transformOrigin: 'top left' }}
+      onClick={handleClick}
+      // Wrap hover for both card and popup:
+      onMouseEnter={() => setShowPopup(true)}
+      onMouseLeave={() => setShowPopup(false)}
     >
-      {/* Poster Image */}
-      <img
-        src={posterUrl}
-        alt={title}
-        className="w-full h-[260px] object-cover rounded-t-[6px]"
-        loading="lazy"
-      />
+      <div className="relative rounded-t-lg overflow-hidden aspect-[2/3]">
+        <img
+          src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium) || '/placeholder.svg'}
+          alt={media.title || media.name || 'Media Poster'}
+          className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+          loading="lazy"
+          onError={handleImageError}
+        />
 
-      {/* Bottom Info Section */}
-      <div className="px-3 py-2 flex flex-col justify-between h-[70px] bg-black/70">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-1">
-            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-            <span className="text-white font-semibold text-sm">{rating}</span>
-          </div>
-          <span className="text-white text-xs">{releaseYear}</span>
-        </div>
-        <h3 className="text-white text-base font-semibold line-clamp-1">{title}</h3>
-        <p className="text-white/70 text-xs truncate">{genres} {runtime && `• ${runtime}`}</p>
+        {quality && (
+          <span
+            className={`absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded backdrop-blur-sm ${
+              quality === 'HD' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'
+            }`}
+          >
+            {quality}
+          </span>
+        )}
+
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
       </div>
 
-      {/* Buttons overlay on hover */}
-      <div
-        className={cn(
-          'absolute bottom-0 left-0 right-0 z-40 flex justify-center gap-3 py-2 bg-black bg-opacity-90 border-t border-white/10 transition-transform duration-300',
-          isHovered ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-full opacity-0 pointer-events-none'
-        )}
-      >
-        <button
-          onClick={handleDetailsClick}
-          className="flex items-center gap-1 px-4 py-1 border border-white rounded-none text-white text-sm font-semibold hover:bg-white hover:text-black transition"
-        >
-          Details
-          <ArrowRight className="w-4 h-4" />
-        </button>
+      <div className="p-3 space-y-1 text-white">
+        <h3 className="text-base font-semibold line-clamp-1">{media.title || media.name}</h3>
 
-        <button
-          onClick={handleWatchClick}
-          className="flex items-center gap-1 px-4 py-1 bg-white rounded-none text-black text-sm font-semibold hover:bg-gray-200 transition"
-        >
-          <Play className="w-5 h-5" />
-          Watch
-        </button>
+        {genreNames && genreNames.length > 0 && (
+          <p className="text-xs text-white/70 line-clamp-1">
+            {genreNames.join(', ')}
+          </p>
+        )}
+
+        <div className="flex justify-between items-center text-sm text-white/70 mt-1">
+          <span>
+            {media.media_type === 'movie'
+              ? media.release_date?.slice(0, 4)
+              : media.first_air_date?.slice(0, 4)}{durationText ? ` · ${durationText}` : ''}
+          </span>
+          {media.vote_average > 0 && (
+            <span className="flex items-center gap-1 text-amber-400">
+              <Star className="h-4 w-4 fill-amber-400" />
+              {media.vote_average.toFixed(1)}
+            </span>
+          )}
+        </div>
+
+      {/* Popup container, absolute and above card */}
+      <AnimatePresence>
+        {showPopup && (
+          <motion.div
+            key="popup"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.2 }}
+            className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-[320px] max-w-full rounded-lg bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
+            onMouseEnter={() => setShowPopup(true)}
+            onMouseLeave={() => setShowPopup(false)}
+          >
+            <h4 className="font-bold text-lg mb-1">{media.title || media.name}</h4>
+            <p className="text-xs mb-2 text-white/70">Release: {fullReleaseDate || 'Unknown'}</p>
+            <p className="text-xs mb-2 text-white/70">Genres: {genreNames?.join(', ') || 'Unknown'}</p>
+            {media.vote_average > 0 && (
+              <p className="flex items-center text-amber-400 mb-2">
+                <Star className="h-4 w-4 mr-1 fill-amber-400" /> {media.vote_average.toFixed(1)}
+              </p>
+            )}
+            <p className="text-xs max-h-28 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+              {media.overview || 'No description available.'}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
       </div>
     </div>
   );
