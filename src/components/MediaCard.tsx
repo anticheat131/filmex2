@@ -37,7 +37,10 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
     if (media.media_type === 'movie') {
       return media.runtime;
     } else if (media.media_type === 'tv') {
-      if (Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0) {
+      if (
+        Array.isArray(media.episode_run_time) && 
+        media.episode_run_time.length > 0
+      ) {
         return media.episode_run_time[0];
       }
       return media.runtime || undefined;
