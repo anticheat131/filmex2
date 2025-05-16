@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Media } from '@/utils/types';
 import { getImageUrl } from '@/utils/services/tmdb';
@@ -12,74 +12,56 @@ interface MediaCardProps {
 }
 
 const genreMap: Record<number, string> = {
-  28: 'Action',
-  12: 'Adventure',
-  16: 'Animation',
-  35: 'Comedy',
-  80: 'Crime',
-  99: 'Documentary',
-  18: 'Drama',
-  10751: 'Family',
-  14: 'Fantasy',
-  36: 'History',
-  27: 'Horror',
-  10402: 'Music',
-  9648: 'Mystery',
-  10749: 'Romance',
-  878: 'Sci-Fi',
-  10770: 'TV Movie',
-  53: 'Thriller',
-  10752: 'War',
-  37: 'Western',
+  28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+  99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
+  27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance', 878: 'Sci-Fi',
+  10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western',
 };
 
 const MediaCard = ({ media, className }: MediaCardProps) => {
+  const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
-  const mediaId = media.id || media.media_id;
-  const type = media.media_type || 'movie';
-  const release = media.release_date || media.first_air_date || '';
-  const releaseYear = release ? new Date(release).getFullYear() : '';
-  const genreNames = media.genre_ids?.map(id => genreMap[id])?.slice(0, 2).filter(Boolean) || [];
+
+  const title = media.title || media.name;
+  const posterUrl = getImageUrl(media.poster_path, posterSizes.medium) || '/placeholder.svg';
+  const rating = media.vote_average?.toFixed(1) || 'N/A';
+  const releaseYear = (media.release_date || media.first_air_date || '').slice(0, 4);
+  const genres = (media.genre_ids || []).map(id => genreMap[id]).filter(Boolean).slice(0, 2).join(', ');
 
   const handleClick = () => {
-    navigate(`/${type}/${mediaId}`);
+    const mediaType = media.media_type === 'tv' ? 'tv' : 'movie';
+    navigate(`/${mediaType}/${media.id}`);
   };
 
   return (
     <div
-      onClick={handleClick}
       className={cn(
-        'group relative w-[180px] md:w-[220px] cursor-pointer transition-transform duration-300 hover:scale-[1.03]',
+        'relative overflow-hidden rounded-lg shadow-md bg-zinc-900 group transition-transform duration-300 hover:scale-[1.03]',
         className
       )}
+      onClick={handleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative overflow-hidden rounded-2xl shadow-md">
-        <img
-          src={getImageUrl(media.poster_path, posterSizes.medium) || '/placeholder.svg'}
-          alt={media.title || media.name}
-          className="w-full h-[270px] md:h-[330px] object-cover rounded-2xl"
-        />
+      <img
+        src={posterUrl}
+        alt={title}
+        className="w-full h-full object-cover aspect-[2/3]"
+      />
 
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 py-4">
-          <h3 className="text-white text-base font-semibold truncate">
-            {media.title || media.name}
-          </h3>
-
-          <div className="text-white/80 text-sm mt-1 flex items-center justify-between">
-            <span>{releaseYear}</span>
-            {media.vote_average > 0 && (
-              <span className="flex items-center gap-1 text-yellow-400">
-                <Star className="h-4 w-4 fill-yellow-400" />
-                {media.vote_average.toFixed(1)}
-              </span>
-            )}
-          </div>
-
-          <div className="text-xs text-white/60 mt-1 line-clamp-1">
-            {genreNames.join(', ')}
-          </div>
-        </div>
+      <div className="absolute top-2 right-2 bg-black/80 text-white text-xs px-2 py-0.5 rounded-md flex items-center gap-1">
+        <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+        {rating}
       </div>
+
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+      {isHovered && (
+        <div className="absolute bottom-0 w-full p-3 text-white z-10 transition-opacity duration-300 opacity-100">
+          <h3 className="text-sm font-semibold line-clamp-2">{title}</h3>
+          <p className="text-xs text-white/70 mt-1">{releaseYear} • {genres}</p>
+        </div>
+      )}
     </div>
   );
 };
