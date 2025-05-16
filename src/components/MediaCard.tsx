@@ -42,43 +42,46 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
   return (
     <div
       className={cn(
-        'relative rounded-lg overflow-hidden shadow-md hover:shadow-lg bg-zinc-900 cursor-pointer transition-transform duration-300 hover:scale-[1.03]',
+        'relative w-[250px] aspect-[2/3] rounded-lg overflow-hidden bg-zinc-900 shadow-lg transition-transform duration-300 hover:scale-105 cursor-pointer',
         className
       )}
       onClick={handleDetailsClick}
     >
-      {/* Poster */}
+      {/* Poster Image */}
       <img
         src={posterUrl}
         alt={title}
-        className="w-full h-auto object-cover aspect-[2/3] rounded-lg"
+        className="w-full h-full object-cover"
         loading="lazy"
       />
 
-      {/* Top overlay with details and info */}
-      <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 via-black/60 to-transparent p-3 z-20">
-        <button
-          onClick={handleDetailsClick}
-          className="flex items-center gap-1 mb-2 px-3 py-1 border border-white/20 text-xs text-white hover:bg-white hover:text-black transition rounded"
-        >
-          Details <ArrowRight className="w-3 h-3" />
-        </button>
-
-        <h3 className="text-sm font-semibold text-white leading-tight line-clamp-2">{title}</h3>
-        <p className="text-xs text-white/70">
-          {releaseYear}
-          {genres && ` • ${genres}`}
-          {runtimeText && ` • ${runtimeText}`}
-        </p>
-      </div>
-
-      {/* Rating badge */}
+      {/* Rating badge top-right */}
       {media.vote_average > 0 && (
         <div className="absolute top-2 right-2 bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 z-10">
           <Star className="w-3 h-3 fill-yellow-400 text-black" />
           {rating}
         </div>
       )}
+
+      {/* Details button top-left */}
+      <div className="absolute top-2 left-2 z-10">
+        <button
+          onClick={handleDetailsClick}
+          className="flex items-center gap-1 px-2 py-0.5 text-xs border border-white/20 text-white hover:bg-white hover:text-black transition rounded"
+        >
+          Details <ArrowRight className="w-3 h-3" />
+        </button>
+      </div>
+
+      {/* Bottom overlay with text info */}
+      <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/90 via-black/60 to-transparent px-3 py-3 z-10">
+        <h3 className="text-sm font-semibold text-white leading-tight line-clamp-2">{title}</h3>
+        <p className="text-xs text-white/70 mt-0.5">
+          {releaseYear}
+          {genres && ` • ${genres}`}
+          {runtimeText && ` • ${runtimeText}`}
+        </p>
+      </div>
     </div>
   );
 };
