@@ -320,3 +320,14 @@ body {
     padding-right: 0rem !important;
   }
 }
+@media (min-width: 768px) {
+    .md\:mt-12 {
+        margin-top: 1.2rem
+19.2px
+;
+    }
+}
+  .px-6 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
