@@ -31,7 +31,6 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    // Prevent scrolling when mobile menu is open
     if (isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -53,34 +52,37 @@ const Navbar = () => {
         isScrolled ? 'nav-scrolled' : 'nav-transparent'
       }`}
       style={{
-        backgroundColor: 'rgba(15, 15, 15, 0.95)', // darker semi-transparent black
-        borderBottom: '2px solid rgb(57 55 55)',
-        // Stretch border full width:
-        boxSizing: 'border-box',
-        // Make sure header takes full viewport width
+        backgroundColor: 'rgb(9, 9, 11)', // darker black background
+        borderBottom: '2px solid rgb(57 55 55)', // 2px bottom border
         width: '100vw',
+        boxSizing: 'border-box',
+        // Reduce height by about 5%
+        // We'll control padding inside container to shrink height and pull content up
       }}
     >
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
-          {/* Logo area - always visible */}
+      <div className="container mx-auto px-4 py-[11px]"> 
+        {/* Reduced vertical padding (original was probably py-3 = 12px) */}
+        <div className="flex items-center justify-between" style={{ marginTop: '-4px' }}>
+          {/* Pull up all content slightly by negative top margin */}
+
+          {/* Logo area */}
           <div className="flex items-center">
             <Logo />
           </div>
           
-          {/* Desktop nav links - hidden on mobile */}
+          {/* Desktop nav links */}
           <div className="hidden md:flex items-center justify-center ml-8">
             <NavLinks />
           </div>
 
-          {/* Right side: Search, Profile/Auth, Menu button */}
+          {/* Right side controls */}
           <div className="flex items-center gap-3">
-            {/* Desktop search bar - hidden on mobile */}
+            {/* Desktop search */}
             <div className="hidden md:block">
               <SearchBar />
             </div>
             
-            {/* Mobile search - Only visible on mobile */}
+            {/* Mobile search - collapsed */}
             {isMobile && !isSearchExpanded && (
               <SearchBar 
                 isMobile 
@@ -89,7 +91,7 @@ const Navbar = () => {
               />
             )}
 
-            {/* Expanded mobile search takes full width - Only visible when expanded */}
+            {/* Mobile search - expanded */}
             {isMobile && isSearchExpanded && (
               <div className="absolute inset-x-0 top-0 p-3 bg-black/95 backdrop-blur-xl z-50 flex items-center">
                 <Button 
@@ -119,7 +121,7 @@ const Navbar = () => {
                   <AuthButtons />
                 )}
                 
-                {/* Mobile menu button - only visible on mobile */}
+                {/* Mobile menu button */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -135,7 +137,7 @@ const Navbar = () => {
         </div>
       </div>
       
-      {/* Mobile menu overlay */}
+      {/* Mobile menu */}
       <MobileMenu 
         isOpen={isMobileMenuOpen} 
         onClose={() => setIsMobileMenuOpen(false)}
