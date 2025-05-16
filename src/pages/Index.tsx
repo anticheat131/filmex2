@@ -17,6 +17,7 @@ import Spinner from '@/components/ui/spinner';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 import { Skeleton } from '@/components/ui/skeleton';
 
+// Lazy-loaded secondary content
 const SecondaryContent = lazy(() => import('./components/SecondaryContent'));
 
 const Index = () => {
@@ -31,9 +32,11 @@ const Index = () => {
   const [contentVisible, setContentVisible] = useState(false);
   const [secondaryLoaded, setSecondaryLoaded] = useState(false);
 
+  // Helper to add quality info to all media items
   const applyQuality = (items: Media[]) =>
     items.map(item => {
-      let quality = 'HD';
+      let quality = 'HD'; // default
+
       if (typeof item.hd === 'boolean') {
         quality = item.hd ? 'HD' : 'CAM';
       } else if (item.video_source && typeof item.video_source === 'string') {
@@ -41,6 +44,7 @@ const Index = () => {
       } else if (!item.backdrop_path) {
         quality = 'CAM';
       }
+
       return {
         ...item,
         quality,
@@ -54,6 +58,7 @@ const Index = () => {
           getPopularMovies(),
           getPopularTVShows(),
         ]);
+
         const combined = [...popularMoviesData, ...popularTVData]
           .filter(item => item.backdrop_path)
           .sort((a, b) => {
@@ -67,6 +72,7 @@ const Index = () => {
         console.error('Failed fetching slider media:', error);
       }
     };
+
     fetchSliderMedia();
   }, []);
 
@@ -88,6 +94,7 @@ const Index = () => {
         ]);
 
         const filteredTrendingData = trendingData.filter(item => item.backdrop_path);
+
         setTrendingMedia(applyQuality(filteredTrendingData));
         setPopularMovies(applyQuality(popularMoviesData));
         setPopularTVShows(applyQuality(popularTVData));
@@ -101,6 +108,7 @@ const Index = () => {
         setTimeout(() => setSecondaryLoaded(true), 1000);
       }
     };
+
     fetchPrimaryData();
   }, []);
 
@@ -122,19 +130,27 @@ const Index = () => {
 
       {isLoading ? (
         <div className="flex flex-col gap-8 pt-24 px-6">
-          <Skeleton className="w-full h-[60vh] rounded-lg" />
+          <Skeleton className="w-full h-[60vh] rounded-lg" /> {/* Hero skeleton */}
           <RowSkeleton />
           <RowSkeleton />
         </div>
       ) : (
-        <div className="mx-auto mt-8 md:mt-12 transition-opacity duration-300 px-4 max-w-[1800px] border-l border-r border-[#393737]">
+        // Wrap main content in container with left & right borders here
+        <div
+          className="mx-auto mt-8 md:mt-12 transition-opacity duration-300 px-6"
+          style={{
+            maxWidth: '1280px',
+            borderLeft: '1px solid #c0c0c0',
+            borderRight: '1px solid #c0c0c0',
+          }}
+        >
           <div
-            className={`transition-opacity duration-300 ${
-              contentVisible ? 'opacity-100' : 'opacity-0'
-            }`}
+            className={`${contentVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
           >
-            <div className="pt-16">
-              {sliderMedia.length > 0 && <Hero media={sliderMedia} className="hero" />}
+            <div className="pt-16">{/* Padding-top for navbar */}
+              {sliderMedia.length > 0 && (
+                <Hero media={sliderMedia} className="hero" />
+              )}
             </div>
 
             {user && <ContinueWatching />}
