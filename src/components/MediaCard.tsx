@@ -59,27 +59,6 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
     navigate(detailPath);
   };
 
-  if (minimal) {
-    return (
-      <Link to={detailPath} className={cn("block h-full", className)}>
-        <div className="relative h-full rounded-lg overflow-hidden shadow-md border border-white/10 hover:border-accent transition-colors">
-          <img
-            src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium) || '/placeholder.svg'}
-            alt={media.title || media.name || 'Media Poster'}
-            className="object-cover w-full h-full"
-            loading="lazy"
-            onError={handleImageError}
-          />
-          {quality && (
-            <span className={`absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded backdrop-blur-sm ${quality === 'HD' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
-              {quality}
-            </span>
-          )}
-        </div>
-      </Link>
-    );
-  }
-
   return (
     <div
       className={cn(
@@ -91,7 +70,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
       onMouseEnter={() => setShowPopup(true)}
       onMouseLeave={() => setShowPopup(false)}
     >
-      {/* Poster and overlay */}
+      {/* Poster */}
       <div className="relative aspect-[2/3] overflow-hidden">
         <img
           src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium) || '/placeholder.svg'}
@@ -117,39 +96,37 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         )}
       </div>
 
-      {/* Bottom: Details button + info */}
-      <div className="p-3 bg-black/70 backdrop-blur-lg border-t border-white/10 text-white">
-        {/* Centered Details button */}
-        <div className="flex justify-center mb-3">
+      {/* Bottom overlay content */}
+      <div className="p-3 bg-black/80 backdrop-blur-md border-t border-white/10 text-white">
+        {/* Centered "Details" button */}
+        <div className="flex justify-center mb-2">
           <button
             onClick={(e) => {
               e.stopPropagation();
               navigate(detailPath);
             }}
-            className="flex items-center gap-2 bg-white text-black text-sm font-semibold px-4 py-1.5 rounded-full hover:bg-neutral-300 transition"
+            className="flex items-center gap-2 bg-white text-black text-sm font-semibold px-4 py-1.5 rounded-full hover:bg-gray-200 transition"
           >
             Details <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Title + year + runtime */}
-        <div className="text-center">
-          <h3 className="text-sm font-medium mb-1 line-clamp-1 text-white/90">{media.title || media.name}</h3>
-
+        {/* Title + Info below button */}
+        <div className="text-center space-y-0.5">
+          <h3 className="text-sm font-normal text-white/90 line-clamp-1">{media.title || media.name}</h3>
           <div className="text-xs text-white/60">
             {(media.release_date || media.first_air_date)?.slice(0, 4)}
             {durationText ? ` · ${durationText}` : ''}
           </div>
-
           {genreNames && genreNames.length > 0 && (
-            <p className="text-xs text-white/60 mt-1 line-clamp-1">
+            <p className="text-xs text-white/50 line-clamp-1">
               {genreNames.join(', ')}
             </p>
           )}
         </div>
       </div>
 
-      {/* Popup on hover */}
+      {/* Hover popup */}
       <AnimatePresence>
         {showPopup && (
           <motion.div
