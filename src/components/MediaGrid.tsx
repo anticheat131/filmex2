@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useState } from 'react';
 
+// Extend Media type to include optional string ID and timestamp
 interface ExtendedMedia extends Omit<Media, 'id'> {
   id: string | number;
   media_id: number;
-  docId?: string;
+  docId?: string;  // Document ID for deletion
   created_at?: string;
   watch_position?: number;
   duration?: number;
@@ -25,10 +26,10 @@ interface MediaGridProps {
   onDeleteSelected?: (ids: string[]) => void;
 }
 
-const MediaGrid = ({
-  media,
-  title,
-  listView = false,
+const MediaGrid = ({ 
+  media, 
+  title, 
+  listView = false, 
   selectable = false,
   onDelete,
   onDeleteSelected
@@ -48,7 +49,9 @@ const MediaGrid = ({
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.05 }
+      transition: {
+        staggerChildren: 0.05
+      }
     }
   };
 
@@ -63,23 +66,25 @@ const MediaGrid = ({
   };
 
   const handleSelect = (docId: string) => {
-    setSelectedItems(prev =>
-      prev.includes(docId)
-        ? prev.filter(item => item !== docId)
-        : [...prev, docId]
-    );
+    setSelectedItems(prev => {
+      if (prev.includes(docId)) {
+        return prev.filter(item => item !== docId);
+      }
+      return [...prev, docId];
+    });
   };
 
   const handleSelectAll = () => {
-    setSelectedItems(
-      selectedItems.length === media.length
-        ? []
-        : media.map(item => item.docId!).filter(Boolean)
-    );
+    if (selectedItems.length === media.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(media.map(item => item.docId!).filter(Boolean));
+    }
   };
 
   const renderTimestamp = (media: ExtendedMedia) => {
     if (!media.created_at) return null;
+    
     return (
       <div className="flex items-center text-xs text-white/70 mb-2">
         <Clock className="h-3 w-3 mr-1" />
@@ -101,7 +106,7 @@ const MediaGrid = ({
         >
           {selectMode ? 'Cancel Selection' : 'Select Items'}
         </Button>
-
+        
         {selectMode && (
           <>
             <Button
@@ -117,7 +122,7 @@ const MediaGrid = ({
               )}
               {selectedItems.length === media.length ? 'Deselect All' : 'Select All'}
             </Button>
-
+            
             {selectedItems.length > 0 && onDeleteSelected && (
               <Button
                 variant="destructive"
@@ -134,14 +139,14 @@ const MediaGrid = ({
       </div>
     );
   };
-
+  
   return (
     <div className="px-4 md:px-8 py-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
         {title && <h2 className="text-2xl font-bold text-white">{title}</h2>}
         {renderSelectionButtons()}
       </div>
-
+      
       {listView ? (
         <motion.div
           className="flex flex-col gap-4"
@@ -150,7 +155,7 @@ const MediaGrid = ({
           animate="show"
         >
           {media.map((mediaItem, idx) => (
-            <motion.div
+            <motion.div 
               key={`${mediaItem.media_type}-${mediaItem.id}-${mediaItem.docId ?? idx}`}
               variants={item}
               className="glass p-4 rounded-lg hover:bg-white/10 transition-colors group"
@@ -158,7 +163,7 @@ const MediaGrid = ({
               <div className="flex gap-4 items-center">
                 {selectMode && mediaItem.docId && (
                   <div className="flex-shrink-0">
-                    <Checkbox
+                    <Checkbox 
                       checked={selectedItems.includes(mediaItem.docId)}
                       onCheckedChange={() => handleSelect(mediaItem.docId!)}
                     />
@@ -169,9 +174,7 @@ const MediaGrid = ({
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-white">
-                      {mediaItem.title || mediaItem.name}
-                    </h3>
+                    <h3 className="text-lg font-semibold text-white">{mediaItem.title || mediaItem.name}</h3>
                     {!selectMode && onDelete && mediaItem.docId && (
                       <Button
                         variant="ghost"
@@ -203,21 +206,21 @@ const MediaGrid = ({
           ))}
         </motion.div>
       ) : (
-        <motion.div
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-10"
+        <motion.div 
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6"
           variants={container}
           initial="hidden"
           animate="show"
         >
           {media.map((mediaItem, idx) => (
-            <motion.div
-              key={`${mediaItem.media_type}-${mediaItem.id}-${mediaItem.docId ?? idx}`}
+            <motion.div 
+              key={`${mediaItem.media_type}-${mediaItem.id}-${mediaItem.docId ?? idx}`} 
               variants={item}
-              className="w-full h-full"
+              className="group relative"
             >
               {selectMode && mediaItem.docId && (
                 <div className="absolute top-2 left-2 z-10">
-                  <Checkbox
+                  <Checkbox 
                     checked={selectedItems.includes(mediaItem.docId)}
                     onCheckedChange={() => handleSelect(mediaItem.docId!)}
                   />
