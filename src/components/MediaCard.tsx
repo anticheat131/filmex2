@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Star } from 'lucide-react';
@@ -8,11 +8,6 @@ import { cn } from '@/lib/utils';
 import { trackMediaPreference, trackMediaView } from '@/lib/analytics';
 import { Media } from '@/utils/types';
 
-interface MediaCardProps {
-  media: Media;
-  className?: string;
-}
-
 const genreMap: Record<number, string> = {
   28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
   99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
@@ -20,7 +15,14 @@ const genreMap: Record<number, string> = {
   878: 'Sci-Fi', 10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western',
 };
 
-const MediaCard = ({ media, className }: MediaCardProps) => {
+interface MediaCardProps {
+  media: Media;
+  className?: string;
+  minimal?: boolean;
+  smaller?: boolean;
+}
+
+const MediaCard = ({ media, className, minimal = false, smaller = false }: MediaCardProps) => {
   const [imageError, setImageError] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [quality, setQuality] = useState<string | null>(null);
@@ -28,14 +30,34 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
 
   const mediaId = media.media_id || media.id;
   const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
-  const posterUrl = getImageUrl(media.poster_path, posterSizes.medium) || '/placeholder.svg';
-  const title = media.title || media.name || 'Untitled';
 
-  const releaseDate = media.release_date || media.first_air_date || '';
-  const year = releaseDate.slice(0, 4);
-  const genres = (media.genre_ids || []).map(id => genreMap[id]).filter(Boolean).slice(0, 2).join(', ');
-  const runtime = media.runtime ? `${media.runtime} min` : '';
-  const rating = media.vote_average?.toFixed(1);
+  const genreNames = media.genre_ids?.map(id => genreMap[id]).filter(Boolean).slice(0, 2);
+  const runtimeMinutes =
+    media.media_type === 'movie'
+      ? media.runtime
+      : Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0
+      ? media.episode_run_time[0]
+      : undefined;
+
+  const fullReleaseDate = media.media_type === 'movie' ? media.release_date : media.first_air_date;
+  const releaseDate = new Date(fullReleaseDate || '');
+  const formattedMonthYear = !isNaN(releaseDate.getTime())
+    ? `${releaseDate.toLocaleString('default', { month: 'long' })} ${releaseDate.getFullYear()}`
+    : 'Unknown';
+
+  const handleImageError = () => setImageError(true);
+
+  const handleClick = async () => {
+    await Promise.all([
+      trackMediaPreference(media.media_type, 'select'),
+      trackMediaView({
+        mediaType: media.media_type as 'movie' | 'tv',
+        mediaId: media.id.toString(),
+        title: media.title || media.name || '',
+      }),
+    ]);
+    navigate(detailPath);
+  };
 
   useEffect(() => {
     const fetchQuality = async () => {
@@ -49,63 +71,49 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
         const usRelease = data.results?.find((r: any) => r.iso_3166_1 === 'US');
         const types = usRelease?.release_dates?.map((r: any) => r.type) || [];
 
-        if (types.includes(2) || types.includes(3)) {
-          setQuality('CAM');
-        } else if (types.length > 0) {
-          setQuality('HD');
-        } else {
-          const release = new Date(releaseDate);
-          const today = new Date();
-          const daysSinceRelease = (today.getTime() - release.getTime()) / (1000 * 60 * 60 * 24);
-          if (!isNaN(daysSinceRelease) && daysSinceRelease >= 30) {
-            setQuality('HD');
-          } else if (media.video_source?.toLowerCase().includes('cam')) {
-            setQuality('CAM');
-          } else {
-            setQuality(null);
-          }
-        }
-      } catch (err) {
-        console.error('Fallback: TMDB release fetch failed', err);
-        setQuality(media.quality?.toUpperCase() || (media.video_source?.toLowerCase().includes('cam') ? 'CAM' : 'HD'));
+        const isHD = types.some((t: number) => ![2, 3].includes(t));
+        setQuality(isHD ? 'HD' : 'CAM');
+      } catch (e) {
+        setQuality(null);
       }
     };
 
     fetchQuality();
-  }, [mediaId, media.media_type, releaseDate, media.quality, media.video_source]);
+  }, [mediaId, media.media_type]);
 
   return (
     <div
       className={cn(
-        'relative inline-block w-[230px] rounded-xl border border-white/10 bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden hover:border-white/30 hover:shadow-white/10',
+        'relative inline-block rounded-xl border border-white/10 bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
+        'hover:border-white/30 hover:shadow-white/10',
+        smaller ? 'scale-90 origin-top-left' : '',
         className
       )}
-      onClick={() => navigate(detailPath)}
+      onClick={handleClick}
       onMouseEnter={() => setShowPopup(true)}
       onMouseLeave={() => setShowPopup(false)}
     >
       <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl">
         <img
-          src={imageError ? '/placeholder.svg' : posterUrl}
-          alt={title}
-          onError={() => setImageError(true)}
+          src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium)}
+          alt={media.title || media.name || 'Media Poster'}
+          onError={handleImageError}
           className="w-full h-full object-cover"
         />
 
-        {rating && (
+        {media.vote_average > 0 && (
           <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-black/75 text-amber-400 rounded-md text-xs font-semibold shadow-sm">
             <Star className="w-4 h-4 fill-amber-400" />
-            {rating}
+            {media.vote_average.toFixed(1)}
           </div>
         )}
 
         {quality && (
           <div
-            className={`absolute top-2 left-2 px-3 py-1 text-[11px] font-semibold rounded-lg shadow-md text-white ${
-              quality === 'HD'
+            className={`absolute top-2 left-2 px-3 py-1 text-[11px] font-semibold rounded-lg shadow-md text-white
+              ${quality === 'HD'
                 ? 'bg-gradient-to-r from-green-600 to-green-500'
-                : 'bg-gradient-to-r from-red-600 to-red-500'
-            }`}
+                : 'bg-gradient-to-r from-red-600 to-red-500'}`}
             style={{ letterSpacing: '0.05em', textShadow: '0 0 3px rgba(0,0,0,0.6)' }}
           >
             {quality}
@@ -113,27 +121,35 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
         )}
 
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
-          <button
-            className="flex items-center gap-2 px-3 py-1 bg-white text-black text-xs font-semibold rounded-full shadow hover:bg-gray-200 transition"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(detailPath);
-            }}
-          >
-            Details <ArrowRight className="w-4 h-4" />
-          </button>
+          <div className="flex justify-center">
+            <button
+              className="flex items-center gap-2 px-3 py-1 bg-white text-black text-xs font-semibold rounded-full shadow hover:bg-gray-200 transition"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(detailPath);
+              }}
+            >
+              Details <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
       </div>
 
       <div className="px-3 pb-3 pt-2 text-white text-sm space-y-1">
-        <h3 className="text-center text-sm font-medium text-white line-clamp-1">{title}</h3>
+        <h3 className="text-center text-sm font-medium text-white line-clamp-1">
+          {media.title || media.name}
+        </h3>
+
         <div className="flex justify-between items-end text-xs">
-          <p className="text-white/70 line-clamp-1 max-w-[60%] pl-[5%]">{genres || '—'}</p>
-          {runtime && <p className="text-white/60 text-xs text-right min-w-[35%]">{runtime}</p>}
+          <p className="text-white/70 line-clamp-1 max-w-[60%] pl-[5%]">{genreNames?.join(', ') || '—'}</p>
+          {runtimeMinutes && (
+            <p className="text-white/60 text-xs text-right min-w-[35%]">{runtimeMinutes} min</p>
+          )}
         </div>
-        <p className="text-center text-white/50 text-[11px] pt-1">{year}</p>
+
+        <p className="text-center text-white/50 text-[11px] pt-1">{formattedMonthYear}</p>
       </div>
 
       <AnimatePresence>
@@ -146,12 +162,12 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
             transition={{ duration: 0.2 }}
             className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-[320px] max-w-full rounded-lg bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
           >
-            <h4 className="font-bold text-lg mb-1">{title}</h4>
-            <p className="text-xs mb-2 text-white/70">Release: {releaseDate || 'Unknown'}</p>
-            <p className="text-xs mb-2 text-white/70">Genres: {genres || 'Unknown'}</p>
-            {rating && (
+            <h4 className="font-bold text-lg mb-1">{media.title || media.name}</h4>
+            <p className="text-xs mb-2 text-white/70">Release: {fullReleaseDate || 'Unknown'}</p>
+            <p className="text-xs mb-2 text-white/70">Genres: {genreNames?.join(', ') || 'Unknown'}</p>
+            {media.vote_average > 0 && (
               <p className="flex items-center text-amber-400 mb-2">
-                <Star className="h-4 w-4 mr-1 fill-amber-400" /> {rating}
+                <Star className="h-4 w-4 mr-1 fill-amber-400" /> {media.vote_average.toFixed(1)}
               </p>
             )}
             <p className="text-xs max-h-28 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
