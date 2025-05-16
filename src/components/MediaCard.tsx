@@ -115,35 +115,38 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
             {quality}
           </span>
         )}
+      </div>
 
-        {/* Always visible overlay + center button */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-end justify-center p-4">
+      {/* Bottom: Details button + info */}
+      <div className="p-3 bg-black/70 backdrop-blur-lg border-t border-white/10 text-white">
+        {/* Centered Details button */}
+        <div className="flex justify-center mb-3">
           <button
-            onClick={e => {
+            onClick={(e) => {
               e.stopPropagation();
               navigate(detailPath);
             }}
-            className="flex items-center gap-2 bg-white text-black text-sm font-medium px-4 py-1.5 rounded-full hover:bg-neutral-200 transition"
+            className="flex items-center gap-2 bg-white text-black text-sm font-semibold px-4 py-1.5 rounded-full hover:bg-neutral-300 transition"
           >
             Details <ArrowRight className="w-4 h-4" />
           </button>
         </div>
-      </div>
 
-      {/* Bottom section: Title + Genres + Year */}
-      <div className="p-3 border-t border-white/10 bg-black/70 backdrop-blur-md text-white">
-        <h3 className="text-sm font-medium mb-1 line-clamp-1 text-white/90">{media.title || media.name}</h3>
+        {/* Title + year + runtime */}
+        <div className="text-center">
+          <h3 className="text-sm font-medium mb-1 line-clamp-1 text-white/90">{media.title || media.name}</h3>
 
-        <div className="text-xs text-white/60">
-          {(media.release_date || media.first_air_date)?.slice(0, 4)}
-          {durationText ? ` · ${durationText}` : ''}
+          <div className="text-xs text-white/60">
+            {(media.release_date || media.first_air_date)?.slice(0, 4)}
+            {durationText ? ` · ${durationText}` : ''}
+          </div>
+
+          {genreNames && genreNames.length > 0 && (
+            <p className="text-xs text-white/60 mt-1 line-clamp-1">
+              {genreNames.join(', ')}
+            </p>
+          )}
         </div>
-
-        {genreNames && genreNames.length > 0 && (
-          <p className="text-xs text-white/60 mt-1 line-clamp-1">
-            {genreNames.join(', ')}
-          </p>
-        )}
       </div>
 
       {/* Popup on hover */}
