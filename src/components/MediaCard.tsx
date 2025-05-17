@@ -69,31 +69,38 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         );
         const data = await res.json();
         const usRelease = data.results?.find((r: any) => r.iso_3166_1 === 'US');
-        const releaseDates = usRelease?.release_dates || [];
-
         const now = new Date();
-        const baseRelease = new Date(media.release_date);
-        const daysSince = Math.floor((now.getTime() - baseRelease.getTime()) / (1000 * 60 * 60 * 24));
+        const release = new Date(media.release_date);
+        const diffInDays = Math.floor((now.getTime() - release.getTime()) / (1000 * 60 * 60 * 24));
 
-        const hasPastDigital = releaseDates.some(
-          (r: any) =>
-            r.type === 4 &&
-            r.release_date &&
-            new Date(r.release_date).getTime() < now.getTime()
-        );
+        let hasDigitalPastRelease = false;
+        let onlyTheatrical = true;
 
-        const onlyTheatrical = releaseDates.every(
-          (r: any) => r.type === 2 || r.type === 3
-        );
+        if (usRelease?.release_dates?.length) {
+          for (const entry of usRelease.release_dates) {
+            const type = entry.type;
+            const date = new Date(entry.release_date);
 
-        if (hasPastDigital) {
+            if (type === 4 && date <= now) {
+              hasDigitalPastRelease = true;
+              break;
+            }
+
+            if (![2, 3].includes(type)) {
+              onlyTheatrical = false;
+            }
+          }
+        }
+
+        if (hasDigitalPastRelease) {
           setQuality('HD');
         } else if (onlyTheatrical) {
-          setQuality(daysSince >= 60 ? 'HD' : 'CAM');
+          setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
         } else {
-          setQuality('HD');
+          setQuality('CAM');
         }
       } catch (e) {
+        console.error('Failed to fetch quality:', e);
         setQuality(null);
       }
     };
@@ -163,9 +170,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         </h3>
 
         <div className="flex justify-between items-end text-xs">
-          <p className="text-white/70 line-clamp-1 max-w-[60%] pl-[5%]">
-            {genreNames?.join(', ') || '—'}
-          </p>
+          <p className="text-white/70 line-clamp-1 max-w-[60%] pl-[5%]">{genreNames?.join(', ') || '—'}</p>
           {runtimeMinutes && (
             <p className="text-white/60 text-xs text-right min-w-[35%]">{runtimeMinutes} min</p>
           )}
