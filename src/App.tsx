@@ -18,6 +18,7 @@ import { trackPageView } from './lib/analytics';
 import './App.css';
 import './styles/notifications.css';
 import { FeatureNotificationsListener } from './hooks/FeatureNotificationsListener';
+<Route path="/movie/:slug" element={<MovieDetailsPage />} />
 
 // Create a client
 const queryClient = new QueryClient({
