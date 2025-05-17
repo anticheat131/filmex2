@@ -1,6 +1,4 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import React from 'react';
-import { slugify } from '@/utils/slugify';  // adjust path if needed
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ContentRow from '@/components/ContentRow';
@@ -14,40 +12,43 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useTVDetails } from '@/hooks/use-tv-details';
 
 const TVDetailsPage = () => {
-  const { idSlug } = useParams<{ idSlug: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  
-  // Extract numeric ID from param, e.g., "1249213-drop" -> "1249213"
-  const id = idSlug ? idSlug.split('-')[0] : null;
-  
-  const { 
-    tvShow, 
-    episodes, 
-    selectedSeason, 
-    setSelectedSeason, 
-    isLoading, 
-    error, 
+
+  // Extract numeric ID before the dash, e.g. "1249213-drop-2023" => "1249213"
+  const id = rawId?.split('-')[0];
+
+  if (!id) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+        <h1 className="text-2xl text-white mb-4">TV show ID is required</h1>
+        <Button onClick={() => navigate('/')} variant="outline">
+          Return to Home
+        </Button>
+      </div>
+    );
+  }
+
+  const {
+    tvShow,
+    episodes,
+    selectedSeason,
+    setSelectedSeason,
+    isLoading,
+    error,
     activeTab,
-    setActiveTab, 
-    recommendations, 
-    cast, 
+    setActiveTab,
+    recommendations,
+    cast,
     trailerKey,
-    isFavorite, 
-    isInMyWatchlist, 
-    handlePlayEpisode, 
-    handleToggleFavorite, 
-    handleToggleWatchlist, 
-    getLastWatchedEpisode
+    isFavorite,
+    isInMyWatchlist,
+    handlePlayEpisode,
+    handleToggleFavorite,
+    handleToggleWatchlist,
+    getLastWatchedEpisode,
   } = useTVDetails(id);
-  
-  // Redirect to pretty URL if URL is missing slug part (only id provided)
-  React.useEffect(() => {
-    if (tvShow && idSlug && !idSlug.includes('-')) {
-      const slugName = slugify(tvShow.name);
-      navigate(`/tv/${id}-${slugName}`, { replace: true });
-    }
-  }, [tvShow, idSlug, id, navigate]);
 
   if (isLoading) {
     return (
@@ -56,7 +57,7 @@ const TVDetailsPage = () => {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
@@ -67,7 +68,7 @@ const TVDetailsPage = () => {
       </div>
     );
   }
-  
+
   if (!tvShow) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
@@ -78,20 +79,20 @@ const TVDetailsPage = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <div className="relative">
-        <button 
+        <button
           onClick={() => navigate(-1)}
           className="absolute top-20 left-6 z-10 text-white p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors"
           aria-label="Go back"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        
+
         {!isMobile && trailerKey && (
           <div className="absolute inset-0 bg-black/60">
             <iframe
@@ -103,7 +104,7 @@ const TVDetailsPage = () => {
           </div>
         )}
 
-        <TVShowHeader 
+        <TVShowHeader
           tvShow={tvShow}
           isFavorite={isFavorite}
           isInWatchlist={isInMyWatchlist}
@@ -113,13 +114,13 @@ const TVDetailsPage = () => {
           lastWatchedEpisode={getLastWatchedEpisode()}
         />
       </div>
-      
+
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex border-b border-white/10 mb-6 overflow-x-auto pb-1 hide-scrollbar">
           <button
             className={`py-2 px-4 font-medium whitespace-nowrap ${
-              activeTab === 'episodes' 
-                ? 'text-white border-b-2 border-accent' 
+              activeTab === 'episodes'
+                ? 'text-white border-b-2 border-accent'
                 : 'text-white/60 hover:text-white'
             }`}
             onClick={() => setActiveTab('episodes')}
@@ -128,8 +129,8 @@ const TVDetailsPage = () => {
           </button>
           <button
             className={`py-2 px-4 font-medium whitespace-nowrap ${
-              activeTab === 'about' 
-                ? 'text-white border-b-2 border-accent' 
+              activeTab === 'about'
+                ? 'text-white border-b-2 border-accent'
                 : 'text-white/60 hover:text-white'
             }`}
             onClick={() => setActiveTab('about')}
@@ -138,8 +139,8 @@ const TVDetailsPage = () => {
           </button>
           <button
             className={`py-2 px-4 font-medium whitespace-nowrap ${
-              activeTab === 'cast' 
-                ? 'text-white border-b-2 border-accent' 
+              activeTab === 'cast'
+                ? 'text-white border-b-2 border-accent'
                 : 'text-white/60 hover:text-white'
             }`}
             onClick={() => setActiveTab('cast')}
@@ -148,8 +149,8 @@ const TVDetailsPage = () => {
           </button>
           <button
             className={`py-2 px-4 font-medium whitespace-nowrap ${
-              activeTab === 'reviews' 
-                ? 'text-white border-b-2 border-accent' 
+              activeTab === 'reviews'
+                ? 'text-white border-b-2 border-accent'
                 : 'text-white/60 hover:text-white'
             }`}
             onClick={() => setActiveTab('reviews')}
@@ -157,9 +158,9 @@ const TVDetailsPage = () => {
             Reviews
           </button>
         </div>
-        
+
         {activeTab === 'episodes' && (
-          <TVShowEpisodes 
+          <TVShowEpisodes
             seasons={tvShow.seasons}
             episodes={episodes}
             selectedSeason={selectedSeason}
@@ -167,15 +168,11 @@ const TVDetailsPage = () => {
             onPlayEpisode={handlePlayEpisode}
           />
         )}
-        
-        {activeTab === 'about' && (
-          <TVShowAbout tvShow={tvShow} />
-        )}
-        
-        {activeTab === 'cast' && (
-          <TVShowCast cast={cast} />
-        )}
-        
+
+        {activeTab === 'about' && <TVShowAbout tvShow={tvShow} />}
+
+        {activeTab === 'cast' && <TVShowCast cast={cast} />}
+
         {activeTab === 'reviews' && (
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-white mb-6">User Reviews</h2>
@@ -183,13 +180,8 @@ const TVDetailsPage = () => {
           </div>
         )}
       </div>
-      
-      {recommendations.length > 0 && (
-        <ContentRow
-          title="More Like This"
-          media={recommendations}
-        />
-      )}
+
+      {recommendations.length > 0 && <ContentRow title="More Like This" media={recommendations} />}
     </div>
   );
 };
