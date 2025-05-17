@@ -72,25 +72,38 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           `https://api.themoviedb.org/3/movie/${mediaId}/release_dates?api_key=${import.meta.env.VITE_TMDB_API_KEY}`
         );
         const data = await res.json();
-        const usRelease = data.results?.find((r: any) => r.iso_3166_1 === 'US');
-        const types = usRelease?.release_dates?.map((r: any) => r.type) || [];
+        const allReleaseDates = data.results || [];
+
+        // Flatten all release dates worldwide
+        const allTypes = allReleaseDates.flatMap((r: any) =>
+          r.release_dates.map((rd: any) => ({
+            type: rd.type,
+            date: new Date(rd.release_date),
+            note: rd.note?.toLowerCase() || '',
+          }))
+        );
 
         const now = new Date();
         const release = new Date(media.release_date);
         const diffInDays = Math.floor((now.getTime() - release.getTime()) / (1000 * 60 * 60 * 24));
 
-        if (types.length === 0) {
+        // Filter out pre-order digital releases
+        const validDigital = allTypes.some(rd =>
+          rd.type === 4 &&
+          rd.date <= now &&
+          !rd.note.includes('pre-order')
+        );
+
+        const allTypesSet = new Set(allTypes.map(rd => rd.type));
+
+        // Check if only theatrical types are present
+        const onlyTheatrical = [...allTypesSet].every(t => t === 2 || t === 3);
+
+        if (allTypes.length === 0) {
           setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
-        } else if (types.every((t: number) => t === 2 || t === 3)) {
+        } else if (onlyTheatrical) {
           setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
         } else {
-          // filter out "preorder" digital types (type 4 with future date)
-          const validDigital = usRelease?.release_dates?.some(
-            (r: any) =>
-              r.type === 4 &&
-              new Date(r.release_date) <= new Date() &&
-              !r.note?.toLowerCase()?.includes('pre-order')
-          );
           setQuality(validDigital ? 'HD' : 'CAM');
         }
       } catch (e) {
@@ -99,7 +112,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
     };
 
     fetchQuality();
-  }, [mediaId, media.media_type]);
+  }, [mediaId, media.media_type, media.release_date]);
 
   return (
     <div
