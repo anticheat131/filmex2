@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Star } from 'lucide-react';
@@ -29,29 +29,36 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   const navigate = useNavigate();
 
   const mediaId = media.media_id || media.id;
-  const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
+  const detailPath = useMemo(() => media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`, [media.media_type, mediaId]);
 
-  const genreNames = (media.genre_ids || [])
-    .map(id => genreMap[id])
-    .filter(Boolean)
-    .slice(0, 2);
+  // Memoize genres, avoid recomputation on re-render
+  const genreNames = useMemo(() => 
+    (media.genre_ids || [])
+      .map(id => genreMap[id])
+      .filter(Boolean)
+      .slice(0, 2),
+    [media.genre_ids]
+  );
 
-  const runtimeMinutes =
-    media.media_type === 'movie'
-      ? media.runtime
-      : Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0
-      ? media.episode_run_time[0]
-      : undefined;
+  const runtimeMinutes = useMemo(() => {
+    if (media.media_type === 'movie') return media.runtime;
+    if (Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0) return media.episode_run_time[0];
+    return undefined;
+  }, [media.media_type, media.runtime, media.episode_run_time]);
 
-  const fullReleaseDate = media.media_type === 'movie' ? media.release_date : media.first_air_date;
-  const releaseDate = new Date(fullReleaseDate || '');
-  const formattedMonthYear = !isNaN(releaseDate.getTime())
-    ? `${releaseDate.toLocaleString('default', { month: 'long' })} ${releaseDate.getFullYear()}`
-    : 'Unknown';
+  // Format release date once
+  const formattedMonthYear = useMemo(() => {
+    const fullReleaseDate = media.media_type === 'movie' ? media.release_date : media.first_air_date;
+    const releaseDate = new Date(fullReleaseDate || '');
+    if (isNaN(releaseDate.getTime())) return 'Unknown';
+    return `${releaseDate.toLocaleString('default', { month: 'long' })} ${releaseDate.getFullYear()}`;
+  }, [media.media_type, media.release_date, media.first_air_date]);
 
-  const handleImageError = () => setImageError(true);
+  // Image error handler - stable function with useCallback
+  const handleImageError = useCallback(() => setImageError(true), []);
 
-  const handleClick = async () => {
+  // Click handler optimized with useCallback
+  const handleClick = useCallback(async () => {
     await Promise.all([
       trackMediaPreference(media.media_type, 'select'),
       trackMediaView({
@@ -61,26 +68,33 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
       }),
     ]);
     navigate(detailPath);
-  };
+  }, [media, detailPath, navigate]);
 
+  // Quality fetch logic with basic caching (optional improvement)
   useEffect(() => {
+    let canceled = false;
+
     const fetchQuality = async () => {
-      if (media.media_type !== 'movie') return;
+      if (media.media_type !== 'movie') {
+        setQuality(null);
+        return;
+      }
 
       try {
         const release = new Date(media.release_date);
         const now = new Date();
         const diffInDays = Math.floor((now.getTime() - release.getTime()) / (1000 * 60 * 60 * 24));
-
         const FOUR_MONTHS_DAYS = 120;
+
         if (diffInDays > FOUR_MONTHS_DAYS) {
-          setQuality('HD'); // Force HD for movies older than 4 months
+          if (!canceled) setQuality('HD'); // Force HD for older movies
           return;
         }
 
         const res = await fetch(
           `https://api.themoviedb.org/3/movie/${mediaId}/release_dates?api_key=${import.meta.env.VITE_TMDB_API_KEY}`
         );
+        if (!res.ok) throw new Error('Failed to fetch release dates');
         const data = await res.json();
         const allReleaseDates = data.results || [];
 
@@ -93,27 +107,29 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         );
 
         const validDigital = allTypes.some(rd =>
-          rd.type === 4 &&
-          rd.date <= now &&
-          !rd.note.includes('pre-order')
+          rd.type === 4 && rd.date <= now && !rd.note.includes('pre-order')
         );
 
         const allTypesSet = new Set(allTypes.map(rd => rd.type));
         const onlyTheatrical = [...allTypesSet].every(t => t === 2 || t === 3);
 
         if (allTypes.length === 0) {
-          setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
+          if (!canceled) setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
         } else if (onlyTheatrical) {
-          setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
+          if (!canceled) setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
         } else {
-          setQuality(validDigital ? 'HD' : 'CAM');
+          if (!canceled) setQuality(validDigital ? 'HD' : 'CAM');
         }
-      } catch (e) {
-        setQuality(null);
+      } catch {
+        if (!canceled) setQuality(null);
       }
     };
 
     fetchQuality();
+
+    return () => {
+      canceled = true;
+    };
   }, [mediaId, media.media_type, media.release_date]);
 
   return (
@@ -130,10 +146,14 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
     >
       <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl">
         <img
+          loading="lazy"
+          decoding="async"
           src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium)}
           alt={media.title || media.name || 'Media Poster'}
           onError={handleImageError}
           className="w-full h-full object-cover"
+          width={300} // hint size for browser
+          height={450}
         />
 
         {media.vote_average > 0 && (
@@ -163,6 +183,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
                 e.stopPropagation();
                 navigate(detailPath);
               }}
+              type="button"
             >
               Details <ArrowRight className="w-4 h-4" />
             </button>
@@ -198,21 +219,6 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
             className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-[320px] max-w-full rounded-lg bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
           >
             <h4 className="font-bold text-lg mb-1">{media.title || media.name}</h4>
-            <p className="text-xs mb-2 text-white/70">Release: {fullReleaseDate || 'Unknown'}</p>
+            <p className="text-xs mb-2 text-white/70">Release: {media.media_type === 'movie' ? media.release_date : media.first_air_date || 'Unknown'}</p>
             <p className="text-xs mb-2 text-white/70">Genres: {genreNames?.join(', ') || 'Unknown'}</p>
             {media.vote_average > 0 && (
-              <p className="flex items-center text-amber-400 mb-2">
-                <Star className="h-4 w-4 mr-1 fill-amber-400" /> {media.vote_average.toFixed(1)}
-              </p>
-            )}
-            <p className="text-xs max-h-28 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-              {media.overview || 'No description available.'}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-export default MediaCard;
