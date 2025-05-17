@@ -25,7 +25,8 @@ const SearchBar = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState<Media[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [searchType, setSearchType] = useState<'movie' | 'tv'>('movie'); // New state for toggle
+  const [searchType, setSearchType] = useState<"movie" | "tv">("movie");
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -65,6 +66,7 @@ const SearchBar = ({
     const fetchSuggestions = async () => {
       if (searchQuery.trim().length > 0) {
         try {
+          // Pass searchType to API if you want to filter by type
           const results = await searchMedia(searchQuery, searchType);
           setSearchSuggestions(results.slice(0, 6));
           setShowSuggestions(true);
@@ -92,7 +94,7 @@ const SearchBar = ({
 
       toast({
         title: "Searching...",
-        description: `Finding results for "${searchQuery.trim()}" in ${searchType === 'movie' ? 'Movies' : 'TV Shows'}`,
+        description: `Finding results for "${searchQuery.trim()}" in ${searchType === "movie" ? "Movies" : "TV Shows"}`,
         duration: 2000,
       });
     }
@@ -112,6 +114,12 @@ const SearchBar = ({
     });
   };
 
+  const toggleSearchType = () => {
+    setSearchType(prev => (prev === "movie" ? "tv" : "movie"));
+    setSearchQuery('');
+    setShowSuggestions(false);
+  };
+
   // For mobile collapsed state (icon only)
   if (isMobile && !expanded) {
     return (
@@ -129,65 +137,67 @@ const SearchBar = ({
 
   return (
     <form onSubmit={handleSearch} className={`search-container ${isMobile ? 'w-full' : ''} ${className}`}>
-      <div className="relative w-full flex items-center gap-2">
+      <div className="relative w-full">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-4 h-4 pointer-events-none" />
         <Input
           type="search"
-          placeholder={`Search for ${searchType === 'movie' ? 'Movie' : 'TV Show'}...`}
-          className="search-input pl-10 pr-12 h-10 flex-grow" // Added explicit height and flex-grow
+          placeholder={
+            isMobile
+              ? `Search for ${searchType === "movie" ? "Movie" : "TV Show"}...`
+              : `Search for ${searchType === "movie" ? "Movie" : "TV Show"}... (Press /)`
+          }
+          className="search-input pl-10 pr-20 h-10"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           ref={searchInputRef}
         />
-        
+
+        <button
+          type="button"
+          onClick={toggleSearchType}
+          className="absolute right-10 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-gray-700 rounded text-white text-xs select-none"
+          aria-label={`Switch search type to ${searchType === "movie" ? "TV Show" : "Movie"}`}
+          tabIndex={0}
+        >
+          {searchType === "movie" ? "TV Show" : "Movie"}
+        </button>
+
         <Button 
           type="submit" 
           size="icon"
-          className="search-button absolute right-2.5 top-1/2 transform -translate-y-1/2" // Adjusted right position
+          className="search-button absolute right-2.5 top-1/2 transform -translate-y-1/2"
           aria-label="Search"
         >
           <ArrowRight className="h-3.5 w-3.5" />
         </Button>
 
-        {/* Toggle button to switch between movie and tvshow */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setSearchType(searchType === 'movie' ? 'tv' : 'movie')}
-          className="ml-2 whitespace-nowrap text-xs text-white/70 hover:text-white"
-          type="button"
-          aria-label="Toggle search type"
-        >
-          {searchType === 'movie' ? 'Movie' : 'TV Show'}
-        </Button>
-      </div>
-
-      {showSuggestions && searchSuggestions.length > 0 && (
-        <div ref={suggestionsRef} className="search-suggestions">
-          {searchSuggestions.map((item) => (
+        {showSuggestions && searchSuggestions.length > 0 && (
+          <div ref={suggestionsRef} className="search-suggestions">
+            {searchSuggestions.map((item) => (
+              <button
+                key={`${item.media_type}-${item.id}`}
+                className="suggestion-item"
+                onClick={() => handleSuggestionClick(item)}
+              >
+                <span className="mr-2 flex-shrink-0">
+                  {item.media_type === 'movie' ? 
+                    <Film className="h-4 w-4 text-red-400" /> : 
+                    <Tv className="h-4 w-4 text-blue-400" />
+                  }
+                </span>
+                <span className="flex-1 text-left truncate">{item.title || item.name}</span>
+                <span className="ml-2 opacity-50 text-xs bg-white/10 px-1.5 py-0.5 rounded flex-shrink-0">Enter</span>
+              </button>
+            ))}
             <button
-              key={`${item.media_type}-${item.id}`}
-              className="suggestion-item"
-              onClick={() => handleSuggestionClick(item)}
+              onClick={handleSearch}
+              className="suggestion-item font-medium text-accent justify-center"
             >
-              <span className="mr-2 flex-shrink-0">
-                {item.media_type === 'movie' ? 
-                  <Film className="h-4 w-4 text-red-400" /> : 
-                  <Tv className="h-4 w-4 text-blue-400" />
-                }
-              </span>
-              <span className="flex-1 text-left truncate">{item.title || item.name}</span>
-              <span className="ml-2 opacity-50 text-xs bg-white/10 px-1.5 py-0.5 rounded flex-shrink-0">Enter</span>
+              View all results for "{searchQuery}"
             </button>
-          ))}
-          <button
-            onClick={handleSearch}
-            className="suggestion-item font-medium text-accent justify-center"
-          >
-            View all results for "{searchQuery}"
-          </button>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </form>
   );
 };
