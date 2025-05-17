@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Play } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import ContentRow from '@/components/ContentRow';
@@ -37,7 +37,6 @@ const TVDetailsPage = () => {
   const { id: rawId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-
   const id = rawId?.split('-')[0];
 
   const {
@@ -104,18 +103,6 @@ const TVDetailsPage = () => {
       </div>
     );
   }
-
-  // Modern play icon CSS as a React component
-  const PlayIcon = () => (
-    <span
-      aria-hidden="true"
-      className="block w-5 h-5 ml-0.5"
-      style={{
-        clipPath: 'polygon(0% 0%, 100% 50%, 0% 100%)',
-        backgroundColor: 'currentColor',
-      }}
-    />
-  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -199,7 +186,7 @@ const TVDetailsPage = () => {
 
         {activeTab === 'episodes' && (
           <>
-            {/* Modernized season dropdown */}
+            {/* Modern season dropdown */}
             <div className="mb-6 max-w-xs relative">
               <label
                 htmlFor="season-select"
@@ -212,7 +199,13 @@ const TVDetailsPage = () => {
                 className="appearance-none w-full bg-gray-900 text-white rounded-md p-3 pr-10 focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer"
                 value={selectedSeason}
                 onChange={(e) => setSelectedSeason(Number(e.target.value))}
-              />
+              >
+                {(tvShow.seasons ?? []).map((season) => (
+                  <option key={season.id} value={season.season_number}>
+                    {season.name ?? `Season ${season.season_number}`}
+                  </option>
+                ))}
+              </select>
               <svg
                 className="pointer-events-none absolute top-11 right-3 w-5 h-5 text-gray-400"
                 fill="none"
@@ -221,29 +214,20 @@ const TVDetailsPage = () => {
                 viewBox="0 0 24 24"
                 aria-hidden="true"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19 9l-7 7-7-7"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
-              {(tvShow.seasons ?? []).map((season) => (
-                <option key={season.id} value={season.season_number}>
-                  {season.name ?? `Season ${season.season_number}`}
-                </option>
-              ))}
             </div>
 
-            {/* Episodes list */}
-            <div className="space-y-4 max-w-4xl">
+            {/* Episodes grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 max-w-4xl">
               {(episodes ?? []).map((episode) => (
                 <div
                   key={episode.id}
-                  className="flex items-center gap-4 p-3 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer transition"
+                  className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer transition"
                   onClick={() => handlePlayEpisode(episode)}
                   title={episode.name}
                 >
-                  {/* Episode thumbnail or placeholder text */}
+                  {/* Thumbnail or placeholder */}
                   {episode.still_path ? (
                     <img
                       src={`https://image.tmdb.org/t/p/w185${episode.still_path}`}
@@ -257,7 +241,7 @@ const TVDetailsPage = () => {
                     </div>
                   )}
 
-                  {/* Episode info */}
+                  {/* Episode details */}
                   <div className="flex flex-col flex-grow overflow-hidden">
                     <h3 className="text-white font-semibold truncate">
                       {`Episode ${episode.episode_number}: ${episode.name}`}
@@ -267,24 +251,17 @@ const TVDetailsPage = () => {
                     </p>
                   </div>
 
-                  {/* Duration and Play button */}
-                  <div className="flex flex-col items-end justify-between">
-                    {episode.runtime && (
-                      <span className="text-xs text-gray-400">
-                        {episode.runtime} min
-                      </span>
-                    )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePlayEpisode(episode);
-                      }}
-                      className="text-accent hover:text-accent-light p-1 rounded-full transition-colors"
-                      aria-label={`Play ${episode.name}`}
-                    >
-                      <PlayIcon />
-                    </button>
-                  </div>
+                  {/* Play button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayEpisode(episode);
+                    }}
+                    className="text-accent hover:text-accent-light p-2 rounded-full transition-colors"
+                    aria-label={`Play ${episode.name}`}
+                  >
+                    <Play className="w-5 h-5" />
+                  </button>
                 </div>
               ))}
             </div>
@@ -292,20 +269,16 @@ const TVDetailsPage = () => {
         )}
 
         {activeTab === 'about' && <TVShowAbout tvShow={tvShow} />}
-
         {activeTab === 'cast' && <TVShowCast cast={cast} />}
-
-        {activeTab === 'reviews' && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-6">User Reviews</h2>
-            <ReviewSection mediaId={parseInt(id!, 10)} mediaType="tv" />
-          </div>
-        )}
+        {activeTab === 'reviews' && <ReviewSection tvShowId={tvShow.id} />}
       </div>
 
-      {recommendations.length > 0 && (
-        <ContentRow title="More Like This" media={recommendations} />
-      )}
+      <ContentRow
+        title="Recommendations"
+        contentList={recommendations}
+        type="tv"
+        showMoreLink={`/tv/${tvShow.id}/recommendations`}
+      />
     </div>
   );
 };
