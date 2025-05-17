@@ -31,6 +31,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   const mediaId = media.media_id || media.id;
   const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
 
+  // Limit genres to max 2, no trailing commas
   const genreNames = (media.genre_ids || [])
     .map(id => genreMap[id])
     .filter(Boolean)
