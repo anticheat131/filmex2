@@ -1,4 +1,4 @@
-plugins: [require('@tailwindcss/line-clamp'), require('@tailwindcss/aspect-ratio')],
+
 
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
