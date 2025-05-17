@@ -1,178 +1,183 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getMovieDetails, getMovieRecommendations, getMovieTrailer, getMovieCast } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
-import { MovieDetails, Media, CastMember } from '@/utils/types';
+import { MovieDetails, Media, CastMember } from '@/types';
+import { Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
-import ContentRow from '@/components/ContentRow';
 import ReviewSection from '@/components/ReviewSection';
-import { Play } from 'lucide-react';
+import MovieAbout from '@/components/movie/MovieAbout';
+import MovieCast from '@/components/movie/MovieCast';
+import MovieHeader from '@/components/movie/MovieHeader';
+import ContentRow from '@/components/ContentRow';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useWatchHistory } from '@/hooks/watch-history';
+
+function generateMovieSlugURL(
+  id: number | string,
+  title?: string,
+  year?: string | number
+) {
+  if (!title) return `/movie/${id}`;
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, '') // remove special chars
+    .trim()
+    .replace(/\s+/g, '-');
+
+  if (year) {
+    return `/movie/${id}-${slug}-${year}`;
+  }
+  return `/movie/${id}-${slug}`;
+}
 
 const MovieDetailsPage = () => {
   const { id: rawId } = useParams<{ id: string }>();
-  const [movie, setMovie] = useState<MovieDetails | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [recommendations, setRecommendations] = useState<Media[]>([]);
-  const [trailerKey, setTrailerKey] = useState<string | null>(null);
-  const [cast, setCast] = useState<CastMember[]>([]);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  const {
-    addToFavorites,
-    addToWatchlist,
-    removeFromFavorites,
-    removeFromWatchlist,
-    isInFavorites,
-    isInWatchlist
-  } = useWatchHistory();
+  const [movie, setMovie] = useState<MovieDetails | null>(null);
+  const [recommendations, setRecommendations] = useState<Media[]>([]);
+  const [trailerKey, setTrailerKey] = useState<string | null>(null);
+  const [cast, setCast] = useState<CastMember[]>([]);
+  const [activeTab, setActiveTab] = useState<'about' | 'cast' | 'reviews'>('about');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isInMyWatchlist, setIsInMyWatchlist] = useState(false);
-
-  // ✅ Extract ID from slug (e.g., /movie/oppenheimer-872585-2023)
-  const extractMovieId = (slug: string): number | null => {
-    const match = slug.match(/-(\d+)(?:-\d{4})?$/);
-    return match ? parseInt(match[1], 10) : null;
-  };
-
-  // ✅ Basic slugify (no library)
-  const toSlug = (text: string): string =>
-    text
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '') // remove special chars
-      .replace(/\s+/g, '-') // replace spaces with dashes
-      .replace(/-+/g, '-'); // collapse multiple dashes
+  const id = rawId?.split('-')[0];
 
   useEffect(() => {
+    if (!id) return;
+
     const fetchData = async () => {
-      const movieId = rawId ? extractMovieId(rawId) : null;
-
-      if (!movieId) {
-        setError("Invalid movie ID");
-        setIsLoading(false);
-        return;
-      }
-
       try {
         setIsLoading(true);
 
-        const [movieData, recommendationsData, castData] = await Promise.all([
-          getMovieDetails(movieId),
-          getMovieRecommendations(movieId),
-          getMovieCast(movieId)
-        ]);
+        const details = await getMovieDetails(id);
+        setMovie(details);
 
-        if (!movieData) {
-          setError("Movie not found");
-          return;
+        const title = details.title || details.original_title;
+        const year = details.release_date
+          ? new Date(details.release_date).getFullYear()
+          : undefined;
+
+        const expectedUrl = generateMovieSlugURL(details.id, title, year);
+        if (window.location.pathname !== expectedUrl) {
+          navigate(expectedUrl, { replace: true });
         }
 
-        setMovie(movieData);
-        setRecommendations(recommendationsData);
-        setCast(castData);
+        const recs = await getMovieRecommendations(id);
+        setRecommendations(recs || []);
 
-        const releaseYear = movieData.release_date?.split("-")[0] || "";
-        const slugifiedTitle = toSlug(movieData.title);
-        const expectedSlug = `/movie/${slugifiedTitle}-${movieData.id}-${releaseYear}`;
+        const trailer = await getMovieTrailer(id);
+        setTrailerKey(trailer || null);
 
-        if (window.location.pathname !== expectedSlug) {
-          navigate(expectedSlug, { replace: true });
-        }
+        const movieCast = await getMovieCast(id);
+        setCast(movieCast || []);
 
-        setIsFavorite(isInFavorites(movieId, 'movie'));
-        setIsInMyWatchlist(isInWatchlist(movieId, 'movie'));
-
-      } catch (err) {
-        console.error("Error fetching movie data", err);
-        setError("Failed to load movie data");
+        setError(null);
+      } catch (err: any) {
+        console.error(err);
+        setError('Failed to fetch movie details.');
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [rawId]);
+  }, [id, navigate]);
 
-  useEffect(() => {
-    const fetchTrailer = async () => {
-      if (movie?.id) {
-        try {
-          const trailer = await getMovieTrailer(movie.id);
-          setTrailerKey(trailer);
-        } catch (err) {
-          console.error("Error fetching trailer:", err);
-        }
-      }
-    };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-pulse-slow text-white font-medium">Loading...</div>
+      </div>
+    );
+  }
 
-    fetchTrailer();
-  }, [movie?.id]);
-
-  const handleToggleFavorite = () => {
-    if (!movie) return;
-    if (isFavorite) {
-      removeFromFavorites(movie.id, 'movie');
-      setIsFavorite(false);
-    } else {
-      addToFavorites({
-        media_id: movie.id,
-        media_type: 'movie',
-        title: movie.title,
-        poster_path: movie.poster_path,
-        backdrop_path: movie.backdrop_path,
-        overview: movie.overview,
-        rating: movie.vote_average
-      });
-      setIsFavorite(true);
-    }
-  };
-
-  const handleToggleWatchlist = () => {
-    if (!movie) return;
-    if (isInMyWatchlist) {
-      removeFromWatchlist(movie.id, 'movie');
-      setIsInMyWatchlist(false);
-    } else {
-      addToWatchlist({
-        media_id: movie.id,
-        media_type: 'movie',
-        title: movie.title,
-        poster_path: movie.poster_path,
-        backdrop_path: movie.backdrop_path,
-        overview: movie.overview,
-        rating: movie.vote_average
-      });
-      setIsInMyWatchlist(true);
-    }
-  };
-
-  const handlePlayMovie = () => {
-    if (movie) {
-      navigate(`/watch/movie/${movie.id}`);
-    }
-  };
+  if (error || !movie) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+        <h1 className="text-2xl text-white mb-4">{error || 'Movie not found'}</h1>
+        <Button onClick={() => navigate('/')} variant="outline">
+          Return to Home
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <>
+    <div className="min-h-screen bg-background">
       <Navbar />
-      {isLoading ? (
-        <div className="text-white p-10 text-center">Loading...</div>
-      ) : error ? (
-        <div className="text-red-500 p-10 text-center">{error}</div>
-      ) : movie ? (
-        <div className="text-white p-4">
-          <h1 className="text-3xl font-bold mb-4">{movie.title}</h1>
-          <Button onClick={handlePlayMovie}>
-            <Play className="w-4 h-4 mr-2" /> Watch Now
-          </Button>
+
+      <div className="relative">
+        {!isMobile && trailerKey && (
+          <div className="absolute inset-0 bg-black/60">
+            <iframe
+              className="w-full h-full"
+              src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&mute=1&controls=0&modestbranding=1&loop=1&playlist=${trailerKey}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              title="Trailer"
+            />
+          </div>
+        )}
+
+        <MovieHeader movie={movie} trailerKey={trailerKey} />
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="flex border-b border-white/10 mb-6 overflow-x-auto pb-1 hide-scrollbar">
+          <button
+            className={`py-2 px-4 font-medium whitespace-nowrap ${
+              activeTab === 'about'
+                ? 'text-white border-b-2 border-accent'
+                : 'text-white/60 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('about')}
+          >
+            About
+          </button>
+          <button
+            className={`py-2 px-4 font-medium whitespace-nowrap ${
+              activeTab === 'cast'
+                ? 'text-white border-b-2 border-accent'
+                : 'text-white/60 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('cast')}
+          >
+            Cast
+          </button>
+          <button
+            className={`py-2 px-4 font-medium whitespace-nowrap ${
+              activeTab === 'reviews'
+                ? 'text-white border-b-2 border-accent'
+                : 'text-white/60 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('reviews')}
+          >
+            Reviews
+          </button>
         </div>
-      ) : null}
-    </>
+
+        {activeTab === 'about' && <MovieAbout movie={movie} />}
+        {activeTab === 'cast' && <MovieCast cast={cast} />}
+        {activeTab === 'reviews' && (
+          <ReviewSection
+            mediaType="movie"
+            mediaId={movie.id}
+            recommendations={recommendations}
+          />
+        )}
+      </div>
+
+      <ContentRow
+        title="Recommended Movies"
+        items={recommendations}
+        mediaType="movie"
+        showSeeAll={false}
+      />
+    </div>
   );
 };
 
