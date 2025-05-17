@@ -13,41 +13,37 @@ import { useWatchHistory } from '@/hooks/watch-history';
 import slugify from 'slugify';
 
 const MovieDetailsPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
   const [movie, setMovie] = useState<MovieDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [backdropLoaded, setBackdropLoaded] = useState(false);
-  const [logoLoaded, setLogoLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'about' | 'reviews' | 'cast'>('about');
   const [recommendations, setRecommendations] = useState<Media[]>([]);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [cast, setCast] = useState<CastMember[]>([]);
-  const { 
-    addToFavorites, 
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const {
+    addToFavorites,
     addToWatchlist,
     removeFromFavorites,
     removeFromWatchlist,
     isInFavorites,
-    isInWatchlist 
+    isInWatchlist
   } = useWatchHistory();
   const [isFavorite, setIsFavorite] = useState(false);
   const [isInMyWatchlist, setIsInMyWatchlist] = useState(false);
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
+
+  // ✅ Extract TMDB ID from slug using regex
+  const extractMovieId = (slug: string): number | null => {
+    const match = slug.match(/-(\d+)(?:-\d{4})?$/);
+    return match ? parseInt(match[1], 10) : null;
+  };
 
   useEffect(() => {
-    const fetchMovieData = async () => {
-      if (!id) {
-        setError("Movie ID is required");
-        setIsLoading(false);
-        return;
-      }
+    const fetchData = async () => {
+      const movieId = rawId ? extractMovieId(rawId) : null;
 
-      const idParts = id.split('-');
-      const extractedId = parseInt(idParts[idParts.length - 2], 10); // Get second last part as ID
-
-      if (isNaN(extractedId)) {
+      if (!movieId) {
         setError("Invalid movie ID");
         setIsLoading(false);
         return;
@@ -55,11 +51,10 @@ const MovieDetailsPage = () => {
 
       try {
         setIsLoading(true);
-        setError(null);
         const [movieData, recommendationsData, castData] = await Promise.all([
-          getMovieDetails(extractedId),
-          getMovieRecommendations(extractedId),
-          getMovieCast(extractedId),
+          getMovieDetails(movieId),
+          getMovieRecommendations(movieId),
+          getMovieCast(movieId),
         ]);
 
         if (!movieData) {
@@ -71,53 +66,43 @@ const MovieDetailsPage = () => {
         setRecommendations(recommendationsData);
         setCast(castData);
 
-        // ✅ Redirect to correct slug + ID + year
+        // ✅ Redirect to correct slug if needed
+        const releaseYear = movieData.release_date?.split("-")[0];
         const slug = slugify(movieData.title, { lower: true, strict: true });
-        const releaseYear = movieData.release_date?.split('-')[0] || 'unknown';
         const expectedPath = `/movie/${slug}-${movieData.id}-${releaseYear}`;
 
         if (window.location.pathname !== expectedPath) {
           navigate(expectedPath, { replace: true });
         }
 
-      } catch (error) {
-        console.error('Error fetching movie data:', error);
-        setError("Failed to load movie data. Please try again.");
+        setIsFavorite(isInFavorites(movieId, 'movie'));
+        setIsInMyWatchlist(isInWatchlist(movieId, 'movie'));
+
+      } catch (err) {
+        console.error("Error fetching movie data", err);
+        setError("Failed to load movie data");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchMovieData();
-  }, [id, navigate]);
+    fetchData();
+  }, [rawId]);
 
   useEffect(() => {
     const fetchTrailer = async () => {
       if (movie?.id) {
         try {
-          const trailerData = await getMovieTrailer(movie.id);
-          setTrailerKey(trailerData);
-        } catch (error) {
-          console.error('Error fetching trailer:', error);
+          const trailer = await getMovieTrailer(movie.id);
+          setTrailerKey(trailer);
+        } catch (err) {
+          console.error("Error fetching trailer:", err);
         }
       }
     };
 
     fetchTrailer();
   }, [movie?.id]);
-
-  useEffect(() => {
-    if (movie?.id) {
-      setIsFavorite(isInFavorites(movie.id, 'movie'));
-      setIsInMyWatchlist(isInWatchlist(movie.id, 'movie'));
-    }
-  }, [movie?.id, isInFavorites, isInWatchlist]);
-
-  const handlePlayMovie = () => {
-    if (movie) {
-      navigate(`/watch/movie/${movie.id}`);
-    }
-  };
 
   const handleToggleFavorite = () => {
     if (!movie) return;
@@ -157,18 +142,30 @@ const MovieDetailsPage = () => {
     }
   };
 
-  const formatRuntime = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
+  const handlePlayMovie = () => {
+    if (movie) {
+      navigate(`/watch/movie/${movie.id}`);
+    }
   };
 
-  // ... (the rest of your JSX and UI rendering goes here)
+  // Loading, error, and UI rendering can be added below
 
   return (
     <>
       <Navbar />
-      {/* Render your movie content, loader, error, and UI here */}
+      {isLoading ? (
+        <div className="text-white p-10 text-center">Loading...</div>
+      ) : error ? (
+        <div className="text-red-500 p-10 text-center">{error}</div>
+      ) : movie ? (
+        <div className="text-white p-4">
+          {/* Add your movie detail JSX here */}
+          <h1 className="text-3xl font-bold mb-4">{movie.title}</h1>
+          <Button onClick={handlePlayMovie}>
+            <Play className="w-4 h-4 mr-2" /> Watch Now
+          </Button>
+        </div>
+      ) : null}
     </>
   );
 };
