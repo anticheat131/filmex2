@@ -4,8 +4,6 @@ import {
   getMovieDetails,
   getMovieRecommendations,
   getMovieTrailer,
-  backdropSizes,
-  posterSizes,
   getMovieCast
 } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
@@ -35,9 +33,6 @@ const MovieDetailsPage = () => {
   const [movie, setMovie] = useState<MovieDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [backdropLoaded, setBackdropLoaded] = useState(false);
-  const [logoLoaded, setLogoLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'about' | 'reviews' | 'cast'>('about');
   const [recommendations, setRecommendations] = useState<Media[]>([]);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [cast, setCast] = useState<CastMember[]>([]);
@@ -93,7 +88,6 @@ const MovieDetailsPage = () => {
         setRecommendations(recommendationsData);
         setCast(castData);
 
-        // SEO-friendly redirect
         const slugTitle = movieData.title
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
@@ -221,9 +215,44 @@ const MovieDetailsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-white">
       <Navbar />
-      {/* ... existing JSX remains unchanged ... */}
+      <div
+        className="relative w-full h-[60vh] bg-cover bg-center"
+        style={{
+          backgroundImage: `url(${getImageUrl(movie.backdrop_path, 'original')})`
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+        <div className="absolute bottom-6 left-6">
+          <h1 className="text-4xl font-bold">{movie.title}</h1>
+          <div className="flex gap-4 text-sm mt-2 text-gray-300">
+            <span><Calendar className="inline-block w-4 h-4 mr-1" /> {movie.release_date}</span>
+            <span><Clock className="inline-block w-4 h-4 mr-1" /> {formatRuntime(movie.runtime)}</span>
+            <span><Star className="inline-block w-4 h-4 mr-1" /> {movie.vote_average.toFixed(1)}</span>
+          </div>
+          <div className="mt-4 flex gap-3">
+            <Button onClick={handlePlayMovie}><Play className="mr-2 w-4 h-4" /> Watch Now</Button>
+            <Button onClick={handleToggleFavorite} variant="secondary">
+              <Heart className="mr-2 w-4 h-4" /> {isFavorite ? 'Remove Favorite' : 'Add to Favorites'}
+            </Button>
+            <Button onClick={handleToggleWatchlist} variant="secondary">
+              <Bookmark className="mr-2 w-4 h-4" /> {isInMyWatchlist ? 'Remove Watchlist' : 'Add to Watchlist'}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6 max-w-6xl mx-auto">
+        <h2 className="text-xl font-semibold mb-2">Overview</h2>
+        <p className="text-gray-300">{movie.overview}</p>
+
+        <h2 className="text-xl font-semibold mt-6 mb-2">Genres</h2>
+        <p className="text-gray-300">{movie.genres.map(g => g.name).join(', ')}</p>
+
+        <ReviewSection mediaId={movie.id} mediaType="movie" />
+        <ContentRow title="You May Also Like" items={recommendations} />
+      </div>
     </div>
   );
 };
