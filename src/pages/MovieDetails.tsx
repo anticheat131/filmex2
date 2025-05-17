@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getMovieDetails, getMovieRecommendations, getMovieTrailer, getMovieCast } from '@/utils/api';
-import { getImageUrl } from '@/utils/services/tmdb';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import {
+  getMovieDetails,
+  getMovieRecommendations,
+  getMovieTrailer,
+  getMovieCast,
+} from '@/utils/api';
 import { MovieDetails, Media, CastMember } from '@/types';
-import { Play } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import ReviewSection from '@/components/ReviewSection';
 import MovieAbout from '@/components/movie/MovieAbout';
@@ -12,28 +14,21 @@ import MovieCast from '@/components/movie/MovieCast';
 import MovieHeader from '@/components/movie/MovieHeader';
 import ContentRow from '@/components/ContentRow';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
 
-function generateMovieSlugURL(
-  id: number | string,
-  title?: string,
-  year?: string | number
-) {
-  if (!title) return `/movie/${id}`;
-  const slug = title
+function createSlug(title: string, year?: string | number) {
+  const safeTitle = title
     .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, '') // remove special chars
-    .trim()
-    .replace(/\s+/g, '-');
-
-  if (year) {
-    return `/movie/${id}-${slug}-${year}`;
-  }
-  return `/movie/${id}-${slug}`;
+    .replace(/[^a-z0-9 ]/g, '')
+    .replace(/\s+/g, '-')
+    .trim();
+  return year ? `${safeTitle}-${year}` : safeTitle;
 }
 
 const MovieDetailsPage = () => {
-  const { id: rawId } = useParams<{ id: string }>();
+  const { id: slugId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
 
   const [movie, setMovie] = useState<MovieDetails | null>(null);
@@ -41,10 +36,10 @@ const MovieDetailsPage = () => {
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [cast, setCast] = useState<CastMember[]>([]);
   const [activeTab, setActiveTab] = useState<'about' | 'cast' | 'reviews'>('about');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const id = rawId?.split('-')[0];
+  const id = slugId?.split('-')[0]; // Get the numeric ID part
 
   useEffect(() => {
     if (!id) return;
@@ -52,18 +47,17 @@ const MovieDetailsPage = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        const movieData = await getMovieDetails(id);
+        setMovie(movieData);
 
-        const details = await getMovieDetails(id);
-        setMovie(details);
+        // Generate slug from title and year
+        const title = movieData.title || movieData.original_title || 'movie';
+        const year = movieData.release_date?.split('-')[0];
+        const expectedSlug = createSlug(title, year);
+        const expectedPath = `/movie/${movieData.id}-${expectedSlug}`;
 
-        const title = details.title || details.original_title;
-        const year = details.release_date
-          ? new Date(details.release_date).getFullYear()
-          : undefined;
-
-        const expectedUrl = generateMovieSlugURL(details.id, title, year);
-        if (window.location.pathname !== expectedUrl) {
-          navigate(expectedUrl, { replace: true });
+        if (location.pathname !== expectedPath) {
+          navigate(expectedPath, { replace: true });
         }
 
         const recs = await getMovieRecommendations(id);
@@ -74,7 +68,6 @@ const MovieDetailsPage = () => {
 
         const movieCast = await getMovieCast(id);
         setCast(movieCast || []);
-
         setError(null);
       } catch (err: any) {
         console.error(err);
@@ -85,23 +78,21 @@ const MovieDetailsPage = () => {
     };
 
     fetchData();
-  }, [id, navigate]);
+  }, [id, location.pathname, navigate]);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="animate-pulse-slow text-white font-medium">Loading...</div>
+      <div className="flex items-center justify-center min-h-screen bg-background text-white">
+        Loading...
       </div>
     );
   }
 
   if (error || !movie) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-        <h1 className="text-2xl text-white mb-4">{error || 'Movie not found'}</h1>
-        <Button onClick={() => navigate('/')} variant="outline">
-          Return to Home
-        </Button>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background text-white">
+        <h1 className="text-2xl mb-4">{error || 'Movie not found'}</h1>
+        <Button onClick={() => navigate('/')}>Return to Home</Button>
       </div>
     );
   }
@@ -116,7 +107,7 @@ const MovieDetailsPage = () => {
             <iframe
               className="w-full h-full"
               src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&mute=1&controls=0&modestbranding=1&loop=1&playlist=${trailerKey}`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allow="autoplay; encrypted-media"
               allowFullScreen
               title="Trailer"
             />
@@ -128,36 +119,19 @@ const MovieDetailsPage = () => {
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex border-b border-white/10 mb-6 overflow-x-auto pb-1 hide-scrollbar">
-          <button
-            className={`py-2 px-4 font-medium whitespace-nowrap ${
-              activeTab === 'about'
-                ? 'text-white border-b-2 border-accent'
-                : 'text-white/60 hover:text-white'
-            }`}
-            onClick={() => setActiveTab('about')}
-          >
-            About
-          </button>
-          <button
-            className={`py-2 px-4 font-medium whitespace-nowrap ${
-              activeTab === 'cast'
-                ? 'text-white border-b-2 border-accent'
-                : 'text-white/60 hover:text-white'
-            }`}
-            onClick={() => setActiveTab('cast')}
-          >
-            Cast
-          </button>
-          <button
-            className={`py-2 px-4 font-medium whitespace-nowrap ${
-              activeTab === 'reviews'
-                ? 'text-white border-b-2 border-accent'
-                : 'text-white/60 hover:text-white'
-            }`}
-            onClick={() => setActiveTab('reviews')}
-          >
-            Reviews
-          </button>
+          {['about', 'cast', 'reviews'].map((tab) => (
+            <button
+              key={tab}
+              className={`py-2 px-4 font-medium ${
+                activeTab === tab
+                  ? 'text-white border-b-2 border-accent'
+                  : 'text-white/60 hover:text-white'
+              }`}
+              onClick={() => setActiveTab(tab as any)}
+            >
+              {tab[0].toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
         </div>
 
         {activeTab === 'about' && <MovieAbout movie={movie} />}
