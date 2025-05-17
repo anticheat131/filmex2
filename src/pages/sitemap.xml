@@ -1,0 +1,59 @@
+// pages/sitemap.xml.tsx
+
+import { GetServerSideProps } from 'next';
+
+const BASE_URL = 'https://fmovies4u.com';
+const TMDB_API_KEY = process.env.VITE_TMDB_API_KEY;
+const TMDB_TRENDING_URL = `https://api.themoviedb.org/3/trending/all/week?api_key=${TMDB_API_KEY}&language=en-US&page=1`;
+
+const slugify = (str: string) =>
+  str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+const generateSiteMap = (urls: string[]) => `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  ${urls
+    .map((url) => {
+      return `
+    <url>
+      <loc>${BASE_URL}${url}</loc>
+      <changefreq>daily</changefreq>
+      <priority>0.8</priority>
+    </url>`;
+    })
+    .join('')}
+</urlset>`;
+
+export const getServerSideProps: GetServerSideProps = async ({ res }) => {
+  const staticPaths = ['/', '/movies', '/tv', '/collections'];
+
+  let dynamicPaths: string[] = [];
+
+  try {
+    const response = await fetch(TMDB_TRENDING_URL);
+    const data = await response.json();
+
+    dynamicPaths = data.results.slice(0, 100).map((item: any) => {
+      const title = item.title || item.name || 'untitled';
+      const slug = slugify(title);
+      const type = item.media_type === 'tv' ? 'tv' : 'movie';
+      return `/${type}/${item.id}-${slug}`;
+    });
+  } catch (error) {
+    console.error('Failed to fetch TMDB data for sitemap:', error);
+  }
+
+  const sitemap = generateSiteMap([...staticPaths, ...dynamicPaths]);
+
+  res.setHeader('Content-Type', 'text/xml');
+  res.write(sitemap);
+  res.end();
+
+  return { props: {} };
+};
+
+export default function Sitemap() {
+  return null;
+}
