@@ -13,7 +13,6 @@ import TVShowCast from '@/components/tv/TVShowCast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTVDetails } from '@/hooks/use-tv-details';
 
-// Helper to generate slug URL for TV show
 function generateTVShowSlugURL(
   id: number | string,
   name?: string,
@@ -23,7 +22,7 @@ function generateTVShowSlugURL(
 
   const slug = name
     .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, '') // remove special chars
+    .replace(/[^a-z0-9 ]/g, '')
     .trim()
     .replace(/\s+/g, '-');
 
@@ -105,6 +104,18 @@ const TVDetailsPage = () => {
       </div>
     );
   }
+
+  // Modern play icon CSS as a React component
+  const PlayIcon = () => (
+    <span
+      aria-hidden="true"
+      className="block w-5 h-5 ml-0.5"
+      style={{
+        clipPath: 'polygon(0% 0%, 100% 50%, 0% 100%)',
+        backgroundColor: 'currentColor',
+      }}
+    />
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -188,8 +199,8 @@ const TVDetailsPage = () => {
 
         {activeTab === 'episodes' && (
           <>
-            {/* Season dropdown instead of horizontal buttons */}
-            <div className="mb-6 max-w-xs">
+            {/* Modernized season dropdown */}
+            <div className="mb-6 max-w-xs relative">
               <label
                 htmlFor="season-select"
                 className="block mb-2 text-white font-semibold"
@@ -198,16 +209,29 @@ const TVDetailsPage = () => {
               </label>
               <select
                 id="season-select"
-                className="w-full bg-gray-900 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent"
+                className="appearance-none w-full bg-gray-900 text-white rounded-md p-3 pr-10 focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer"
                 value={selectedSeason}
                 onChange={(e) => setSelectedSeason(Number(e.target.value))}
+              />
+              <svg
+                className="pointer-events-none absolute top-11 right-3 w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
               >
-                {(tvShow.seasons ?? []).map((season) => (
-                  <option key={season.id} value={season.season_number}>
-                    {season.name ?? `Season ${season.season_number}`}
-                  </option>
-                ))}
-              </select>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+              {(tvShow.seasons ?? []).map((season) => (
+                <option key={season.id} value={season.season_number}>
+                  {season.name ?? `Season ${season.season_number}`}
+                </option>
+              ))}
             </div>
 
             {/* Episodes list */}
@@ -219,21 +243,25 @@ const TVDetailsPage = () => {
                   onClick={() => handlePlayEpisode(episode)}
                   title={episode.name}
                 >
-                  {/* Episode thumbnail */}
-                  <img
-                    src={
-                      episode.still_path
-                        ? `https://image.tmdb.org/t/p/w185${episode.still_path}`
-                        : '/placeholder-episode.png'
-                    }
-                    alt={episode.name}
-                    className="w-24 h-14 rounded-md object-cover flex-shrink-0"
-                    loading="lazy"
-                  />
+                  {/* Episode thumbnail or placeholder text */}
+                  {episode.still_path ? (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w185${episode.still_path}`}
+                      alt={episode.name}
+                      className="w-24 h-14 rounded-md object-cover flex-shrink-0"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-24 h-14 rounded-md bg-gray-700 flex items-center justify-center text-gray-400 text-xs font-semibold select-none">
+                      No Photo
+                    </div>
+                  )}
 
                   {/* Episode info */}
                   <div className="flex flex-col flex-grow overflow-hidden">
-                    <h3 className="text-white font-semibold truncate">{`Episode ${episode.episode_number}: ${episode.name}`}</h3>
+                    <h3 className="text-white font-semibold truncate">
+                      {`Episode ${episode.episode_number}: ${episode.name}`}
+                    </h3>
                     <p className="text-sm text-gray-300 truncate">
                       {episode.overview || 'No description available.'}
                     </p>
@@ -251,10 +279,10 @@ const TVDetailsPage = () => {
                         e.stopPropagation();
                         handlePlayEpisode(episode);
                       }}
-                      className="text-accent hover:text-accent-light"
+                      className="text-accent hover:text-accent-light p-1 rounded-full transition-colors"
                       aria-label={`Play ${episode.name}`}
                     >
-                      ▶️
+                      <PlayIcon />
                     </button>
                   </div>
                 </div>
