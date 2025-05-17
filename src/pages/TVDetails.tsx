@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play } from 'lucide-react';
-
+import { ArrowLeft, Play } from 'lucide-react'; // Using lucide-react's Play icon for play button
 import { Button } from '@/components/ui/button';
 import ContentRow from '@/components/ContentRow';
 import Navbar from '@/components/Navbar';
@@ -9,7 +8,6 @@ import ReviewSection from '@/components/ReviewSection';
 import TVShowHeader from '@/components/tv/TVShowHeader';
 import TVShowAbout from '@/components/tv/TVShowAbout';
 import TVShowCast from '@/components/tv/TVShowCast';
-
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTVDetails } from '@/hooks/use-tv-details';
 
@@ -19,17 +17,15 @@ function generateTVShowSlugURL(
   year?: string | number
 ) {
   if (!name) return `/tv/${id}`;
-
   const slug = name
     .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, '')
+    .replace(/[^a-z0-9 ]/g, '') // remove special chars
     .trim()
     .replace(/\s+/g, '-');
 
   if (year) {
     return `/tv/${id}-${slug}-${year}`;
   }
-
   return `/tv/${id}-${slug}`;
 }
 
@@ -37,6 +33,7 @@ const TVDetailsPage = () => {
   const { id: rawId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
   const id = rawId?.split('-')[0];
 
   const {
@@ -65,9 +62,7 @@ const TVDetailsPage = () => {
       const year = tvShow.first_air_date
         ? new Date(tvShow.first_air_date).getFullYear()
         : undefined;
-
       const expectedUrl = generateTVShowSlugURL(tvShow.id, name, year);
-
       if (window.location.pathname !== expectedUrl) {
         navigate(expectedUrl, { replace: true });
       }
@@ -103,6 +98,28 @@ const TVDetailsPage = () => {
       </div>
     );
   }
+
+  // Modern styled season dropdown
+  const renderSeasonDropdown = () => (
+    <select
+      value={selectedSeason ?? ''}
+      onChange={(e) => setSelectedSeason(Number(e.target.value))}
+      className="bg-background border border-white/20 rounded-md text-white px-4 py-2 max-w-[160px] appearance-none cursor-pointer relative pr-8"
+      aria-label="Select Season"
+      style={{
+        backgroundImage: `url("data:image/svg+xml;utf8,<svg fill='white' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'right 0.75rem center',
+        backgroundSize: '1rem',
+      }}
+    >
+      {tvShow.seasons?.map((season) => (
+        <option key={season.id} value={season.season_number}>
+          {season.name || `Season ${season.season_number}`}
+        </option>
+      ))}
+    </select>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -186,100 +203,95 @@ const TVDetailsPage = () => {
 
         {activeTab === 'episodes' && (
           <>
-            {/* Modern season dropdown */}
-            <div className="mb-6 max-w-xs relative">
-              <label
-                htmlFor="season-select"
-                className="block mb-2 text-white font-semibold"
-              >
-                Select Season
-              </label>
-              <select
-                id="season-select"
-                className="appearance-none w-full bg-gray-900 text-white rounded-md p-3 pr-10 focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer"
-                value={selectedSeason}
-                onChange={(e) => setSelectedSeason(Number(e.target.value))}
-              >
-                {(tvShow.seasons ?? []).map((season) => (
-                  <option key={season.id} value={season.season_number}>
-                    {season.name ?? `Season ${season.season_number}`}
-                  </option>
-                ))}
-              </select>
-              <svg
-                className="pointer-events-none absolute top-11 right-3 w-5 h-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
+            <div className="mb-4 flex justify-start">{renderSeasonDropdown()}</div>
 
-            {/* Episodes grid with wider cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 max-w-5xl">
-              {(episodes ?? []).map((episode) => (
-                <div
-                  key={episode.id}
-                  className="flex items-center gap-4 p-4 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer transition"
-                  onClick={() => handlePlayEpisode(episode)}
-                  title={episode.name}
-                  style={{ minWidth: '280px' }}
-                >
-                  {/* Thumbnail or placeholder */}
-                  {episode.still_path ? (
-                    <img
-                      src={`https://image.tmdb.org/t/p/w185${episode.still_path}`}
-                      alt={episode.name}
-                      className="w-28 h-16 rounded-md object-cover flex-shrink-0"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-28 h-16 rounded-md bg-gray-700 flex items-center justify-center text-gray-400 text-xs font-semibold select-none">
-                      No Photo
-                    </div>
-                  )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+              {episodes?.map((ep) => {
+                const episodeTitle = ep.name || `Episode ${ep.episode_number}`;
+                const description = ep.overview?.trim()
+                  ? ep.overview
+                  : episodeTitle;
 
-                  {/* Episode details */}
-                  <div className="flex flex-col flex-grow overflow-hidden">
-                    <h3 className="text-white font-semibold truncate">
-                      {`Episode ${episode.episode_number}: ${episode.name}`}
-                    </h3>
-                    <p className="text-sm text-gray-300 truncate">{episode.name}</p>
-                  </div>
-
-                  {/* Play button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePlayEpisode(episode);
-                    }}
-                    className="text-accent hover:text-accent-light p-2 rounded-full transition-colors"
-                    aria-label={`Play ${episode.name}`}
+                return (
+                  <div
+                    key={ep.id}
+                    className="bg-gray-900 rounded-md p-3 flex flex-col cursor-pointer hover:bg-accent/80 transition"
+                    onClick={() =>
+                      handlePlayEpisode(
+                        selectedSeason!,
+                        ep.episode_number
+                      )
+                    }
+                    title={`${episodeTitle} - ${description}`}
                   >
-                    <Play className="w-5 h-5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+                    {/* Episode image or placeholder */}
+                    {ep.still_path ? (
+                      <img
+                        src={`https://image.tmdb.org/t/p/w300${ep.still_path}`}
+                        alt={episodeTitle}
+                        className="rounded-md mb-2 object-cover w-full h-40"
+                      />
+                    ) : (
+                      <div className="rounded-md mb-2 w-full h-40 bg-gray-700 flex items-center justify-center text-gray-400 text-sm select-none">
+                        No photo available
+                      </div>
+                    )}
 
-        {activeTab === 'about' && <TVShowAbout tvShow={tvShow} />}
-        {activeTab === 'cast' && <TVShowCast cast={cast} />}
-        {activeTab === 'reviews' && <ReviewSection tvShowId={tvShow.id} />}
-      </div>
+                    <div className="flex justify-between items-center mb-1">
+                      <p
+                        className="text-white font-semibold truncate max-w-[70%]"
+                        title={episodeTitle}
+                      >
+                        Ep {ep.episode_number}: {episodeTitle}
+                      </p>
 
-      <ContentRow
-        title="Recommendations"
-        contentList={recommendations}
-        type="tv"
-        showMoreLink={`/tv/${tvShow.id}/recommendations`}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePlayEpisode(
+                            selectedSeason!,
+                            ep.episode_number
+                          );
+                        }}
+                        aria-label={`Play Episode ${ep.episode_number}`}
+                        className="text-accent hover:text-accent-light transition"
+>
+<Play size={20} />
+</button>
+</div>
+                {description && (
+                  <p className="text-sm text-white/70 line-clamp-3">
+                    {description}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </>
+    )}
+
+    {activeTab === 'about' && <TVShowAbout tvShow={tvShow} />}
+
+    {activeTab === 'cast' && <TVShowCast cast={cast} />}
+
+    {activeTab === 'reviews' && (
+      <ReviewSection
+        mediaType="tv"
+        mediaId={tvShow.id}
+        recommendations={recommendations}
       />
-    </div>
-  );
+    )}
+  </div>
+
+  <ContentRow
+    title="Recommended Shows"
+    items={recommendations}
+    mediaType="tv"
+    showSeeAll={false}
+  />
+</div>
+);
 };
 
 export default TVDetailsPage;
