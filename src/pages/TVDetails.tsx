@@ -1,134 +1,125 @@
+// app/tv/[id]/page.tsx
+
+"use client";
+
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { useParams } from "next/navigation";
 import axios from "axios";
-import { Play } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import Image from "next/image";
+import Link from "next/link";
+import { PlayIcon } from "lucide-react";
+import { format } from "date-fns";
+
+type Episode = {
+  id: number;
+  name: string;
+  still_path: string | null;
+  overview: string;
+  season_number: number;
+  episode_number: number;
+};
+
+type TVDetails = {
+  id: number;
+  name: string;
+  overview: string;
+  poster_path: string;
+  first_air_date: string;
+  genres: { id: number; name: string }[];
+  vote_average: number;
+  number_of_seasons: number;
+};
 
 const TVDetailsPage = () => {
-  const router = useRouter();
-  const { id } = router.query;
-
-  const [tvShow, setTVShow] = useState<any>(null);
-  const [selectedSeason, setSelectedSeason] = useState<any>(null);
-  const [episodes, setEpisodes] = useState<any[]>([]);
+  const { id } = useParams();
+  const [tv, setTV] = useState<TVDetails | null>(null);
+  const [episodes, setEpisodes] = useState<Episode[]>([]);
 
   useEffect(() => {
     if (!id) return;
-    const fetchTVShow = async () => {
+
+    const fetchTVDetails = async () => {
       try {
-        const res = await axios.get(
-          `https://api.themoviedb.org/3/tv/${id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
+        const tvRes = await axios.get(
+          `https://api.themoviedb.org/3/tv/${id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=en-US`
         );
-        setTVShow(res.data);
-        if (res.data.seasons && res.data.seasons.length > 0) {
-          setSelectedSeason(res.data.seasons[res.data.seasons.length - 1]); // Latest season by default
-        }
+        setTV(tvRes.data);
+
+        const seasonRes = await axios.get(
+          `https://api.themoviedb.org/3/tv/${id}/season/1?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=en-US`
+        );
+        setEpisodes(seasonRes.data.episodes || []);
       } catch (error) {
-        console.error("Failed to fetch TV show:", error);
+        console.error("Failed to fetch TV details:", error);
       }
     };
 
-    fetchTVShow();
+    fetchTVDetails();
   }, [id]);
 
-  useEffect(() => {
-    const fetchEpisodes = async () => {
-      if (!selectedSeason) return;
-      try {
-        const res = await axios.get(
-          `https://api.themoviedb.org/3/tv/${id}/season/${selectedSeason.season_number}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
-        );
-        setEpisodes(res.data.episodes || []);
-      } catch (error) {
-        console.error("Failed to fetch episodes:", error);
-      }
-    };
-
-    fetchEpisodes();
-  }, [id, selectedSeason]);
-
-  const handlePlayEpisode = (episode: any) => {
-    router.push(`/watch/tv/${id}?season=${selectedSeason.season_number}&episode=${episode.episode_number}`);
-  };
-
-  if (!tvShow) return <div className="text-white p-4">Loading...</div>;
+  if (!tv) return <div className="text-white p-4">Loading...</div>;
 
   return (
-    <div className="p-4 sm:p-8 text-white">
-      <h1 className="text-3xl font-bold mb-6">{tvShow.name}</h1>
-
-      <div className="mb-6">
-        <Label className="text-white mb-2 block text-lg font-semibold">Season</Label>
-        <Select
-          value={selectedSeason?.season_number?.toString()}
-          onValueChange={(value) =>
-            setSelectedSeason(
-              tvShow.seasons?.find(
-                (s: any) => s.season_number.toString() === value
-              )
-            )
-          }
-        >
-          <SelectTrigger className="w-[220px] bg-white/10 text-white border-none focus:ring-0 focus:outline-none">
-            <SelectValue placeholder="Select Season" />
-          </SelectTrigger>
-          <SelectContent>
-            {tvShow.seasons?.map((season: any) => (
-              <SelectItem
-                key={season.id}
-                value={season.season_number.toString()}
-              >
-                {season.name || `Season ${season.season_number}`}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <div className="p-4 text-white max-w-6xl mx-auto">
+      <div className="flex flex-col md:flex-row gap-6 mb-10">
+        <Image
+          src={`https://image.tmdb.org/t/p/w500${tv.poster_path}`}
+          alt={tv.name}
+          width={300}
+          height={450}
+          className="rounded-xl object-cover w-full md:w-[300px] h-auto"
+        />
+        <div>
+          <h1 className="text-3xl font-bold mb-2">{tv.name}</h1>
+          <div className="flex items-center gap-2 text-sm mb-4 text-gray-300">
+            <span>{format(new Date(tv.first_air_date), "MMMM d, yyyy")}</span>
+            <span>•</span>
+            <span>{tv.vote_average.toFixed(1)} IMDb</span>
+            <span>•</span>
+            <span>
+              {tv.genres.slice(0, 2).map((genre, i, arr) => (
+                <span key={genre.id}>
+                  {genre.name}
+                  {i < arr.length - 1 && ", "}
+                </span>
+              ))}
+            </span>
+          </div>
+          <p className="text-gray-400 max-w-xl">{tv.overview}</p>
+        </div>
       </div>
 
       <h2 className="text-2xl font-semibold mb-4">Episodes</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {episodes.map((ep: any) => (
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {episodes.map((ep) => (
           <div
             key={ep.id}
-            className="bg-white/5 rounded-2xl overflow-hidden shadow hover:shadow-lg transition-shadow group"
+            className="bg-[#1c1c1c] rounded-lg overflow-hidden shadow hover:shadow-lg transition duration-300"
           >
-            <div className="relative aspect-video bg-black">
-              <img
-                src={
-                  ep.still_path
-                    ? `https://image.tmdb.org/t/p/w780${ep.still_path}`
-                    : "/placeholder.jpg"
-                }
+            {ep.still_path ? (
+              <Image
+                src={`https://image.tmdb.org/t/p/w500${ep.still_path}`}
                 alt={ep.name}
-                className="w-full h-full object-cover"
+                width={500}
+                height={281}
+                className="w-full h-56 object-cover"
               />
-              <button
-                onClick={() => handlePlayEpisode(ep)}
-                className="absolute bottom-3 right-3 bg-white text-black px-3 py-1 rounded-full text-sm font-semibold opacity-90 hover:opacity-100 transition"
-              >
-                <Play className="w-4 h-4 inline mr-1" /> Play
-              </button>
-            </div>
+            ) : (
+              <div className="w-full h-56 bg-gray-700 flex items-center justify-center text-gray-400 text-sm">
+                No Image
+              </div>
+            )}
             <div className="p-4">
-              <h3 className="text-white text-lg font-semibold mb-1">
-                Episode {ep.episode_number}: {ep.name}
-              </h3>
-              {ep.overview ? (
-                <p className="text-white/70 text-sm line-clamp-3">
-                  {ep.overview}
-                </p>
-              ) : (
-                <p className="text-white/40 italic text-sm">
-                  No description available.
-                </p>
-              )}
+              <h3 className="text-lg font-semibold">{ep.name}</h3>
+              <p className="text-sm text-gray-400 mb-2 line-clamp-2">
+                {ep.overview || "No description available."}
+              </p>
+              <Link
+                href={`/tv/${id}/season/${ep.season_number}/episode/${ep.episode_number}`}
+                className="inline-flex items-center text-blue-400 hover:underline text-sm"
+              >
+                <PlayIcon className="w-4 h-4 mr-1" /> Watch Episode
+              </Link>
             </div>
           </div>
         ))}
