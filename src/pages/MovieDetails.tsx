@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import ContentRow from '@/components/ContentRow';
 import ReviewSection from '@/components/ReviewSection';
-import { Play, Clock, Calendar, Star, ArrowLeft, Shield, Heart, Bookmark } from 'lucide-react';
+import { Play, Clock, Calendar, Star, ArrowLeft, Heart, Bookmark } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useWatchHistory } from '@/hooks/watch-history';
 
@@ -252,150 +252,119 @@ const MovieDetailsPage = () => {
                               transition-all duration-300 ease-in-out hover:scale-105">
                   {/* Loading skeleton */}
                   {!logoLoaded && (
-                    <div className="absolute inset-0 bg-background image-skeleton rounded-lg" />
-                  )}
-                  
-                  <img
-                    src={getImageUrl(movie.logo_path, backdropSizes.original)}
-                   
+                    <div class Name="bg-gray-800 rounded-lg h-16 animate-pulse" />
+)}
+<img
+src={getImageUrl(movie.logo_path, posterSizes.medium)}
 alt={${movie.title} logo}
-className={w-full object-contain rounded-lg ${ logoLoaded ? 'opacity-100' : 'opacity-0' }}
+className={w-full h-auto object-contain ${ logoLoaded ? 'opacity-100' : 'opacity-0' }}
 onLoad={() => setLogoLoaded(true)}
-draggable={false}
 />
 </div>
 ) : (
-<h1 className="text-3xl font-bold text-white mb-3">{movie.title}</h1>
+<h1 className="text-4xl font-bold text-white mb-2">{movie.title}</h1>
 )}
-          {/* Basic info */}
-          <div className="flex flex-wrap items-center gap-4 mb-4 text-white text-sm">
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              <span>{movie.runtime ? formatRuntime(movie.runtime) : 'N/A'}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              <span>{movie.release_date || 'Unknown'}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 text-yellow-400" />
-              <span>{movie.vote_average.toFixed(1)}</span>
-            </div>
+          <div className="flex flex-wrap gap-3 mb-4 text-sm font-medium text-white/80">
+            <span>{movie.release_date?.split('-')[0]}</span>
+            <span>•</span>
+            <span>{formatRuntime(movie.runtime)}</span>
+            <span>•</span>
+            <span>TMDB: {movie.vote_average.toFixed(1)}</span>
+            <span>•</span>
+            <span>
+              {movie.genres.slice(0, 3).map((genre, idx) => (
+                <span key={genre.id}>
+                  {genre.name}
+                  {idx < Math.min(2, movie.genres.length - 1) ? ', ' : ''}
+                </span>
+              ))}
+            </span>
           </div>
-
-          {/* Genres */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {movie.genres?.slice(0, 3).map((genre) => (
-              <span
-                key={genre.id}
-                className="bg-primary/50 text-primary rounded-full px-3 py-1 text-xs font-semibold"
-              >
-                {genre.name}
-              </span>
-            ))}
-          </div>
-
-          {/* Overview */}
-          <p className="text-gray-300 mb-6 max-w-3xl">{movie.overview}</p>
-
-          {/* Action buttons */}
+          
+          <p className="text-white/90 mb-6 max-w-prose leading-relaxed">{movie.overview}</p>
+          
           <div className="flex gap-4 flex-wrap">
-            <Button onClick={handlePlayMovie} size="lg" className="flex items-center gap-2">
-              <Play className="h-5 w-5" /> Play
+            <Button onClick={handlePlayMovie} className="bg-primary text-black flex items-center gap-2 hover:bg-primary-dark">
+              <Play className="h-5 w-5" />
+              Play
             </Button>
-            <Button 
-              onClick={handleToggleFavorite} 
-              size="lg" 
-              variant={isFavorite ? 'destructive' : 'default'} 
+            
+            <Button
+              onClick={handleToggleFavorite}
+              variant={isFavorite ? 'default' : 'outline'}
               className="flex items-center gap-2"
+              aria-pressed={isFavorite}
             >
-              <Heart className="h-5 w-5" /> {isFavorite ? 'Remove Favorite' : 'Add Favorite'}
+              <Heart className="h-5 w-5" />
+              {isFavorite ? 'Favorited' : 'Add to Favorites'}
             </Button>
-            <Button 
-              onClick={handleToggleWatchlist} 
-              size="lg" 
-              variant={isInMyWatchlist ? 'destructive' : 'default'} 
+            
+            <Button
+              onClick={handleToggleWatchlist}
+              variant={isInMyWatchlist ? 'default' : 'outline'}
               className="flex items-center gap-2"
+              aria-pressed={isInMyWatchlist}
             >
-              <Bookmark className="h-5 w-5" /> {isInMyWatchlist ? 'Remove Watchlist' : 'Add Watchlist'}
+              <Bookmark className="h-5 w-5" />
+              {isInMyWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
             </Button>
           </div>
         </div>
       </div>
     </div>
   </div>
-
-  {/* Tabs: About, Reviews, Cast */}
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
-    <nav className="flex border-b border-gray-700">
-      <button
-        onClick={() => setActiveTab('about')}
-        className={`py-3 px-6 text-sm font-medium text-white ${
-          activeTab === 'about' ? 'border-b-2 border-primary' : 'border-b-2 border-transparent hover:border-gray-600'
-        }`}
-      >
-        About
-      </button>
-      <button
-        onClick={() => setActiveTab('reviews')}
-        className={`py-3 px-6 text-sm font-medium text-white ${
-          activeTab === 'reviews' ? 'border-b-2 border-primary' : 'border-b-2 border-transparent hover:border-gray-600'
-        }`}
-      >
-        Reviews
-      </button>
-      <button
-        onClick={() => setActiveTab('cast')}
-        className={`py-3 px-6 text-sm font-medium text-white ${
-          activeTab === 'cast' ? 'border-b-2 border-primary' : 'border-b-2 border-transparent hover:border-gray-600'
-        }`}
-      >
-        Cast
-      </button>
+  
+  {/* Tabs */}
+  <div className="max-w-7xl mx-auto p-6">
+    <nav className="flex border-b border-white/10 mb-6" aria-label="Tabs">
+      {['about', 'reviews', 'cast'].map((tab) => (
+        <button
+          key={tab}
+          className={`py-2 px-4 -mb-px text-white/80 font-semibold transition-colors ${
+            activeTab === tab ? 'border-b-2 border-primary text-white' : 'hover:text-white'
+          }`}
+          onClick={() => setActiveTab(tab as typeof activeTab)}
+          aria-current={activeTab === tab ? 'page' : undefined}
+        >
+          {tab.charAt(0).toUpperCase() + tab.slice(1)}
+        </button>
+      ))}
     </nav>
-
-    <div className="py-8">
-      {activeTab === 'about' && (
-        <section>
-          <h2 className="text-2xl font-semibold text-white mb-4">Overview</h2>
-          <p className="text-gray-300 max-w-4xl">{movie.overview}</p>
-        </section>
-      )}
-
-      {activeTab === 'reviews' && (
-        <ReviewSection mediaId={movie.id} mediaType="movie" />
-      )}
-
-      {activeTab === 'cast' && (
-        <section>
-          <h2 className="text-2xl font-semibold text-white mb-6">Cast</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {cast.map((member) => (
-              <div key={member.cast_id} className="flex flex-col items-center text-center">
-                <img
-                  src={getImageUrl(member.profile_path, posterSizes.small)}
-                  alt={member.name}
-                  className="w-24 h-32 rounded-lg object-cover mb-2"
-                  loading="lazy"
-                />
-                <p className="text-white font-semibold text-sm">{member.name}</p>
-                <p className="text-gray-400 text-xs">{member.character}</p>
-              </div>
-            ))}
+    
+    {activeTab === 'about' && (
+      <div className="space-y-6">
+        <h2 className="text-xl font-semibold text-white mb-4">About the Movie</h2>
+        <p className="text-white/90 leading-relaxed">{movie.overview}</p>
+      </div>
+    )}
+    
+    {activeTab === 'reviews' && (
+      <ReviewSection mediaType="movie" mediaId={movie.id} />
+    )}
+    
+    {activeTab === 'cast' && (
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+        {cast.map((member) => (
+          <div key={member.id} className="bg-gray-900 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+            <img
+              src={getImageUrl(member.profile_path, posterSizes.small)}
+              alt={member.name}
+              className="w-full h-48 object-cover"
+            />
+            <div className="p-2 text-center">
+              <h3 className="text-white text-sm font-semibold truncate" title={member.name}>{member.name}</h3>
+              <p className="text-white/70 text-xs truncate" title={member.character}>{member.character}</p>
+            </div>
           </div>
-        </section>
-      )}
-    </div>
-
-    {/* Recommendations */}
-    {recommendations.length > 0 && (
-      <ContentRow
-        title="Recommended Movies"
-        items={recommendations}
-        mediaType="movie"
-      />
+        ))}
+      </div>
     )}
   </div>
+
+  {/* Recommendations */}
+  {recommendations.length > 0 && (
+    <ContentRow title="You might also like" items={recommendations} />
+  )}
 </div>
 );
 };
