@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, NavigateFunction } from 'react-router-dom';
-import { getMovieDetails, getMovieRecommendations, getMovieTrailer, backdropSizes, posterSizes, getMovieCast } from '@/utils/api';
+import { useParams, useNavigate } from 'react-router-dom';
+import { 
+  getMovieDetails, 
+  getMovieRecommendations, 
+  getMovieTrailer, 
+  backdropSizes, 
+  posterSizes, 
+  getMovieCast 
+} from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { MovieDetails, Media, CastMember } from '@/utils/types';
 import { Button } from '@/components/ui/button';
@@ -11,41 +18,8 @@ import { Play, Clock, Calendar, Star, ArrowLeft, Shield, Heart, Bookmark } from 
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useWatchHistory } from '@/hooks/watch-history';
 
-// Helper to slugify title for URL
-const slugify = (text: string) =>
-  text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')        // Replace spaces with -
-    .replace(/[^\w\-]+/g, '')    // Remove all non-word chars
-    .replace(/\-\-+/g, '-');     // Replace multiple - with single -
-
-// Extracts ID, title slug, year from param slug like "12345-inception-2010"
-function parseSlug(slug: string) {
-  // Split by '-' from the end:
-  // e.g. "12345-inception-2010"
-  // id: 12345
-  // titleSlug: inception
-  // year: 2010
-  const parts = slug.split('-');
-  const idPart = parts[0];
-  const yearPart = parts[parts.length - 1];
-  const titleParts = parts.slice(1, parts.length - 1);
-  const titleSlug = titleParts.join('-');
-
-  return { id: idPart, titleSlug, year: yearPart };
-}
-
-// Rebuild clean URL
-function buildSlugUrl(movie: MovieDetails) {
-  const year = movie.release_date ? new Date(movie.release_date).getFullYear() : 'unknown';
-  const titleSlug = slugify(movie.title || 'movie');
-  return `/movie/${movie.id}-${titleSlug}-${year}`;
-}
-
 const MovieDetailsPage = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { id } = useParams<{ id: string }>();
   const [movie, setMovie] = useState<MovieDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,37 +29,34 @@ const MovieDetailsPage = () => {
   const [recommendations, setRecommendations] = useState<Media[]>([]);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [cast, setCast] = useState<CastMember[]>([]);
-  const {
-    addToFavorites,
+  const { 
+    addToFavorites, 
     addToWatchlist,
     removeFromFavorites,
     removeFromWatchlist,
     isInFavorites,
-    isInWatchlist
+    isInWatchlist 
   } = useWatchHistory();
   const [isFavorite, setIsFavorite] = useState(false);
   const [isInMyWatchlist, setIsInMyWatchlist] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-
+  
   useEffect(() => {
-    if (!slug) {
-      setError("Movie slug is required");
-      setIsLoading(false);
-      return;
-    }
-
-    const { id, titleSlug, year } = parseSlug(slug);
-
-    const movieId = parseInt(id, 10);
-    if (isNaN(movieId)) {
-      setError("Invalid movie ID");
-      setIsLoading(false);
-      return;
-    }
-
-    // Fetch movie and redirect if URL is outdated (e.g. title or year doesn't match)
     const fetchMovieData = async () => {
+      if (!id) {
+        setError("Movie ID is required");
+        setIsLoading(false);
+        return;
+      }
+
+      const movieId = parseInt(id, 10);
+      if (isNaN(movieId)) {
+        setError("Invalid movie ID");
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         setIsLoading(true);
         setError(null);
@@ -94,23 +65,16 @@ const MovieDetailsPage = () => {
           getMovieRecommendations(movieId),
           getMovieCast(movieId),
         ]);
-
+        
         if (!movieData) {
           setError("Movie not found");
           setIsLoading(false);
           return;
         }
-
+        
         setMovie(movieData);
         setRecommendations(recommendationsData);
         setCast(castData);
-
-        // Check if current URL slug matches movie data, if not redirect
-        const correctSlugUrl = buildSlugUrl(movieData);
-        if (correctSlugUrl !== `/movie/${slug}`) {
-          navigate(correctSlugUrl, { replace: true });
-          return;
-        }
       } catch (error) {
         console.error('Error fetching movie data:', error);
         setError("Failed to load movie data. Please try again.");
@@ -118,10 +82,10 @@ const MovieDetailsPage = () => {
         setIsLoading(false);
       }
     };
-
+    
     fetchMovieData();
-  }, [slug, navigate]);
-
+  }, [id]);
+  
   useEffect(() => {
     const fetchTrailer = async () => {
       if (movie?.id) {
@@ -133,7 +97,7 @@ const MovieDetailsPage = () => {
         }
       }
     };
-
+    
     fetchTrailer();
   }, [movie?.id]);
 
@@ -152,7 +116,7 @@ const MovieDetailsPage = () => {
 
   const handleToggleFavorite = () => {
     if (!movie) return;
-
+    
     if (isFavorite) {
       removeFromFavorites(movie.id, 'movie');
       setIsFavorite(false);
@@ -172,7 +136,7 @@ const MovieDetailsPage = () => {
 
   const handleToggleWatchlist = () => {
     if (!movie) return;
-
+    
     if (isInMyWatchlist) {
       removeFromWatchlist(movie.id, 'movie');
       setIsInMyWatchlist(false);
@@ -195,7 +159,7 @@ const MovieDetailsPage = () => {
     const mins = minutes % 60;
     return `${hours}h ${mins}m`;
   };
-
+  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -203,7 +167,7 @@ const MovieDetailsPage = () => {
       </div>
     );
   }
-
+  
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
@@ -214,7 +178,7 @@ const MovieDetailsPage = () => {
       </div>
     );
   }
-
+  
   if (!movie) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
@@ -225,213 +189,213 @@ const MovieDetailsPage = () => {
       </div>
     );
   }
-
+  
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
+      
       {/* Backdrop Image */}
       <div className="relative w-full h-[70vh]">
+        {/* Loading skeleton */}
         {!backdropLoaded && (
           <div className="absolute inset-0 bg-background image-skeleton" />
         )}
-
-        <button
+        
+        {/* Back button */}
+        <button 
           onClick={() => navigate(-1)}
           className="absolute top-20 left-6 z-10 text-white p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors"
           aria-label="Go back"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-
+        
         <img
           src={getImageUrl(movie.backdrop_path, backdropSizes.original)}
           alt={movie.title || 'Movie backdrop'}
-          className={`w-full h-full object-cover transition-opacity duration-700 ${backdropLoaded ? 'opacity-100' : 'opacity-0'}`}
-onLoad={() => setBackdropLoaded(true)}
-/>
-    {/* Overlay */}
-    <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/70 to-transparent" />
-  </div>
-
-  {/* Main Content */}
-  <main className="max-w-7xl mx-auto px-6 pt-6 pb-16 text-white">
-    <div className="flex flex-col lg:flex-row gap-8">
-      {/* Poster */}
-      <div className="flex-shrink-0 w-full lg:w-[250px] rounded-lg overflow-hidden shadow-lg bg-background/50">
-        {!logoLoaded && (
-          <div className="w-full h-[375px] bg-gray-700 animate-pulse" />
-        )}
-        <img
-          src={getImageUrl(movie.poster_path, posterSizes.w342)}
-          alt={movie.title || 'Movie poster'}
-          className={`w-full h-[375px] object-cover transition-opacity duration-700 ${logoLoaded ? 'opacity-100' : 'opacity-0'}`}
-          onLoad={() => setLogoLoaded(true)}
+          className={`w-full h-full object-cover transition-opacity duration-700 ${
+            backdropLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+          onLoad={() => setBackdropLoaded(true)}
         />
-      </div>
+        
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 details-gradient" />
+        
+        {/* Trailer section - only show on desktop */}
+        {!isMobile && trailerKey && (
+          <div className="absolute inset-0 bg-black/60">
+            <iframe
+              className="w-full h-full"
+              src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&mute=1&controls=0&modestbranding=1&loop=1&playlist=${trailerKey}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              title="Movie Trailer"
+            />
+          </div>
+        )}
 
-      {/* Info */}
-      <section className="flex flex-col flex-1">
-        <h1 className="text-3xl font-extrabold leading-tight">
-          {movie.title} <span className="text-gray-400 text-xl">({new Date(movie.release_date).getFullYear()})</span>
-        </h1>
-
-        <div className="flex flex-wrap items-center gap-4 mt-2 text-gray-300 text-sm font-medium">
-          {movie.release_date && (
-            <div className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              <time dateTime={movie.release_date}>{movie.release_date}</time>
+        {/* Movie info overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 lg:p-16">
+          <div className="flex flex-col md:flex-row items-start gap-6 max-w-6xl mx-auto">
+            <div className="hidden md:block flex-shrink-0 w-48 xl:w-64 rounded-lg overflow-hidden shadow-lg">
+              <img 
+                src={getImageUrl(movie.poster_path, posterSizes.medium)} 
+                alt={movie.title || 'Movie poster'} 
+                className="w-full h-auto"
+              />
             </div>
-          )}
-
-          {movie.runtime && (
+            
+            <div className="flex-1 animate-slide-up">
+              {movie.logo_path ? (
+                <div className="relative w-full max-w-[300px] md:max-w-[400px] lg:max-w-[500px] mx-auto mb-4 
+                              transition-all duration-300 ease-in-out hover:scale-105">
+                  {/* Loading skeleton */}
+                  {!logoLoaded && (
+                    <div className="absolute inset-0 bg-background image-skeleton rounded-lg" />
+                  )}
+                  
+                  <img
+                    src={getImageUrl(movie.logo_path, backdropSizes.original)}
+                   
+alt={${movie.title} logo}
+className={w-full object-contain rounded-lg ${ logoLoaded ? 'opacity-100' : 'opacity-0' }}
+onLoad={() => setLogoLoaded(true)}
+draggable={false}
+/>
+</div>
+) : (
+<h1 className="text-3xl font-bold text-white mb-3">{movie.title}</h1>
+)}
+          {/* Basic info */}
+          <div className="flex flex-wrap items-center gap-4 mb-4 text-white text-sm">
             <div className="flex items-center gap-1">
               <Clock className="h-4 w-4" />
-              <span>{formatRuntime(movie.runtime)}</span>
+              <span>{movie.runtime ? formatRuntime(movie.runtime) : 'N/A'}</span>
             </div>
-          )}
+            <div className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              <span>{movie.release_date || 'Unknown'}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Star className="h-4 w-4 text-yellow-400" />
+              <span>{movie.vote_average.toFixed(1)}</span>
+            </div>
+          </div>
 
-          <div className="flex items-center gap-1">
-            <Star className="h-4 w-4 text-yellow-400" />
-            <span>{movie.vote_average?.toFixed(1)} / 10</span>
+          {/* Genres */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {movie.genres?.slice(0, 3).map((genre) => (
+              <span
+                key={genre.id}
+                className="bg-primary/50 text-primary rounded-full px-3 py-1 text-xs font-semibold"
+              >
+                {genre.name}
+              </span>
+            ))}
+          </div>
+
+          {/* Overview */}
+          <p className="text-gray-300 mb-6 max-w-3xl">{movie.overview}</p>
+
+          {/* Action buttons */}
+          <div className="flex gap-4 flex-wrap">
+            <Button onClick={handlePlayMovie} size="lg" className="flex items-center gap-2">
+              <Play className="h-5 w-5" /> Play
+            </Button>
+            <Button 
+              onClick={handleToggleFavorite} 
+              size="lg" 
+              variant={isFavorite ? 'destructive' : 'default'} 
+              className="flex items-center gap-2"
+            >
+              <Heart className="h-5 w-5" /> {isFavorite ? 'Remove Favorite' : 'Add Favorite'}
+            </Button>
+            <Button 
+              onClick={handleToggleWatchlist} 
+              size="lg" 
+              variant={isInMyWatchlist ? 'destructive' : 'default'} 
+              className="flex items-center gap-2"
+            >
+              <Bookmark className="h-5 w-5" /> {isInMyWatchlist ? 'Remove Watchlist' : 'Add Watchlist'}
+            </Button>
           </div>
         </div>
-
-        {/* Genres */}
-        <div className="mt-4 flex flex-wrap gap-2">
-          {movie.genres?.slice(0, 3).map((genre) => (
-            <span
-              key={genre.id}
-              className="px-3 py-1 rounded-full bg-primary/20 text-primary text-sm font-semibold"
-            >
-              {genre.name}
-            </span>
-          ))}
-        </div>
-
-        {/* Description */}
-        <p className="mt-6 text-gray-300 max-w-prose leading-relaxed">{movie.overview}</p>
-
-        {/* Actions */}
-        <div className="mt-8 flex flex-wrap gap-4">
-          <Button
-            size="lg"
-            variant="primary"
-            onClick={handlePlayMovie}
-            aria-label={`Play ${movie.title}`}
-            className="flex items-center gap-2"
-          >
-            <Play className="h-5 w-5" />
-            Play
-          </Button>
-
-          <Button
-            size="lg"
-            variant={isFavorite ? 'destructive' : 'outline'}
-            onClick={handleToggleFavorite}
-            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-            className="flex items-center gap-2"
-          >
-            <Heart className="h-5 w-5" />
-            {isFavorite ? 'Remove Favorite' : 'Add Favorite'}
-          </Button>
-
-          <Button
-            size="lg"
-            variant={isInMyWatchlist ? 'destructive' : 'outline'}
-            onClick={handleToggleWatchlist}
-            aria-label={isInMyWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
-            className="flex items-center gap-2"
-          >
-            <Bookmark className="h-5 w-5" />
-            {isInMyWatchlist ? 'Remove Watchlist' : 'Add Watchlist'}
-          </Button>
-        </div>
-
-        {/* Tabs */}
-        <div className="mt-10">
-          <nav className="flex border-b border-gray-700">
-            <button
-              onClick={() => setActiveTab('about')}
-              className={`py-3 px-6 -mb-px font-semibold text-sm border-b-2 ${
-                activeTab === 'about' ? 'border-primary text-primary' : 'border-transparent text-gray-400 hover:text-white hover:border-gray-600'
-              }`}
-            >
-              About
-            </button>
-            <button
-              onClick={() => setActiveTab('cast')}
-              className={`py-3 px-6 -mb-px font-semibold text-sm border-b-2 ${
-                activeTab === 'cast' ? 'border-primary text-primary' : 'border-transparent text-gray-400 hover:text-white hover:border-gray-600'
-              }`}
-            >
-              Cast
-            </button>
-            <button
-              onClick={() => setActiveTab('reviews')}
-              className={`py-3 px-6 -mb-px font-semibold text-sm border-b-2 ${
-                activeTab === 'reviews' ? 'border-primary text-primary' : 'border-transparent text-gray-400 hover:text-white hover:border-gray-600'
-              }`}
-            >
-              Reviews
-            </button>
-          </nav>
-
-          <div className="mt-6">
-            {activeTab === 'about' && (
-              <>
-                {/* Trailer */}
-                {trailerKey ? (
-                  <div className="aspect-video rounded-lg overflow-hidden mb-8 shadow-lg">
-                    <iframe
-                      title={`${movie.title} Trailer`}
-                      src={`https://www.youtube.com/embed/${trailerKey}?autoplay=0&controls=1`}
-                      allowFullScreen
-                      frameBorder={0}
-                      className="w-full h-full"
-                    />
-                  </div>
-                ) : (
-                  <p className="text-gray-400 italic">No trailer available.</p>
-                )}
-              </>
-            )}
-
-            {activeTab === 'cast' && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                {cast.length === 0 && <p className="text-gray-400 italic">No cast information available.</p>}
-                {cast.map((member) => (
-                  <div key={member.id} className="flex flex-col items-center text-center">
-                    <img
-                      src={getImageUrl(member.profile_path, posterSizes.w185)}
-                      alt={member.name}
-                      className="rounded-lg shadow-md w-full aspect-[2/3] object-cover mb-2"
-                    />
-                    <p className="font-semibold">{member.name}</p>
-                    <p className="text-sm text-gray-400">{member.character}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {activeTab === 'reviews' && (
-              <ReviewSection mediaId={movie.id} mediaType="movie" />
-            )}
-          </div>
-        </div>
-
-        {/* Recommendations */}
-        {recommendations.length > 0 && (
-          <ContentRow
-            title="More Like This"
-            mediaList={recommendations}
-            mediaType="movie"
-            className="mt-12"
-          />
-        )}
-      </section>
+      </div>
     </div>
-  </main>
+  </div>
+
+  {/* Tabs: About, Reviews, Cast */}
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+    <nav className="flex border-b border-gray-700">
+      <button
+        onClick={() => setActiveTab('about')}
+        className={`py-3 px-6 text-sm font-medium text-white ${
+          activeTab === 'about' ? 'border-b-2 border-primary' : 'border-b-2 border-transparent hover:border-gray-600'
+        }`}
+      >
+        About
+      </button>
+      <button
+        onClick={() => setActiveTab('reviews')}
+        className={`py-3 px-6 text-sm font-medium text-white ${
+          activeTab === 'reviews' ? 'border-b-2 border-primary' : 'border-b-2 border-transparent hover:border-gray-600'
+        }`}
+      >
+        Reviews
+      </button>
+      <button
+        onClick={() => setActiveTab('cast')}
+        className={`py-3 px-6 text-sm font-medium text-white ${
+          activeTab === 'cast' ? 'border-b-2 border-primary' : 'border-b-2 border-transparent hover:border-gray-600'
+        }`}
+      >
+        Cast
+      </button>
+    </nav>
+
+    <div className="py-8">
+      {activeTab === 'about' && (
+        <section>
+          <h2 className="text-2xl font-semibold text-white mb-4">Overview</h2>
+          <p className="text-gray-300 max-w-4xl">{movie.overview}</p>
+        </section>
+      )}
+
+      {activeTab === 'reviews' && (
+        <ReviewSection mediaId={movie.id} mediaType="movie" />
+      )}
+
+      {activeTab === 'cast' && (
+        <section>
+          <h2 className="text-2xl font-semibold text-white mb-6">Cast</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            {cast.map((member) => (
+              <div key={member.cast_id} className="flex flex-col items-center text-center">
+                <img
+                  src={getImageUrl(member.profile_path, posterSizes.small)}
+                  alt={member.name}
+                  className="w-24 h-32 rounded-lg object-cover mb-2"
+                  loading="lazy"
+                />
+                <p className="text-white font-semibold text-sm">{member.name}</p>
+                <p className="text-gray-400 text-xs">{member.character}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+
+    {/* Recommendations */}
+    {recommendations.length > 0 && (
+      <ContentRow
+        title="Recommended Movies"
+        items={recommendations}
+        mediaType="movie"
+      />
+    )}
+  </div>
 </div>
 );
 };
