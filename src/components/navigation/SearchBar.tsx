@@ -6,23 +6,17 @@ import { useToast } from "@/components/ui/use-toast";
 import { searchMedia } from '@/utils/api';
 import { Media } from '@/utils/types';
 
-interface SearchBarProps {
-  isMobile?: boolean;
-  onSearch?: () => void;
-  className?: string;
-  expanded?: boolean;
-  onToggleExpand?: () => void;
-}
-
-// Animated placeholder input with typing + deleting animation cycling phrases
-const phrases = ["Search for Movie...", "Search for TV Show..."];
-
+// Animated placeholder input component
 const AnimatedPlaceholderInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, value, onChange, ...props }, ref) => {
+    const staticText = "Search for ";
+    const dynamicPhrases = ["Movie...", "TV Show..."];
+
     const [displayedText, setDisplayedText] = useState("");
     const [phraseIndex, setPhraseIndex] = useState(0);
     const [charIndex, setCharIndex] = useState(0);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [firstCycle, setFirstCycle] = useState(true);
 
     const typingSpeed = 120;
     const deletingSpeed = 60;
@@ -31,26 +25,50 @@ const AnimatedPlaceholderInput = React.forwardRef<HTMLInputElement, React.Compon
     useEffect(() => {
       let timeout: ReturnType<typeof setTimeout>;
 
-      if (!isDeleting && charIndex <= phrases[phraseIndex].length) {
-        // Typing
-        setDisplayedText(phrases[phraseIndex].substring(0, charIndex));
-        if (charIndex === phrases[phraseIndex].length) {
-          timeout = setTimeout(() => setIsDeleting(true), pauseDelay);
-        } else {
-          timeout = setTimeout(() => setCharIndex(charIndex + 1), typingSpeed);
+      if (firstCycle) {
+        // First cycle: type full phrase including "Search for "
+        const fullPhrase = staticText + dynamicPhrases[phraseIndex];
+
+        if (!isDeleting && charIndex <= fullPhrase.length) {
+          setDisplayedText(fullPhrase.substring(0, charIndex));
+          if (charIndex === fullPhrase.length) {
+            timeout = setTimeout(() => setIsDeleting(true), pauseDelay);
+          } else {
+            timeout = setTimeout(() => setCharIndex(charIndex + 1), typingSpeed);
+          }
+        } else if (isDeleting && charIndex >= 0) {
+          setDisplayedText(fullPhrase.substring(0, charIndex));
+          if (charIndex === 0) {
+            setIsDeleting(false);
+            setPhraseIndex((prev) => (prev + 1) % dynamicPhrases.length);
+            setFirstCycle(false);
+          }
+          timeout = setTimeout(() => setCharIndex(charIndex - 1), deletingSpeed);
         }
-      } else if (isDeleting && charIndex >= 0) {
-        // Deleting
-        setDisplayedText(phrases[phraseIndex].substring(0, charIndex));
-        if (charIndex === 0) {
-          setIsDeleting(false);
-          setPhraseIndex((prev) => (prev + 1) % phrases.length);
+      } else {
+        // Subsequent cycles: only erase/write dynamic part ("Movie..." or "TV Show...")
+
+        const phrase = dynamicPhrases[phraseIndex];
+
+        if (!isDeleting && charIndex <= phrase.length) {
+          setDisplayedText(staticText + phrase.substring(0, charIndex));
+          if (charIndex === phrase.length) {
+            timeout = setTimeout(() => setIsDeleting(true), pauseDelay);
+          } else {
+            timeout = setTimeout(() => setCharIndex(charIndex + 1), typingSpeed);
+          }
+        } else if (isDeleting && charIndex >= 0) {
+          setDisplayedText(staticText + phrase.substring(0, charIndex));
+          if (charIndex === 0) {
+            setIsDeleting(false);
+            setPhraseIndex((prev) => (prev + 1) % dynamicPhrases.length);
+          }
+          timeout = setTimeout(() => setCharIndex(charIndex - 1), deletingSpeed);
         }
-        timeout = setTimeout(() => setCharIndex(charIndex - 1), deletingSpeed);
       }
 
       return () => clearTimeout(timeout);
-    }, [charIndex, isDeleting, phraseIndex]);
+    }, [charIndex, isDeleting, phraseIndex, firstCycle]);
 
     return (
       <input
@@ -67,8 +85,15 @@ const AnimatedPlaceholderInput = React.forwardRef<HTMLInputElement, React.Compon
     );
   }
 );
-
 AnimatedPlaceholderInput.displayName = "AnimatedPlaceholderInput";
+
+interface SearchBarProps {
+  isMobile?: boolean;
+  onSearch?: () => void;
+  className?: string;
+  expanded?: boolean;
+  onToggleExpand?: () => void;
+}
 
 const SearchBar = ({ 
   isMobile = false, 
@@ -166,6 +191,7 @@ const SearchBar = ({
     });
   };
 
+  // For mobile collapsed state (icon only)
   if (isMobile && !expanded) {
     return (
       <Button
@@ -184,6 +210,7 @@ const SearchBar = ({
     <form onSubmit={handleSearch} className={`search-container ${isMobile ? 'w-full' : ''} ${className}`}>
       <div className="relative w-full">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-4 h-4 pointer-events-none" />
+        
         <AnimatedPlaceholderInput
           className="search-input pl-10 pr-12 h-10"
           value={searchQuery}
