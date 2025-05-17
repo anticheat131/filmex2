@@ -72,24 +72,28 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         const releaseDates = usRelease?.release_dates || [];
 
         const now = new Date();
-        const release = new Date(media.release_date);
-        const daysSinceRelease = Math.floor((now.getTime() - release.getTime()) / (1000 * 60 * 60 * 24));
+        const baseRelease = new Date(media.release_date);
+        const daysSince = Math.floor((now.getTime() - baseRelease.getTime()) / (1000 * 60 * 60 * 24));
 
         const hasPastDigital = releaseDates.some(
-          (r: any) => r.type === 4 && new Date(r.release_date) <= now
+          (r: any) =>
+            r.type === 4 &&
+            r.release_date &&
+            new Date(r.release_date).getTime() < now.getTime()
         );
+
         const onlyTheatrical = releaseDates.every(
           (r: any) => r.type === 2 || r.type === 3
         );
 
         if (hasPastDigital) {
           setQuality('HD');
-        } else if (onlyTheatrical && daysSinceRelease < 60) {
-          setQuality('CAM');
+        } else if (onlyTheatrical) {
+          setQuality(daysSince >= 60 ? 'HD' : 'CAM');
         } else {
           setQuality('HD');
         }
-      } catch {
+      } catch (e) {
         setQuality(null);
       }
     };
@@ -159,7 +163,9 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         </h3>
 
         <div className="flex justify-between items-end text-xs">
-          <p className="text-white/70 line-clamp-1 max-w-[60%] pl-[5%]">{genreNames?.join(', ') || '—'}</p>
+          <p className="text-white/70 line-clamp-1 max-w-[60%] pl-[5%]">
+            {genreNames?.join(', ') || '—'}
+          </p>
           {runtimeMinutes && (
             <p className="text-white/60 text-xs text-right min-w-[35%]">{runtimeMinutes} min</p>
           )}
