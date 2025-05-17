@@ -187,7 +187,7 @@ const TVDetailsPage = () => {
 
         {activeTab === 'episodes' && (
           <>
-            {/* Removed the horizontal season select dropdown here */}
+            {/* Horizontal season tabs bar removed, keeping only the dropdown season selector inside TVShowEpisodes */}
 
             <TVShowEpisodes
               seasons={tvShow.seasons ?? []}
