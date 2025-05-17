@@ -10,40 +10,32 @@ import TVShowAbout from '@/components/tv/TVShowAbout';
 import TVShowCast from '@/components/tv/TVShowCast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTVDetails } from '@/hooks/use-tv-details';
-import React, { useEffect } from 'react';
 
 const TVDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-
-  const {
-    tvShow,
-    episodes,
-    selectedSeason,
-    setSelectedSeason,
-    isLoading,
-    error,
+  
+  const { 
+    tvShow, 
+    episodes, 
+    selectedSeason, 
+    setSelectedSeason, 
+    isLoading, 
+    error, 
     activeTab,
-    setActiveTab,
-    recommendations,
-    cast,
+    setActiveTab, 
+    recommendations, 
+    cast, 
     trailerKey,
-    isFavorite,
-    isInMyWatchlist,
-    handlePlayEpisode,
-    handleToggleFavorite,
-    handleToggleWatchlist,
-    getLastWatchedEpisode,
+    isFavorite, 
+    isInMyWatchlist, 
+    handlePlayEpisode, 
+    handleToggleFavorite, 
+    handleToggleWatchlist, 
+    getLastWatchedEpisode
   } = useTVDetails(id);
-
-  // If no selectedSeason yet, set to first season number available once tvShow.seasons loads
-  useEffect(() => {
-    if (tvShow?.seasons?.length && !selectedSeason) {
-      setSelectedSeason(tvShow.seasons[0].season_number);
-    }
-  }, [tvShow, selectedSeason, setSelectedSeason]);
-
+  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -51,7 +43,7 @@ const TVDetailsPage = () => {
       </div>
     );
   }
-
+  
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
@@ -62,7 +54,7 @@ const TVDetailsPage = () => {
       </div>
     );
   }
-
+  
   if (!tvShow) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
@@ -73,20 +65,20 @@ const TVDetailsPage = () => {
       </div>
     );
   }
-
+  
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
+      
       <div className="relative">
-        <button
+        <button 
           onClick={() => navigate(-1)}
           className="absolute top-20 left-6 z-10 text-white p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors"
           aria-label="Go back"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-
+        
         {!isMobile && trailerKey && (
           <div className="absolute inset-0 bg-black/60">
             <iframe
@@ -94,12 +86,11 @@ const TVDetailsPage = () => {
               src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&mute=1&controls=0&modestbranding=1&loop=1&playlist=${trailerKey}`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-              title="TV Show Trailer"
             />
           </div>
         )}
 
-        <TVShowHeader
+        <TVShowHeader 
           tvShow={tvShow}
           isFavorite={isFavorite}
           isInWatchlist={isInMyWatchlist}
@@ -109,26 +100,53 @@ const TVDetailsPage = () => {
           lastWatchedEpisode={getLastWatchedEpisode()}
         />
       </div>
-
+      
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex border-b border-white/10 mb-6 overflow-x-auto pb-1 hide-scrollbar">
-          {['episodes', 'about', 'cast', 'reviews'].map((tab) => (
-            <button
-              key={tab}
-              className={`py-2 px-4 font-medium whitespace-nowrap ${
-                activeTab === tab
-                  ? 'text-white border-b-2 border-accent'
-                  : 'text-white/60 hover:text-white'
-              }`}
-              onClick={() => setActiveTab(tab as typeof activeTab)}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
+          <button
+            className={`py-2 px-4 font-medium whitespace-nowrap ${
+              activeTab === 'episodes' 
+                ? 'text-white border-b-2 border-accent' 
+                : 'text-white/60 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('episodes')}
+          >
+            Episodes
+          </button>
+          <button
+            className={`py-2 px-4 font-medium whitespace-nowrap ${
+              activeTab === 'about' 
+                ? 'text-white border-b-2 border-accent' 
+                : 'text-white/60 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('about')}
+          >
+            About
+          </button>
+          <button
+            className={`py-2 px-4 font-medium whitespace-nowrap ${
+              activeTab === 'cast' 
+                ? 'text-white border-b-2 border-accent' 
+                : 'text-white/60 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('cast')}
+          >
+            Cast
+          </button>
+          <button
+            className={`py-2 px-4 font-medium whitespace-nowrap ${
+              activeTab === 'reviews' 
+                ? 'text-white border-b-2 border-accent' 
+                : 'text-white/60 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('reviews')}
+          >
+            Reviews
+          </button>
         </div>
-
+        
         {activeTab === 'episodes' && (
-          <TVShowEpisodes
+          <TVShowEpisodes 
             seasons={tvShow.seasons}
             episodes={episodes}
             selectedSeason={selectedSeason}
@@ -136,11 +154,15 @@ const TVDetailsPage = () => {
             onPlayEpisode={handlePlayEpisode}
           />
         )}
-
-        {activeTab === 'about' && <TVShowAbout tvShow={tvShow} />}
-
-        {activeTab === 'cast' && <TVShowCast cast={cast} />}
-
+        
+        {activeTab === 'about' && (
+          <TVShowAbout tvShow={tvShow} />
+        )}
+        
+        {activeTab === 'cast' && (
+          <TVShowCast cast={cast} />
+        )}
+        
         {activeTab === 'reviews' && (
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-white mb-6">User Reviews</h2>
@@ -148,8 +170,13 @@ const TVDetailsPage = () => {
           </div>
         )}
       </div>
-
-      {recommendations.length > 0 && <ContentRow title="More Like This" media={recommendations} />}
+      
+      {recommendations.length > 0 && (
+        <ContentRow
+          title="More Like This"
+          media={recommendations}
+        />
+      )}
     </div>
   );
 };
