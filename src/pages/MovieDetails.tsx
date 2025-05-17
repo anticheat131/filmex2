@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'; 
 import { useParams, useNavigate } from 'react-router-dom';
-import { getMovieDetails, getMovieRecommendations, getMovieTrailer, backdropSizes, posterSizes, getMovieCast } from '@/utils/api';
+import { getMovieDetails, getMovieRecommendations, getMovieTrailer, getMovieCast } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { MovieDetails, Media, CastMember } from '@/utils/types';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import ReviewSection from '@/components/ReviewSection';
 import { Play, Clock, Calendar, Star, ArrowLeft, Shield, Heart, Bookmark } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useWatchHistory } from '@/hooks/watch-history';
-import slugify from 'slugify'; // ✅ make sure slugify is installed
+import slugify from 'slugify';
 
 const MovieDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,7 +44,9 @@ const MovieDetailsPage = () => {
         return;
       }
 
-      const extractedId = parseInt(id.split('-').pop() || '', 10);
+      const idParts = id.split('-');
+      const extractedId = parseInt(idParts[idParts.length - 2], 10); // Get second last part as ID
+
       if (isNaN(extractedId)) {
         setError("Invalid movie ID");
         setIsLoading(false);
@@ -69,9 +71,11 @@ const MovieDetailsPage = () => {
         setRecommendations(recommendationsData);
         setCast(castData);
 
-        // ✅ Redirect to correct URL if slug is wrong or missing
+        // ✅ Redirect to correct slug + ID + year
         const slug = slugify(movieData.title, { lower: true, strict: true });
-        const expectedPath = `/movie/${slug}-${movieData.id}`;
+        const releaseYear = movieData.release_date?.split('-')[0] || 'unknown';
+        const expectedPath = `/movie/${slug}-${movieData.id}-${releaseYear}`;
+
         if (window.location.pathname !== expectedPath) {
           navigate(expectedPath, { replace: true });
         }
@@ -159,4 +163,14 @@ const MovieDetailsPage = () => {
     return `${hours}h ${mins}m`;
   };
 
-  // ... (the rest of the component JSX remains unchanged)
+  // ... (the rest of your JSX and UI rendering goes here)
+
+  return (
+    <>
+      <Navbar />
+      {/* Render your movie content, loader, error, and UI here */}
+    </>
+  );
+};
+
+export default MovieDetailsPage;
