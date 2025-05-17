@@ -31,7 +31,13 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   const mediaId = media.media_id || media.id;
   const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
 
-  const genreNames = media.genre_ids?.map(id => genreMap[id]).filter(Boolean).slice(0, 2);
+  const genreNames = media.genre_ids
+    ?.map((id) => genreMap[id])
+    .filter(Boolean)
+    .slice(0, 2);
+
+  const genreDisplay = genreNames?.length ? genreNames.join(', ') : '—';
+
   const runtimeMinutes =
     media.media_type === 'movie'
       ? media.runtime
@@ -69,38 +75,20 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         );
         const data = await res.json();
         const usRelease = data.results?.find((r: any) => r.iso_3166_1 === 'US');
+        const types = usRelease?.release_dates?.map((r: any) => r.type) || [];
+
         const now = new Date();
         const release = new Date(media.release_date);
         const diffInDays = Math.floor((now.getTime() - release.getTime()) / (1000 * 60 * 60 * 24));
 
-        let hasDigitalPastRelease = false;
-        let onlyTheatrical = true;
-
-        if (usRelease?.release_dates?.length) {
-          for (const entry of usRelease.release_dates) {
-            const type = entry.type;
-            const date = new Date(entry.release_date);
-
-            if (type === 4 && date <= now) {
-              hasDigitalPastRelease = true;
-              break;
-            }
-
-            if (![2, 3].includes(type)) {
-              onlyTheatrical = false;
-            }
-          }
-        }
-
-        if (hasDigitalPastRelease) {
-          setQuality('HD');
-        } else if (onlyTheatrical) {
+        if (types.length === 0) {
+          setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
+        } else if (types.every((t: number) => t === 2 || t === 3)) {
           setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
         } else {
-          setQuality('CAM');
+          setQuality('HD');
         }
       } catch (e) {
-        console.error('Failed to fetch quality:', e);
         setQuality(null);
       }
     };
@@ -170,7 +158,9 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         </h3>
 
         <div className="flex justify-between items-end text-xs">
-          <p className="text-white/70 line-clamp-1 max-w-[60%] pl-[5%]">{genreNames?.join(', ') || '—'}</p>
+          <p className="text-white/70 line-clamp-1 max-w-[60%] pl-[5%]">
+            {genreDisplay}
+          </p>
           {runtimeMinutes && (
             <p className="text-white/60 text-xs text-right min-w-[35%]">{runtimeMinutes} min</p>
           )}
@@ -191,7 +181,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           >
             <h4 className="font-bold text-lg mb-1">{media.title || media.name}</h4>
             <p className="text-xs mb-2 text-white/70">Release: {fullReleaseDate || 'Unknown'}</p>
-            <p className="text-xs mb-2 text-white/70">Genres: {genreNames?.join(', ') || 'Unknown'}</p>
+            <p className="text-xs mb-2 text-white/70">Genres: {genreDisplay}</p>
             {media.vote_average > 0 && (
               <p className="flex items-center text-amber-400 mb-2">
                 <Star className="h-4 w-4 mr-1 fill-amber-400" /> {media.vote_average.toFixed(1)}
