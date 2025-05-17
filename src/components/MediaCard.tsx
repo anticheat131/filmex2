@@ -69,20 +69,27 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         );
         const data = await res.json();
         const usRelease = data.results?.find((r: any) => r.iso_3166_1 === 'US');
-        const types = usRelease?.release_dates?.map((r: any) => r.type) || [];
+        const releaseDates = usRelease?.release_dates || [];
 
         const now = new Date();
         const release = new Date(media.release_date);
-        const diffInDays = Math.floor((now.getTime() - release.getTime()) / (1000 * 60 * 60 * 24));
+        const daysSinceRelease = Math.floor((now.getTime() - release.getTime()) / (1000 * 60 * 60 * 24));
 
-        if (types.length === 0) {
-          setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
-        } else if (types.every((t: number) => t === 2 || t === 3)) {
-          setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
+        const hasPastDigital = releaseDates.some(
+          (r: any) => r.type === 4 && new Date(r.release_date) <= now
+        );
+        const onlyTheatrical = releaseDates.every(
+          (r: any) => r.type === 2 || r.type === 3
+        );
+
+        if (hasPastDigital) {
+          setQuality('HD');
+        } else if (onlyTheatrical && daysSinceRelease < 60) {
+          setQuality('CAM');
         } else {
           setQuality('HD');
         }
-      } catch (e) {
+      } catch {
         setQuality(null);
       }
     };
