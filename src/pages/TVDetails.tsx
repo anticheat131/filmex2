@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,24 +12,35 @@ import TVShowCast from '@/components/tv/TVShowCast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTVDetails } from '@/hooks/use-tv-details';
 
+// Helper to generate slug URL for TV show
+function generateTVShowSlugURL(
+  id: number | string,
+  name?: string,
+  year?: string | number
+) {
+  if (!name) return `/tv/${id}`;
+
+  // Convert name to URL-friendly slug: lowercase, remove special chars, spaces → dash
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, '') // remove special chars
+    .trim()
+    .replace(/\s+/g, '-');
+
+  if (year) {
+    return `/tv/${id}-${slug}-${year}`;
+  }
+
+  return `/tv/${id}-${slug}`;
+}
+
 const TVDetailsPage = () => {
   const { id: rawId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  // Extract numeric ID before the dash, e.g. "1249213-drop-2023" => "1249213"
+  // Extract numeric ID from param that may contain slug: e.g. '1249213-drop-2023' → '1249213'
   const id = rawId?.split('-')[0];
-
-  if (!id) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-        <h1 className="text-2xl text-white mb-4">TV show ID is required</h1>
-        <Button onClick={() => navigate('/')} variant="outline">
-          Return to Home
-        </Button>
-      </div>
-    );
-  }
 
   const {
     tvShow,
@@ -49,6 +61,23 @@ const TVDetailsPage = () => {
     handleToggleWatchlist,
     getLastWatchedEpisode,
   } = useTVDetails(id);
+
+  // Redirect to canonical slug URL if current pathname doesn't match expected
+  useEffect(() => {
+    if (tvShow) {
+      // Use name || original_name and year from first_air_date
+      const name = tvShow.name || tvShow.original_name || tvShow.title || '';
+      const year = tvShow.first_air_date
+        ? new Date(tvShow.first_air_date).getFullYear()
+        : undefined;
+
+      const expectedUrl = generateTVShowSlugURL(tvShow.id, name, year);
+
+      if (window.location.pathname !== expectedUrl) {
+        navigate(expectedUrl, { replace: true });
+      }
+    }
+  }, [tvShow, navigate]);
 
   if (isLoading) {
     return (
@@ -100,6 +129,7 @@ const TVDetailsPage = () => {
               src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&mute=1&controls=0&modestbranding=1&loop=1&playlist=${trailerKey}`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
+              title="Trailer"
             />
           </div>
         )}
@@ -181,7 +211,9 @@ const TVDetailsPage = () => {
         )}
       </div>
 
-      {recommendations.length > 0 && <ContentRow title="More Like This" media={recommendations} />}
+      {recommendations.length > 0 && (
+        <ContentRow title="More Like This" media={recommendations} />
+      )}
     </div>
   );
 };
