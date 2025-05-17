@@ -218,25 +218,26 @@ const TVDetailsPage = () => {
               </svg>
             </div>
 
-            {/* Episodes grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 max-w-4xl">
+            {/* Episodes grid with wider cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 max-w-5xl">
               {(episodes ?? []).map((episode) => (
                 <div
                   key={episode.id}
-                  className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer transition"
+                  className="flex items-center gap-4 p-4 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer transition"
                   onClick={() => handlePlayEpisode(episode)}
                   title={episode.name}
+                  style={{ minWidth: '280px' }}
                 >
                   {/* Thumbnail or placeholder */}
                   {episode.still_path ? (
                     <img
                       src={`https://image.tmdb.org/t/p/w185${episode.still_path}`}
                       alt={episode.name}
-                      className="w-24 h-14 rounded-md object-cover flex-shrink-0"
+                      className="w-28 h-16 rounded-md object-cover flex-shrink-0"
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-24 h-14 rounded-md bg-gray-700 flex items-center justify-center text-gray-400 text-xs font-semibold select-none">
+                    <div className="w-28 h-16 rounded-md bg-gray-700 flex items-center justify-center text-gray-400 text-xs font-semibold select-none">
                       No Photo
                     </div>
                   )}
@@ -246,9 +247,7 @@ const TVDetailsPage = () => {
                     <h3 className="text-white font-semibold truncate">
                       {`Episode ${episode.episode_number}: ${episode.name}`}
                     </h3>
-                    <p className="text-sm text-gray-300 truncate">
-                      {episode.overview || 'No description available.'}
-                    </p>
+                    <p className="text-sm text-gray-300 truncate">{episode.name}</p>
                   </div>
 
                   {/* Play button */}
