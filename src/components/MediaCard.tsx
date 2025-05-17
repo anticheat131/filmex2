@@ -22,6 +22,12 @@ interface MediaCardProps {
   smaller?: boolean;
 }
 
+const slugifyTitle = (title: string) =>
+  title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
 const MediaCard = ({ media, className, minimal = false, smaller = false }: MediaCardProps) => {
   const [imageError, setImageError] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -29,9 +35,12 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   const navigate = useNavigate();
 
   const mediaId = media.media_id || media.id;
-  const detailPath = media.media_type === 'movie' ? `/movie/${mediaId}` : `/tv/${mediaId}`;
+  const slug = slugifyTitle(media.title || media.name || '');
+  const detailPath =
+    media.media_type === 'movie'
+      ? `/movie/${mediaId}-${slug}`
+      : `/tv/${mediaId}-${slug}`;
 
-  // Limit genres to max 2, no trailing commas
   const genreNames = (media.genre_ids || [])
     .map(id => genreMap[id])
     .filter(Boolean)
