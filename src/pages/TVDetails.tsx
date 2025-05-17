@@ -187,23 +187,7 @@ const TVDetailsPage = () => {
 
         {activeTab === 'episodes' && (
           <>
-            <div className="mb-6 w-48">
-              <label htmlFor="season-select" className="block mb-2 text-white font-medium">
-                Select Season
-              </label>
-              <select
-                id="season-select"
-                value={selectedSeason}
-                onChange={(e) => setSelectedSeason(Number(e.target.value))}
-                className="w-full bg-background border border-white/20 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-accent"
-              >
-                {(tvShow.seasons ?? []).map((season) => (
-                  <option key={season.id} value={season.season_number}>
-                    {season.name || `Season ${season.season_number}`}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Removed the horizontal season select dropdown here */}
 
             <TVShowEpisodes
               seasons={tvShow.seasons ?? []}
