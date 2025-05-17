@@ -1,5 +1,5 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
+import { slugify } from '@/utils/slugify';  // adjust path if needed
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ContentRow from '@/components/ContentRow';
@@ -13,9 +13,12 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useTVDetails } from '@/hooks/use-tv-details';
 
 const TVDetailsPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { idSlug } = useParams<{ idSlug: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  
+  // Extract numeric ID from param, e.g., "1249213-drop" -> "1249213"
+  const id = idSlug ? idSlug.split('-')[0] : null;
   
   const { 
     tvShow, 
@@ -37,6 +40,14 @@ const TVDetailsPage = () => {
     getLastWatchedEpisode
   } = useTVDetails(id);
   
+  // Redirect to pretty URL if URL is missing slug part (only id provided)
+  React.useEffect(() => {
+    if (tvShow && idSlug && !idSlug.includes('-')) {
+      const slugName = slugify(tvShow.name);
+      navigate(`/tv/${id}-${slugName}`, { replace: true });
+    }
+  }, [tvShow, idSlug, id, navigate]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
