@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'; 
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getMovieDetails, getMovieRecommendations, getMovieTrailer, getMovieCast } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
@@ -7,10 +7,9 @@ import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import ContentRow from '@/components/ContentRow';
 import ReviewSection from '@/components/ReviewSection';
-import { Play, Clock, Calendar, Star, ArrowLeft, Shield, Heart, Bookmark } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useWatchHistory } from '@/hooks/watch-history';
-import slugify from 'slugify';
 
 const MovieDetailsPage = () => {
   const { id: rawId } = useParams<{ id: string }>();
@@ -22,6 +21,7 @@ const MovieDetailsPage = () => {
   const [cast, setCast] = useState<CastMember[]>([]);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
   const {
     addToFavorites,
     addToWatchlist,
@@ -30,14 +30,23 @@ const MovieDetailsPage = () => {
     isInFavorites,
     isInWatchlist
   } = useWatchHistory();
+
   const [isFavorite, setIsFavorite] = useState(false);
   const [isInMyWatchlist, setIsInMyWatchlist] = useState(false);
 
-  // ✅ Extract TMDB ID from slug using regex
+  // ✅ Extract ID from slug (e.g., /movie/oppenheimer-872585-2023)
   const extractMovieId = (slug: string): number | null => {
     const match = slug.match(/-(\d+)(?:-\d{4})?$/);
     return match ? parseInt(match[1], 10) : null;
   };
+
+  // ✅ Basic slugify (no library)
+  const toSlug = (text: string): string =>
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // remove special chars
+      .replace(/\s+/g, '-') // replace spaces with dashes
+      .replace(/-+/g, '-'); // collapse multiple dashes
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,10 +60,11 @@ const MovieDetailsPage = () => {
 
       try {
         setIsLoading(true);
+
         const [movieData, recommendationsData, castData] = await Promise.all([
           getMovieDetails(movieId),
           getMovieRecommendations(movieId),
-          getMovieCast(movieId),
+          getMovieCast(movieId)
         ]);
 
         if (!movieData) {
@@ -66,13 +76,12 @@ const MovieDetailsPage = () => {
         setRecommendations(recommendationsData);
         setCast(castData);
 
-        // ✅ Redirect to correct slug if needed
-        const releaseYear = movieData.release_date?.split("-")[0];
-        const slug = slugify(movieData.title, { lower: true, strict: true });
-        const expectedPath = `/movie/${slug}-${movieData.id}-${releaseYear}`;
+        const releaseYear = movieData.release_date?.split("-")[0] || "";
+        const slugifiedTitle = toSlug(movieData.title);
+        const expectedSlug = `/movie/${slugifiedTitle}-${movieData.id}-${releaseYear}`;
 
-        if (window.location.pathname !== expectedPath) {
-          navigate(expectedPath, { replace: true });
+        if (window.location.pathname !== expectedSlug) {
+          navigate(expectedSlug, { replace: true });
         }
 
         setIsFavorite(isInFavorites(movieId, 'movie'));
@@ -148,8 +157,6 @@ const MovieDetailsPage = () => {
     }
   };
 
-  // Loading, error, and UI rendering can be added below
-
   return (
     <>
       <Navbar />
@@ -159,7 +166,6 @@ const MovieDetailsPage = () => {
         <div className="text-red-500 p-10 text-center">{error}</div>
       ) : movie ? (
         <div className="text-white p-4">
-          {/* Add your movie detail JSX here */}
           <h1 className="text-3xl font-bold mb-4">{movie.title}</h1>
           <Button onClick={handlePlayMovie}>
             <Play className="w-4 h-4 mr-2" /> Watch Now
