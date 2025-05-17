@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, ArrowRight, Film, Tv } from 'lucide-react';
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/components/ui/use-toast";
@@ -15,6 +14,60 @@ interface SearchBarProps {
   onToggleExpand?: () => void;
 }
 
+// Animated placeholder input component
+const phrases = ["Search for Movie...", "Search for TV Show..."];
+
+const AnimatedPlaceholderInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+  ({ className, value, onChange, ...props }, ref) => {
+    const [displayedText, setDisplayedText] = useState("");
+    const [phraseIndex, setPhraseIndex] = useState(0);
+    const [charIndex, setCharIndex] = useState(0);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const typingSpeed = 100;
+    const deletingSpeed = 60;
+    const pauseDelay = 1500;
+
+    useEffect(() => {
+      let timeout: NodeJS.Timeout;
+
+      if (!isDeleting && charIndex <= phrases[phraseIndex].length) {
+        setDisplayedText(phrases[phraseIndex].substring(0, charIndex));
+        timeout = setTimeout(() => setCharIndex(charIndex + 1), typingSpeed);
+
+        if (charIndex === phrases[phraseIndex].length) {
+          timeout = setTimeout(() => setIsDeleting(true), pauseDelay);
+        }
+      } else if (isDeleting && charIndex >= 0) {
+        setDisplayedText(phrases[phraseIndex].substring(0, charIndex));
+        timeout = setTimeout(() => setCharIndex(charIndex - 1), deletingSpeed);
+
+        if (charIndex === 0) {
+          setIsDeleting(false);
+          setPhraseIndex((phraseIndex + 1) % phrases.length);
+        }
+      }
+
+      return () => clearTimeout(timeout);
+    }, [charIndex, isDeleting, phraseIndex]);
+
+    return (
+      <input
+        {...props}
+        ref={ref}
+        value={value}
+        onChange={onChange}
+        placeholder={displayedText}
+        autoComplete="off"
+        spellCheck={false}
+        type="search"
+        className={className}
+      />
+    );
+  }
+);
+AnimatedPlaceholderInput.displayName = "AnimatedPlaceholderInput";
+
 const SearchBar = ({ 
   isMobile = false, 
   onSearch,
@@ -25,8 +78,6 @@ const SearchBar = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState<Media[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [searchType, setSearchType] = useState<"movie" | "tv">("movie");
-
   const navigate = useNavigate();
   const { toast } = useToast();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -66,8 +117,7 @@ const SearchBar = ({
     const fetchSuggestions = async () => {
       if (searchQuery.trim().length > 0) {
         try {
-          // Pass searchType to API if you want to filter by type
-          const results = await searchMedia(searchQuery, searchType);
+          const results = await searchMedia(searchQuery);
           setSearchSuggestions(results.slice(0, 6));
           setShowSuggestions(true);
         } catch (error) {
@@ -81,12 +131,12 @@ const SearchBar = ({
 
     const debounceTimer = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery, searchType]);
+  }, [searchQuery]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}&type=${searchType}`);
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
       setShowSuggestions(false);
       if (onSearch) onSearch();
@@ -94,7 +144,7 @@ const SearchBar = ({
 
       toast({
         title: "Searching...",
-        description: `Finding results for "${searchQuery.trim()}" in ${searchType === "movie" ? "Movies" : "TV Shows"}`,
+        description: `Finding results for "${searchQuery.trim()}"`,
         duration: 2000,
       });
     }
@@ -112,12 +162,6 @@ const SearchBar = ({
       description: `Going to ${item.title || item.name}`,
       duration: 2000,
     });
-  };
-
-  const toggleSearchType = () => {
-    setSearchType(prev => (prev === "movie" ? "tv" : "movie"));
-    setSearchQuery('');
-    setShowSuggestions(false);
   };
 
   // For mobile collapsed state (icon only)
@@ -139,38 +183,23 @@ const SearchBar = ({
     <form onSubmit={handleSearch} className={`search-container ${isMobile ? 'w-full' : ''} ${className}`}>
       <div className="relative w-full">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-4 h-4 pointer-events-none" />
-        <Input
-          type="search"
-          placeholder={
-            isMobile
-              ? `Search for ${searchType === "movie" ? "Movie" : "TV Show"}...`
-              : `Search for ${searchType === "movie" ? "Movie" : "TV Show"}... (Press /)`
-          }
-          className="search-input pl-10 pr-20 h-10"
+
+        <AnimatedPlaceholderInput
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           ref={searchInputRef}
+          className="search-input pl-10 pr-12 h-10 w-full rounded-md border border-input bg-background text-base placeholder:text-muted-foreground"
         />
-
-        <button
-          type="button"
-          onClick={toggleSearchType}
-          className="absolute right-10 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-gray-700 rounded text-white text-xs select-none"
-          aria-label={`Switch search type to ${searchType === "movie" ? "TV Show" : "Movie"}`}
-          tabIndex={0}
-        >
-          {searchType === "movie" ? "TV Show" : "Movie"}
-        </button>
 
         <Button 
           type="submit" 
           size="icon"
-          className="search-button absolute right-2.5 top-1/2 transform -translate-y-1/2"
+          className="search-button absolute right-2.5 top-1/2 transform -translate-y-1/2" 
           aria-label="Search"
         >
           <ArrowRight className="h-3.5 w-3.5" />
         </Button>
-
+        
         {showSuggestions && searchSuggestions.length > 0 && (
           <div ref={suggestionsRef} className="search-suggestions">
             {searchSuggestions.map((item) => (
