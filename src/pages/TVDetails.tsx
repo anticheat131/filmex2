@@ -1,67 +1,157 @@
-import React from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import ContentRow from '@/components/ContentRow';
+import Navbar from '@/components/Navbar';
+import ReviewSection from '@/components/ReviewSection';
+import TVShowHeader from '@/components/tv/TVShowHeader';
+import TVShowEpisodes from '@/components/tv/TVShowEpisodes';
+import TVShowAbout from '@/components/tv/TVShowAbout';
+import TVShowCast from '@/components/tv/TVShowCast';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useTVDetails } from '@/hooks/use-tv-details';
+import React, { useEffect } from 'react';
 
-interface Season {
-  season_number: number;
-  name: string;
-}
+const TVDetailsPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
-interface Episode {
-  id: number;
-  episode_number: number;
-  name: string;
-  overview?: string;
-  // add other episode fields you use
-}
+  const {
+    tvShow,
+    episodes,
+    selectedSeason,
+    setSelectedSeason,
+    isLoading,
+    error,
+    activeTab,
+    setActiveTab,
+    recommendations,
+    cast,
+    trailerKey,
+    isFavorite,
+    isInMyWatchlist,
+    handlePlayEpisode,
+    handleToggleFavorite,
+    handleToggleWatchlist,
+    getLastWatchedEpisode,
+  } = useTVDetails(id);
 
-interface TVShowEpisodesProps {
-  seasons: Season[];
-  episodes: Episode[];
-  selectedSeason: number;
-  onSeasonChange: (seasonNumber: number) => void;
-  onPlayEpisode: (episode: Episode) => void;
-}
+  // If no selectedSeason yet, set to first season number available once tvShow.seasons loads
+  useEffect(() => {
+    if (tvShow?.seasons?.length && !selectedSeason) {
+      setSelectedSeason(tvShow.seasons[0].season_number);
+    }
+  }, [tvShow, selectedSeason, setSelectedSeason]);
 
-const TVShowEpisodes: React.FC<TVShowEpisodesProps> = ({
-  seasons,
-  episodes,
-  selectedSeason,
-  onSeasonChange,
-  onPlayEpisode,
-}) => {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-pulse-slow text-white font-medium">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+        <h1 className="text-2xl text-white mb-4">{error}</h1>
+        <Button onClick={() => navigate('/')} variant="outline">
+          Return to Home
+        </Button>
+      </div>
+    );
+  }
+
+  if (!tvShow) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+        <h1 className="text-2xl text-white mb-4">TV Show not found</h1>
+        <Button onClick={() => navigate('/')} variant="outline">
+          Return to Home
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <div className="mb-6">
-        <label htmlFor="season-select" className="text-white font-medium mb-2 block">
-          Select Season:
-        </label>
-        <select
-          id="season-select"
-          value={selectedSeason}
-          onChange={(e) => onSeasonChange(Number(e.target.value))}
-          className="bg-background text-white px-4 py-2 rounded border border-white/20 focus:outline-none focus:ring-2 focus:ring-accent"
+    <div className="min-h-screen bg-background">
+      <Navbar />
+
+      <div className="relative">
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-20 left-6 z-10 text-white p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors"
+          aria-label="Go back"
         >
-          {seasons.map((season) => (
-            <option key={season.season_number} value={season.season_number}>
-              {season.name}
-            </option>
-          ))}
-        </select>
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+
+        {!isMobile && trailerKey && (
+          <div className="absolute inset-0 bg-black/60">
+            <iframe
+              className="w-full h-full"
+              src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&mute=1&controls=0&modestbranding=1&loop=1&playlist=${trailerKey}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              title="TV Show Trailer"
+            />
+          </div>
+        )}
+
+        <TVShowHeader
+          tvShow={tvShow}
+          isFavorite={isFavorite}
+          isInWatchlist={isInMyWatchlist}
+          onToggleFavorite={handleToggleFavorite}
+          onToggleWatchlist={handleToggleWatchlist}
+          onPlayEpisode={handlePlayEpisode}
+          lastWatchedEpisode={getLastWatchedEpisode()}
+        />
       </div>
 
-      <ul className="space-y-2">
-        {episodes.map((episode) => (
-          <li key={episode.id}>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="flex border-b border-white/10 mb-6 overflow-x-auto pb-1 hide-scrollbar">
+          {['episodes', 'about', 'cast', 'reviews'].map((tab) => (
             <button
-              onClick={() => onPlayEpisode(episode)}
-              className="text-white hover:underline"
+              key={tab}
+              className={`py-2 px-4 font-medium whitespace-nowrap ${
+                activeTab === tab
+                  ? 'text-white border-b-2 border-accent'
+                  : 'text-white/60 hover:text-white'
+              }`}
+              onClick={() => setActiveTab(tab as typeof activeTab)}
             >
-              {episode.episode_number}. {episode.name}
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
-          </li>
-        ))}
-      </ul>
+          ))}
+        </div>
+
+        {activeTab === 'episodes' && (
+          <TVShowEpisodes
+            seasons={tvShow.seasons}
+            episodes={episodes}
+            selectedSeason={selectedSeason}
+            onSeasonChange={setSelectedSeason}
+            onPlayEpisode={handlePlayEpisode}
+          />
+        )}
+
+        {activeTab === 'about' && <TVShowAbout tvShow={tvShow} />}
+
+        {activeTab === 'cast' && <TVShowCast cast={cast} />}
+
+        {activeTab === 'reviews' && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white mb-6">User Reviews</h2>
+            <ReviewSection mediaId={parseInt(id!, 10)} mediaType="tv" />
+          </div>
+        )}
+      </div>
+
+      {recommendations.length > 0 && <ContentRow title="More Like This" media={recommendations} />}
     </div>
   );
 };
 
-export default TVShowEpisodes;
+export default TVDetailsPage;
