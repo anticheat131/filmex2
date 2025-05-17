@@ -12,6 +12,7 @@ import TVShowCast from '@/components/tv/TVShowCast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTVDetails } from '@/hooks/use-tv-details';
 
+// Helper to generate slug URL for TV show
 function generateTVShowSlugURL(
   id: number | string,
   name?: string,
@@ -104,12 +105,6 @@ const TVDetailsPage = () => {
     );
   }
 
-  // Handler for season change from dropdown
-  const handleSeasonSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const seasonNumber = Number(event.target.value);
-    setSelectedSeason(seasonNumber);
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -147,46 +142,96 @@ const TVDetailsPage = () => {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Only one tab now: Episodes */}
-        <div className="flex border-b border-white/10 mb-6">
+        <div className="flex border-b border-white/10 mb-6 overflow-x-auto pb-1 hide-scrollbar">
           <button
-            className="py-2 px-4 font-medium whitespace-nowrap text-white border-b-2 border-accent cursor-default"
-            disabled
+            className={`py-2 px-4 font-medium whitespace-nowrap ${
+              activeTab === 'episodes'
+                ? 'text-white border-b-2 border-accent'
+                : 'text-white/60 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('episodes')}
           >
             Episodes
           </button>
+          <button
+            className={`py-2 px-4 font-medium whitespace-nowrap ${
+              activeTab === 'about'
+                ? 'text-white border-b-2 border-accent'
+                : 'text-white/60 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('about')}
+          >
+            About
+          </button>
+          <button
+            className={`py-2 px-4 font-medium whitespace-nowrap ${
+              activeTab === 'cast'
+                ? 'text-white border-b-2 border-accent'
+                : 'text-white/60 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('cast')}
+          >
+            Cast
+          </button>
+          <button
+            className={`py-2 px-4 font-medium whitespace-nowrap ${
+              activeTab === 'reviews'
+                ? 'text-white border-b-2 border-accent'
+                : 'text-white/60 hover:text-white'
+            }`}
+            onClick={() => setActiveTab('reviews')}
+          >
+            Reviews
+          </button>
         </div>
 
-        {/* Season dropdown */}
-        <div className="mb-6 max-w-xs">
-          <label
-            htmlFor="season-select"
-            className="block mb-2 text-white font-semibold text-sm"
-          >
-            Select Season
-          </label>
-          <select
-            id="season-select"
-            value={selectedSeason}
-            onChange={handleSeasonSelect}
-            className="w-full bg-gray-900 text-white py-2 px-3 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-accent"
-          >
-            {(tvShow.seasons ?? []).map((season) => (
-              <option key={season.id} value={season.season_number}>
-                {`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}
-              </option>
-            ))}
-          </select>
-        </div>
+        {activeTab === 'episodes' && (
+          <>
+            {/* Dropdown menu for seasons */}
+            <div className="mb-4">
+              <label
+                htmlFor="season-select"
+                className="block mb-1 text-white font-semibold"
+              >
+                Select Season
+              </label>
+              <select
+                id="season-select"
+                value={selectedSeason}
+                onChange={(e) => setSelectedSeason(Number(e.target.value))}
+                className="w-full max-w-xs bg-gray-800 text-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
+              >
+                {tvShow.seasons?.map((season) => (
+                  <option key={season.season_number} value={season.season_number}>
+                    {`Season ${season.season_number}` + (season.name ? ` - ${season.name}` : '')}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        {/* Episodes list */}
-        <TVShowEpisodes
-          seasons={tvShow.seasons ?? []}
-          episodes={episodes ?? []}
-          selectedSeason={selectedSeason}
-          onSeasonChange={setSelectedSeason}
-          onPlayEpisode={handlePlayEpisode}
-        />
+            {/* Section title */}
+            <h2 className="text-white text-2xl font-bold mb-4">Episodes</h2>
+
+            <TVShowEpisodes
+              seasons={tvShow.seasons ?? []}
+              episodes={episodes ?? []}
+              selectedSeason={selectedSeason}
+              onSeasonChange={setSelectedSeason}
+              onPlayEpisode={handlePlayEpisode}
+            />
+          </>
+        )}
+
+        {activeTab === 'about' && <TVShowAbout tvShow={tvShow} />}
+
+        {activeTab === 'cast' && <TVShowCast cast={cast} />}
+
+        {activeTab === 'reviews' && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white mb-6">User Reviews</h2>
+            <ReviewSection mediaId={parseInt(id!, 10)} mediaType="tv" />
+          </div>
+        )}
       </div>
 
       {recommendations.length > 0 && (
