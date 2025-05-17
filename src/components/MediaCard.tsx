@@ -13,8 +13,6 @@ const genreMap: Record<number, string> = {
   99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
   27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance',
   878: 'Sci-Fi', 10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western',
-  10759: 'Action & Adventure', 10762: 'Kids', 10763: 'News', 10764: 'Reality',
-  10765: 'Sci-Fi & Fantasy', 10766: 'Soap', 10767: 'Talk', 10768: 'War & Politics'
 };
 
 interface MediaCardProps {
@@ -81,13 +79,19 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         const release = new Date(media.release_date);
         const diffInDays = Math.floor((now.getTime() - release.getTime()) / (1000 * 60 * 60 * 24));
 
-        if (types.length === 0 || types.every((t: number) => t === 2 || t === 3)) {
+        if (types.length === 0) {
+          setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
+        } else if (types.every((t: number) => t === 2 || t === 3)) {
           setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
         } else {
-          const hasDigital = types.includes(4);
-          const digitalDate = usRelease?.release_dates?.find((r: any) => r.type === 4)?.release_date;
-          const digitalReleased = digitalDate && new Date(digitalDate) <= now;
-          setQuality(hasDigital && digitalReleased ? 'HD' : diffInDays >= 60 ? 'HD' : 'CAM');
+          // filter out "preorder" digital types (type 4 with future date)
+          const validDigital = usRelease?.release_dates?.some(
+            (r: any) =>
+              r.type === 4 &&
+              new Date(r.release_date) <= new Date() &&
+              !r.note?.toLowerCase()?.includes('pre-order')
+          );
+          setQuality(validDigital ? 'HD' : 'CAM');
         }
       } catch (e) {
         setQuality(null);
@@ -159,9 +163,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         </h3>
 
         <div className="flex justify-between items-end text-xs">
-          <p className="text-white/70 line-clamp-1 max-w-[60%] pl-[5%]">
-            {genreNames.length > 0 ? genreNames.join(', ') : '—'}
-          </p>
+          <p className="text-white/70 line-clamp-1 text-left">{genreNames.length > 0 ? genreNames.join(', ') : '—'}</p>
           {runtimeMinutes && (
             <p className="text-white/60 text-xs text-right min-w-[35%]">{runtimeMinutes} min</p>
           )}
@@ -182,7 +184,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           >
             <h4 className="font-bold text-lg mb-1">{media.title || media.name}</h4>
             <p className="text-xs mb-2 text-white/70">Release: {fullReleaseDate || 'Unknown'}</p>
-            <p className="text-xs mb-2 text-white/70">Genres: {genreNames.length > 0 ? genreNames.join(', ') : 'Unknown'}</p>
+            <p className="text-xs mb-2 text-white/70">Genres: {genreNames?.join(', ') || 'Unknown'}</p>
             {media.vote_average > 0 && (
               <p className="flex items-center text-amber-400 mb-2">
                 <Star className="h-4 w-4 mr-1 fill-amber-400" /> {media.vote_average.toFixed(1)}
