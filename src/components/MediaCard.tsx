@@ -68,13 +68,23 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
       if (media.media_type !== 'movie') return;
 
       try {
+        const release = new Date(media.release_date);
+        const now = new Date();
+        const diffInDays = Math.floor((now.getTime() - release.getTime()) / (1000 * 60 * 60 * 24));
+
+        const ONE_YEAR_DAYS = 365;
+        if (diffInDays > ONE_YEAR_DAYS) {
+          setQuality('HD'); // Force HD for movies older than 1 year
+          return;
+        }
+
         const res = await fetch(
           `https://api.themoviedb.org/3/movie/${mediaId}/release_dates?api_key=${import.meta.env.VITE_TMDB_API_KEY}`
         );
         const data = await res.json();
         const allReleaseDates = data.results || [];
 
-        // Flatten all release dates worldwide
+        // Flatten all release dates from all countries
         const allTypes = allReleaseDates.flatMap((r: any) =>
           r.release_dates.map((rd: any) => ({
             type: rd.type,
@@ -83,20 +93,15 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           }))
         );
 
-        const now = new Date();
-        const release = new Date(media.release_date);
-        const diffInDays = Math.floor((now.getTime() - release.getTime()) / (1000 * 60 * 60 * 24));
-
-        // Filter out pre-order digital releases
+        // Check for valid digital release (type 4) with a past release date and no pre-order note
         const validDigital = allTypes.some(rd =>
           rd.type === 4 &&
           rd.date <= now &&
           !rd.note.includes('pre-order')
         );
 
+        // Check if all release types are theatrical only (2 or 3)
         const allTypesSet = new Set(allTypes.map(rd => rd.type));
-
-        // Check if only theatrical types are present
         const onlyTheatrical = [...allTypesSet].every(t => t === 2 || t === 3);
 
         if (allTypes.length === 0) {
