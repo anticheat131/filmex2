@@ -6,13 +6,11 @@ import ContentRow from '@/components/ContentRow';
 import Navbar from '@/components/Navbar';
 import ReviewSection from '@/components/ReviewSection';
 import TVShowHeader from '@/components/tv/TVShowHeader';
-import TVShowEpisodes from '@/components/tv/TVShowEpisodes';
 import TVShowAbout from '@/components/tv/TVShowAbout';
 import TVShowCast from '@/components/tv/TVShowCast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTVDetails } from '@/hooks/use-tv-details';
 
-// Helper to generate slug URL for TV show
 function generateTVShowSlugURL(
   id: number | string,
   name?: string,
@@ -187,38 +185,55 @@ const TVDetailsPage = () => {
 
         {activeTab === 'episodes' && (
           <>
-            {/* Dropdown menu for seasons */}
-            <div className="mb-4">
-              <label
-                htmlFor="season-select"
-                className="block mb-1 text-white font-semibold"
-              >
+            {/* Season dropdown above episodes */}
+            <div className="mb-4 w-full max-w-xs">
+              <label htmlFor="season-select" className="block mb-2 text-white font-semibold">
                 Select Season
               </label>
               <select
                 id="season-select"
                 value={selectedSeason}
                 onChange={(e) => setSelectedSeason(Number(e.target.value))}
-                className="w-full max-w-xs bg-gray-800 text-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-full bg-gray-800 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
               >
                 {tvShow.seasons?.map((season) => (
-                  <option key={season.season_number} value={season.season_number}>
-                    {`Season ${season.season_number}` + (season.name ? ` - ${season.name}` : '')}
+                  <option key={season.id} value={season.season_number}>
+                    {season.name
+                      ? `Season ${season.season_number} - ${season.name}`
+                      : `Season ${season.season_number}`}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Section title */}
-            <h2 className="text-white text-2xl font-bold mb-4">Episodes</h2>
+            {/* Episodes list */}
+            <div>
+              <h2 className="text-xl font-semibold text-white mb-4">Episodes</h2>
 
-            <TVShowEpisodes
-              seasons={tvShow.seasons ?? []}
-              episodes={episodes ?? []}
-              selectedSeason={selectedSeason}
-              onSeasonChange={setSelectedSeason}
-              onPlayEpisode={handlePlayEpisode}
-            />
+              <ul className="space-y-4">
+                {(episodes ?? []).map((episode) => (
+                  <li
+                    key={episode.id}
+                    className="flex items-center space-x-4 cursor-pointer hover:bg-white/10 p-3 rounded-md"
+                    onClick={() => handlePlayEpisode(episode)}
+                  >
+                    {episode.still_path && (
+                      <img
+                        src={`https://image.tmdb.org/t/p/w185${episode.still_path}`}
+                        alt={episode.name}
+                        className="w-28 h-16 object-cover rounded"
+                      />
+                    )}
+                    <div>
+                      <p className="text-white font-semibold">
+                        {episode.episode_number}. {episode.name}
+                      </p>
+                      <p className="text-sm text-white/70">{episode.air_date}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </>
         )}
 
