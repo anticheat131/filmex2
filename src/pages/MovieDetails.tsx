@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import ContentRow from '@/components/ContentRow';
 import ReviewSection from '@/components/ReviewSection';
-import { Play, Clock, Calendar, Star, ArrowLeft, Shield, Heart, Bookmark } from 'lucide-react';
+import { Play, Clock, Calendar, Star, ArrowLeft, Heart, Bookmark } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useWatchHistory } from '@/hooks/watch-history';
 
@@ -40,7 +40,7 @@ const MovieDetailsPage = () => {
   const [isInMyWatchlist, setIsInMyWatchlist] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  
+
   useEffect(() => {
     const fetchMovieData = async () => {
       if (!id) {
@@ -109,7 +109,6 @@ const MovieDetailsPage = () => {
 
   const handlePlayMovie = () => {
     if (movie) {
-      // Include slugified title and year in the URL
       const year = movie.release_date ? new Date(movie.release_date).getFullYear() : 'unknown-year';
       const slugTitle = slugify(movie.title || 'movie');
       navigate(`/watch/movie/${movie.id}/${slugTitle}-${year}`);
@@ -201,8 +200,7 @@ const MovieDetailsPage = () => {
         {/* Loading skeleton */}
         {!backdropLoaded && (
           <div className="absolute inset-0 bg-background image-skeleton" />
-        )
-        }
+        )}
         
         {/* Back button */}
         <button 
@@ -233,6 +231,7 @@ const MovieDetailsPage = () => {
               src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&mute=1&controls=0&modestbranding=1&loop=1&playlist=${trailerKey}`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
+              title="Movie Trailer"
             />
           </div>
         )}
@@ -244,77 +243,61 @@ const MovieDetailsPage = () => {
               <img 
                 src={getImageUrl(movie.poster_path, posterSizes.medium)} 
                 alt={movie.title || 'Movie poster'} 
-                className="w-full h-auto"
-              />
-            </div>
-            
-            <div className="flex-1 animate-slide-up">
-              {movie.logo_path && (
-<img
-src={getImageUrl(movie.logo_path, posterSizes.small)}
-alt={${movie.title} logo}
-onLoad={() => setLogoLoaded(true)}
-className={max-h-16 mb-4 transition-opacity duration-700 ${ logoLoaded ? 'opacity-100' : 'opacity-0' }}
-/>
-)}
-<h1 className="text-3xl md:text-5xl font-bold text-white mb-4">{movie.title}</h1>
-<div className="flex flex-wrap items-center gap-4 text-sm text-gray-300 mb-4">
-{movie.release_date && (
-<div className="flex items-center gap-1">
-<Calendar className="w-4 h-4" />
-<span>{new Date(movie.release_date).toLocaleDateString()}</span>
-</div>
-)}
-{movie.runtime && (
-<div className="flex items-center gap-1">
-<Clock className="w-4 h-4" />
-<span>{formatRuntime(movie.runtime)}</span>
-</div>
-)}
-<div className="flex items-center gap-1">
-<Star className="w-4 h-4 text-yellow-400" />
-<span>{movie.vote_average.toFixed(1)}</span>
-</div>
-{movie.genres && movie.genres.length > 0 && (
-<div className="flex items-center gap-1 flex-wrap max-w-[60%]">
-{movie.genres.slice(0, 3).map(genre => (
-<span key={genre.id} className="bg-gray-700 rounded-full px-3 py-1 text-xs font-semibold">
-{genre.name}
-</span>
-))}
-</div>
-)}
-</div>
-<p className="text-gray-300 mb-6 max-w-prose">{movie.overview}</p>
-          <div className="flex gap-4 flex-wrap">
-            <Button 
-              variant="primary" 
-              size="lg" 
-              onClick={handlePlayMovie}
-              leftIcon={<Play />}
-              aria-label="Play movie"
-            >
+            className={`w-full h-full object-cover transition-opacity duration-700 ${logoLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setLogoLoaded(true)}
+            loading="lazy"
+          />
+        </div>
+        
+        <div className="flex flex-col text-white max-w-3xl">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            {movie.title} {movie.release_date && `(${new Date(movie.release_date).getFullYear()})`}
+          </h1>
+          <p className="text-sm mb-3 max-w-xl line-clamp-4">{movie.overview}</p>
+          
+          <div className="flex flex-wrap items-center gap-4 mb-4 text-gray-300 text-sm">
+            {movie.release_date && (
+              <div className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                <span>{new Date(movie.release_date).toLocaleDateString()}</span>
+              </div>
+            )}
+            {movie.runtime && (
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>{formatRuntime(movie.runtime)}</span>
+              </div>
+            )}
+            {movie.vote_average && (
+              <div className="flex items-center gap-1">
+                <Star className="h-4 w-4 text-yellow-400" />
+                <span>{movie.vote_average.toFixed(1)}</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex gap-4">
+            <Button onClick={handlePlayMovie} variant="primary" className="flex items-center gap-2">
+              <Play className="h-5 w-5" />
               Play
             </Button>
-
-            <Button
-              variant={isFavorite ? 'destructive' : 'outline'}
-              size="lg"
-              onClick={handleToggleFavorite}
-              leftIcon={<Heart />}
-              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            
+            <Button 
+              onClick={handleToggleFavorite} 
+              variant={isFavorite ? "destructive" : "outline"} 
+              aria-pressed={isFavorite}
+              aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
             >
-              {isFavorite ? 'Remove Favorite' : 'Add Favorite'}
+              <Heart className="h-5 w-5" />
             </Button>
-
+            
             <Button
-              variant={isInMyWatchlist ? 'destructive' : 'outline'}
-              size="lg"
               onClick={handleToggleWatchlist}
-              leftIcon={<Bookmark />}
-              aria-label={isInMyWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+              variant={isInMyWatchlist ? "destructive" : "outline"}
+              aria-pressed={isInMyWatchlist}
+              aria-label={isInMyWatchlist ? "Remove from watchlist" : "Add to watchlist"}
             >
-              {isInMyWatchlist ? 'Remove Watchlist' : 'Add Watchlist'}
+              <Bookmark className="h-5 w-5" />
             </Button>
           </div>
         </div>
@@ -322,77 +305,105 @@ className={max-h-16 mb-4 transition-opacity duration-700 ${ logoLoaded ? 'opacit
     </div>
   </div>
   
-  {/* Tabs: About, Cast, Reviews */}
-  <div className="max-w-6xl mx-auto p-4 md:p-8">
-    <nav className="flex gap-6 border-b border-gray-700 mb-8">
+  {/* Tabs Section */}
+  <section className="max-w-6xl mx-auto p-4 md:p-8">
+    <nav className="flex space-x-6 border-b border-gray-700 mb-6" role="tablist" aria-label="Movie details tabs">
       <button
-        onClick={() => setActiveTab('about')}
-        className={`pb-2 font-semibold ${
-          activeTab === 'about' ? 'border-b-2 border-primary text-primary' : 'text-gray-400 hover:text-white'
+        role="tab"
+        aria-selected={activeTab === 'about'}
+        aria-controls="tab-about"
+        id="tab-about-btn"
+        className={`pb-2 border-b-2 font-semibold text-lg ${
+          activeTab === 'about' ? 'border-primary text-white' : 'border-transparent text-gray-400 hover:text-white'
         }`}
-        aria-current={activeTab === 'about' ? 'page' : undefined}
+        onClick={() => setActiveTab('about')}
       >
         About
       </button>
       <button
-        onClick={() => setActiveTab('cast')}
-        className={`pb-2 font-semibold ${
-          activeTab === 'cast' ? 'border-b-2 border-primary text-primary' : 'text-gray-400 hover:text-white'
+        role="tab"
+        aria-selected={activeTab === 'reviews'}
+        aria-controls="tab-reviews"
+        id="tab-reviews-btn"
+        className={`pb-2 border-b-2 font-semibold text-lg ${
+          activeTab === 'reviews' ? 'border-primary text-white' : 'border-transparent text-gray-400 hover:text-white'
         }`}
-        aria-current={activeTab === 'cast' ? 'page' : undefined}
-      >
-        Cast & Crew
-      </button>
-      <button
         onClick={() => setActiveTab('reviews')}
-        className={`pb-2 font-semibold ${
-          activeTab === 'reviews' ? 'border-b-2 border-primary text-primary' : 'text-gray-400 hover:text-white'
-        }`}
-        aria-current={activeTab === 'reviews' ? 'page' : undefined}
       >
         Reviews
       </button>
+      <button
+        role="tab"
+        aria-selected={activeTab === 'cast'}
+        aria-controls="tab-cast"
+        id="tab-cast-btn"
+        className={`pb-2 border-b-2 font-semibold text-lg ${
+          activeTab === 'cast' ? 'border-primary text-white' : 'border-transparent text-gray-400 hover:text-white'
+        }`}
+        onClick={() => setActiveTab('cast')}
+      >
+        Cast
+      </button>
     </nav>
-
-    {activeTab === 'about' && (
-      <section aria-label="Movie description" className="text-gray-300 prose max-w-none">
-        <p>{movie.overview}</p>
-      </section>
-    )}
-
-    {activeTab === 'cast' && (
-      <section aria-label="Movie cast and crew" className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+    
+    <div
+      role="tabpanel"
+      id="tab-about"
+      aria-labelledby="tab-about-btn"
+      hidden={activeTab !== 'about'}
+      className="text-gray-300"
+    >
+      <p>{movie.overview || 'No description available.'}</p>
+    </div>
+    
+    <div
+      role="tabpanel"
+      id="tab-reviews"
+      aria-labelledby="tab-reviews-btn"
+      hidden={activeTab !== 'reviews'}
+    >
+      <ReviewSection movieId={movie.id} />
+    </div>
+    
+    <div
+      role="tabpanel"
+      id="tab-cast"
+      aria-labelledby="tab-cast-btn"
+      hidden={activeTab !== 'cast'}
+      className="overflow-x-auto"
+    >
+      <div className="flex gap-4 min-w-max">
         {cast.length === 0 ? (
           <p className="text-gray-400">No cast information available.</p>
         ) : (
-          cast.map(person => (
-            <div key={person.id} className="flex flex-col items-center text-center">
+          cast.map((member) => (
+            <div
+              key={member.cast_id}
+              className="w-28 text-center flex-shrink-0"
+            >
               <img
-                src={getImageUrl(person.profile_path, posterSizes.small)}
-                alt={person.name}
-                className="rounded-lg w-24 h-32 object-cover mb-2"
+                src={getImageUrl(member.profile_path, posterSizes.small)}
+                alt={member.name}
+                className="rounded-md mb-2 aspect-[2/3] object-cover"
+                loading="lazy"
               />
-              <h4 className="text-white font-semibold">{person.name}</h4>
-              <p className="text-gray-400 text-sm">{person.character || person.job}</p>
+              <p className="text-sm font-semibold text-white">{member.name}</p>
+              <p className="text-xs text-gray-400">{member.character}</p>
             </div>
           ))
         )}
-      </section>
-    )}
-
-    {activeTab === 'reviews' && (
-      <ReviewSection movieId={movie.id} />
-    )}
-
-    {/* Recommendations */}
-    {recommendations.length > 0 && (
-      <ContentRow
-        title="Recommendations"
-        mediaList={recommendations}
-        linkTo="/"
-      />
-    )}
-  </div>
+      </div>
+    </div>
+  </section>
+  
+  {/* Recommendations */}
+  {recommendations.length > 0 && (
+    <ContentRow
+      title="You Might Also Like"
+      items={recommendations}
+      mediaType="movie"
+    />
+  )}
 </div>
 );
 };
