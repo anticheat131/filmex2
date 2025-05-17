@@ -14,7 +14,7 @@ interface SearchBarProps {
   onToggleExpand?: () => void;
 }
 
-// Animated placeholder input component
+// Animated placeholder input with typing + deleting animation cycling phrases
 const phrases = ["Search for Movie...", "Search for TV Show..."];
 
 const AnimatedPlaceholderInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
@@ -24,28 +24,29 @@ const AnimatedPlaceholderInput = React.forwardRef<HTMLInputElement, React.Compon
     const [charIndex, setCharIndex] = useState(0);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const typingSpeed = 100;
+    const typingSpeed = 120;
     const deletingSpeed = 60;
-    const pauseDelay = 1500;
+    const pauseDelay = 1200;
 
     useEffect(() => {
-      let timeout: NodeJS.Timeout;
+      let timeout: ReturnType<typeof setTimeout>;
 
       if (!isDeleting && charIndex <= phrases[phraseIndex].length) {
+        // Typing
         setDisplayedText(phrases[phraseIndex].substring(0, charIndex));
-        timeout = setTimeout(() => setCharIndex(charIndex + 1), typingSpeed);
-
         if (charIndex === phrases[phraseIndex].length) {
           timeout = setTimeout(() => setIsDeleting(true), pauseDelay);
+        } else {
+          timeout = setTimeout(() => setCharIndex(charIndex + 1), typingSpeed);
         }
       } else if (isDeleting && charIndex >= 0) {
+        // Deleting
         setDisplayedText(phrases[phraseIndex].substring(0, charIndex));
-        timeout = setTimeout(() => setCharIndex(charIndex - 1), deletingSpeed);
-
         if (charIndex === 0) {
           setIsDeleting(false);
-          setPhraseIndex((phraseIndex + 1) % phrases.length);
+          setPhraseIndex((prev) => (prev + 1) % phrases.length);
         }
+        timeout = setTimeout(() => setCharIndex(charIndex - 1), deletingSpeed);
       }
 
       return () => clearTimeout(timeout);
@@ -66,6 +67,7 @@ const AnimatedPlaceholderInput = React.forwardRef<HTMLInputElement, React.Compon
     );
   }
 );
+
 AnimatedPlaceholderInput.displayName = "AnimatedPlaceholderInput";
 
 const SearchBar = ({ 
@@ -164,7 +166,6 @@ const SearchBar = ({
     });
   };
 
-  // For mobile collapsed state (icon only)
   if (isMobile && !expanded) {
     return (
       <Button
@@ -183,18 +184,17 @@ const SearchBar = ({
     <form onSubmit={handleSearch} className={`search-container ${isMobile ? 'w-full' : ''} ${className}`}>
       <div className="relative w-full">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-4 h-4 pointer-events-none" />
-
         <AnimatedPlaceholderInput
+          className="search-input pl-10 pr-12 h-10"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           ref={searchInputRef}
-          className="search-input pl-10 pr-12 h-10 w-full rounded-md border border-input bg-background text-base placeholder:text-muted-foreground"
         />
-
+        
         <Button 
           type="submit" 
           size="icon"
-          className="search-button absolute right-2.5 top-1/2 transform -translate-y-1/2" 
+          className="search-button absolute right-2.5 top-1/2 transform -translate-y-1/2"
           aria-label="Search"
         >
           <ArrowRight className="h-3.5 w-3.5" />
