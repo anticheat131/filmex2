@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import React from 'react';
 import { slugify } from '@/utils/slugify';  // adjust path if needed
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
