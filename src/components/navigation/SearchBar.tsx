@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, ArrowRight, Film, Tv } from 'lucide-react';
 import { Input } from "@/components/ui/input";
@@ -26,6 +25,7 @@ const SearchBar = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState<Media[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchType, setSearchType] = useState<'movie' | 'tv'>('movie'); // New state for toggle
   const navigate = useNavigate();
   const { toast } = useToast();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -65,7 +65,7 @@ const SearchBar = ({
     const fetchSuggestions = async () => {
       if (searchQuery.trim().length > 0) {
         try {
-          const results = await searchMedia(searchQuery);
+          const results = await searchMedia(searchQuery, searchType);
           setSearchSuggestions(results.slice(0, 6));
           setShowSuggestions(true);
         } catch (error) {
@@ -79,12 +79,12 @@ const SearchBar = ({
 
     const debounceTimer = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
+  }, [searchQuery, searchType]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}&type=${searchType}`);
       setSearchQuery('');
       setShowSuggestions(false);
       if (onSearch) onSearch();
@@ -92,7 +92,7 @@ const SearchBar = ({
 
       toast({
         title: "Searching...",
-        description: `Finding results for "${searchQuery.trim()}"`,
+        description: `Finding results for "${searchQuery.trim()}" in ${searchType === 'movie' ? 'Movies' : 'TV Shows'}`,
         duration: 2000,
       });
     }
@@ -129,12 +129,12 @@ const SearchBar = ({
 
   return (
     <form onSubmit={handleSearch} className={`search-container ${isMobile ? 'w-full' : ''} ${className}`}>
-      <div className="relative w-full">
+      <div className="relative w-full flex items-center gap-2">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-4 h-4 pointer-events-none" />
         <Input
           type="search"
-          placeholder={isMobile ? "Search..." : "Search... (Press /)"}
-          className="search-input pl-10 pr-12 h-10" // Added explicit height
+          placeholder={`Search for ${searchType === 'movie' ? 'Movie' : 'TV Show'}...`}
+          className="search-input pl-10 pr-12 h-10 flex-grow" // Added explicit height and flex-grow
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           ref={searchInputRef}
@@ -148,34 +148,46 @@ const SearchBar = ({
         >
           <ArrowRight className="h-3.5 w-3.5" />
         </Button>
-        
-        {showSuggestions && searchSuggestions.length > 0 && (
-          <div ref={suggestionsRef} className="search-suggestions">
-            {searchSuggestions.map((item) => (
-              <button
-                key={`${item.media_type}-${item.id}`}
-                className="suggestion-item"
-                onClick={() => handleSuggestionClick(item)}
-              >
-                <span className="mr-2 flex-shrink-0">
-                  {item.media_type === 'movie' ? 
-                    <Film className="h-4 w-4 text-red-400" /> : 
-                    <Tv className="h-4 w-4 text-blue-400" />
-                  }
-                </span>
-                <span className="flex-1 text-left truncate">{item.title || item.name}</span>
-                <span className="ml-2 opacity-50 text-xs bg-white/10 px-1.5 py-0.5 rounded flex-shrink-0">Enter</span>
-              </button>
-            ))}
-            <button
-              onClick={handleSearch}
-              className="suggestion-item font-medium text-accent justify-center"
-            >
-              View all results for "{searchQuery}"
-            </button>
-          </div>
-        )}
+
+        {/* Toggle button to switch between movie and tvshow */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setSearchType(searchType === 'movie' ? 'tv' : 'movie')}
+          className="ml-2 whitespace-nowrap text-xs text-white/70 hover:text-white"
+          type="button"
+          aria-label="Toggle search type"
+        >
+          {searchType === 'movie' ? 'Movie' : 'TV Show'}
+        </Button>
       </div>
+
+      {showSuggestions && searchSuggestions.length > 0 && (
+        <div ref={suggestionsRef} className="search-suggestions">
+          {searchSuggestions.map((item) => (
+            <button
+              key={`${item.media_type}-${item.id}`}
+              className="suggestion-item"
+              onClick={() => handleSuggestionClick(item)}
+            >
+              <span className="mr-2 flex-shrink-0">
+                {item.media_type === 'movie' ? 
+                  <Film className="h-4 w-4 text-red-400" /> : 
+                  <Tv className="h-4 w-4 text-blue-400" />
+                }
+              </span>
+              <span className="flex-1 text-left truncate">{item.title || item.name}</span>
+              <span className="ml-2 opacity-50 text-xs bg-white/10 px-1.5 py-0.5 rounded flex-shrink-0">Enter</span>
+            </button>
+          ))}
+          <button
+            onClick={handleSearch}
+            className="suggestion-item font-medium text-accent justify-center"
+          >
+            View all results for "{searchQuery}"
+          </button>
+        </div>
+      )}
     </form>
   );
 };
