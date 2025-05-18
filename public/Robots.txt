@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://fmovies4u.com/sitemap.xml
+Sitemap: https://fmovies4u.com/sitemap-12.xml
