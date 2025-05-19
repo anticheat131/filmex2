@@ -1,9 +1,6 @@
-name: Generate Sitemaps
+name: Generate and Push Sitemaps
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
@@ -14,7 +11,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Node.js environment
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
@@ -22,20 +19,25 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run sitemap generator
+      - name: Generate sitemaps
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
-        run: node generate-sitemaps.js
+        run: |
+          echo "Running sitemap generator..."
+          node generate-sitemaps.js
 
-      # Optional: If you want to commit and push generated sitemap files back to the repo,
-      # uncomment and configure the following step:
-      #
-      # - name: Commit and push sitemap files
-      #   env:
-      #     PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-      #   run: |
-      #     git config --global user.name "github-actions[bot]"
-      #     git config --global user.email "github-actions[bot]@users.noreply.github.com"
-      #     git add public/sitemaps/*
-      #     git commit -m "Update sitemaps [CI]" || echo "No changes to commit"
-      #     git push https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
+      - name: Debug - list sitemap files
+        run: |
+          echo "Checking sitemap output:"
+          ls -la public/sitemaps
+
+      - name: Commit and push sitemap files
+        if: success()
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/sitemaps/* || echo "No files to add"
+          git commit -m "Update sitemaps [CI]" || echo "No changes to commit"
+          git push https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref }} || echo "Nothing to push"
