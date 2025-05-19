@@ -3,16 +3,17 @@ import path from 'path';
 import fetch from 'node-fetch';
 import { fileURLToPath } from 'url';
 
-const BASE_URL = 'https://fmovies4u.com'; // Replace with your domain
+const BASE_URL = 'https://fmovies4u.com';
 const TOTAL_ITEMS = 1000;
 const ITEMS_PER_SITEMAP = 200;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const sitemapDir = path.join(__dirname, 'public', 'sitemaps');
+// ✅ FIXED: use repo root, not script location
+const sitemapDir = path.join(process.cwd(), 'public', 'sitemaps');
 
-// Helper to fetch from TMDB with API key as query param
+// Helper to fetch from TMDB
 async function fetchTmdb(endpoint) {
   const url = `https://api.themoviedb.org/3${endpoint}${endpoint.includes('?') ? '&' : '?'}api_key=${process.env.TMDB_API_KEY}`;
   console.log(`Fetching TMDB: ${url}`);
@@ -21,7 +22,6 @@ async function fetchTmdb(endpoint) {
   return res.json();
 }
 
-// Helper to generate <url> entries
 function createUrlEntry(loc) {
   return `
     <url>
@@ -31,22 +31,17 @@ function createUrlEntry(loc) {
     </url>`;
 }
 
-// Generate individual sitemaps
 async function generateSitemaps() {
   await fs.mkdir(sitemapDir, { recursive: true });
-  console.log('Sitemap directory:', sitemapDir);
+  console.log('Sitemap output dir:', sitemapDir);
 
   const urls = [];
 
-  // Add static pages
-  urls.push(`${BASE_URL}/`);
-  urls.push(`${BASE_URL}/movie`);
-  urls.push(`${BASE_URL}/tv`);
-  urls.push(`${BASE_URL}/privacy-policy`);
-  urls.push(`${BASE_URL}/terms`);
-  urls.push(`${BASE_URL}/dmca`);
+  // Static pages
+  urls.push(`${BASE_URL}/`, `${BASE_URL}/movie`, `${BASE_URL}/tv`);
+  urls.push(`${BASE_URL}/privacy-policy`, `${BASE_URL}/terms`, `${BASE_URL}/dmca`);
 
-  // Fetch movies
+  // Movies
   let page = 1;
   while (urls.length < TOTAL_ITEMS && page <= 50) {
     const data = await fetchTmdb(`/movie/popular?page=${page}`);
@@ -58,7 +53,7 @@ async function generateSitemaps() {
     page++;
   }
 
-  // Fetch TV shows
+  // TV shows
   page = 1;
   while (urls.length < TOTAL_ITEMS && page <= 50) {
     const data = await fetchTmdb(`/tv/popular?page=${page}`);
@@ -70,9 +65,8 @@ async function generateSitemaps() {
     page++;
   }
 
-  console.log(`Total URLs collected: ${urls.length}`);
+  console.log(`Collected ${urls.length} URLs`);
 
-  // Split URLs into chunks for multiple sitemaps
   const chunks = [];
   for (let i = 0; i < urls.length; i += ITEMS_PER_SITEMAP) {
     chunks.push(urls.slice(i, i + ITEMS_PER_SITEMAP));
@@ -80,7 +74,6 @@ async function generateSitemaps() {
 
   const indexEntries = [];
 
-  // Write each sitemap file
   for (let i = 0; i < chunks.length; i++) {
     const body = chunks[i].map(url => createUrlEntry(url)).join('');
     const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -90,7 +83,7 @@ ${body}
 
     const filename = `sitemap-${i + 1}.xml`;
     const filepath = path.join(sitemapDir, filename);
-    console.log(`Writing sitemap file: ${filepath}`);
+    console.log(`Writing ${filepath}`);
     await fs.writeFile(filepath, sitemapXml, 'utf-8');
 
     indexEntries.push(`
@@ -99,17 +92,16 @@ ${body}
   </sitemap>`);
   }
 
-  // Write sitemap index file
   const indexXml = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${indexEntries.join('\n')}
 </sitemapindex>`;
 
   const indexPath = path.join(sitemapDir, 'sitemap-index.xml');
-  console.log(`Writing sitemap index file: ${indexPath}`);
+  console.log(`Writing ${indexPath}`);
   await fs.writeFile(indexPath, indexXml, 'utf-8');
 
-  console.log(`✅ Generated ${chunks.length} sitemap files with ${urls.length} total URLs`);
+  console.log(`✅ Finished. ${chunks.length} sitemaps written.`);
 }
 
 generateSitemaps().catch((err) => {
