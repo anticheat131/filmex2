@@ -29,24 +29,21 @@ jobs:
           echo "Running sitemap generator..."
           node generate-sitemaps.js
 
-      - name: Debug - print working directory after generation
-        run: pwd
-
       - name: Debug - list sitemap files after generation
         run: |
           echo "Checking sitemap output:"
           ls -la public/sitemaps || echo "No sitemap files found"
 
-      - name: Debug git status before add
+      - name: Git status before add
         run: git status
 
       - name: Add sitemap files
         run: git add public/sitemaps/* || echo "No files to add"
 
-      - name: Debug git status after add
+      - name: Git status after add
         run: git status
 
-      - name: Debug git diff after add
+      - name: Git diff after add
         run: git diff --stat || echo "No diffs"
 
       - name: Commit sitemap files
@@ -56,4 +53,4 @@ jobs:
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          git push https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref }} || echo "Nothing to push"
+          git push https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }} main || echo "Nothing to push"
