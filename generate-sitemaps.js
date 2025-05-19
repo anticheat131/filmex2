@@ -1,98 +1,113 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 import fetch from 'node-fetch';
+import { fileURLToPath } from 'url';
 
-const TMDB_API_KEY = process.env.TMDB_API_KEY;
-const BASE_URL = 'https://api.themoviedb.org/3';
-const SITE_URL = 'https://fmovies4u.com'; // Change to your actual site
+const BASE_URL = 'https://fmovies4u.com'; // Replace with your domain
+const TOTAL_ITEMS = 1000;
+const ITEMS_PER_SITEMAP = 200;
 
-const MAX_URLS_PER_SITEMAP = 500; // safe limit below Google max 50k
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-async function fetchTmdb(endpoint, page = 1) {
-  const url = `${BASE_URL}${endpoint}?api_key=${TMDB_API_KEY}&page=${page}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch ${endpoint} page ${page}`);
+const sitemapDir = path.join(__dirname, 'public', 'sitemaps');
+
+// Helper to fetch from TMDB
+async function fetchTmdb(endpoint) {
+  const res = await fetch(`https://api.themoviedb.org/3${endpoint}`, {
+    headers: {
+      Authorization: `Bearer ${process.env.TMDB_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!res.ok) throw new Error(`TMDB error: ${res.status} ${endpoint}`);
   return res.json();
 }
 
-function createUrlEntry(loc, lastmod = new Date().toISOString()) {
+// Helper to generate <url> entries
+function createUrlEntry(loc) {
   return `
-  <url>
-    <loc>${loc}</loc>
-    <lastmod>${lastmod}</lastmod>
-  </url>`;
+    <url>
+      <loc>${loc}</loc>
+      <changefreq>weekly</changefreq>
+      <priority>0.8</priority>
+    </url>`;
 }
 
+// Generate individual sitemaps
 async function generateSitemaps() {
-  if (!TMDB_API_KEY) {
-    throw new Error('TMDB_API_KEY is not set in environment variables');
-  }
+  await fs.mkdir(sitemapDir, { recursive: true });
 
-  // Basic URLs
-  const urls = [
-    `${SITE_URL}/`,
-    `${SITE_URL}/movie`,
-    `${SITE_URL}/tv`,
-    `${SITE_URL}/privacy-policy`,
-    `${SITE_URL}/terms`,
-    `${SITE_URL}/dmca`,
-  ];
+  const urls = [];
 
-  // Fetch popular movies (first 50 pages, ~1000 movies)
-  for (let page = 1; page <= 50; page++) {
-    const data = await fetchTmdb('/movie/popular', page);
+  // Add static pages
+  urls.push(`${BASE_URL}/`);
+  urls.push(`${BASE_URL}/movie`);
+  urls.push(`${BASE_URL}/tv`);
+  urls.push(`${BASE_URL}/privacy-policy`);
+  urls.push(`${BASE_URL}/terms`);
+  urls.push(`${BASE_URL}/dmca`);
+
+  // Fetch movies
+  let page = 1;
+  while (urls.length < TOTAL_ITEMS && page <= 50) {
+    const data = await fetchTmdb(`/movie/popular?page=${page}`);
     for (const movie of data.results) {
-      const slug = movie.title.toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      urls.push(`${SITE_URL}/movie/${movie.id}-${slug}`);
+      const slug = movie.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      urls.push(`${BASE_URL}/movie/${movie.id}-${slug}`);
+      if (urls.length >= TOTAL_ITEMS) break;
     }
+    page++;
   }
 
-  // Fetch popular TV shows (first 50 pages, ~1000 shows)
-  for (let page = 1; page <= 50; page++) {
-    const data = await fetchTmdb('/tv/popular', page);
+  // Fetch TV shows
+  page = 1;
+  while (urls.length < TOTAL_ITEMS && page <= 50) {
+    const data = await fetchTmdb(`/tv/popular?page=${page}`);
     for (const tv of data.results) {
-      const slug = tv.name.toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      urls.push(`${SITE_URL}/tv/${tv.id}-${slug}`);
+      const slug = tv.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      urls.push(`${BASE_URL}/tv/${tv.id}-${slug}-${tv.first_air_date?.split('-')[0] || 'unknown'}`);
+      if (urls.length >= TOTAL_ITEMS) break;
     }
+    page++;
   }
 
-  // Split URLs into chunks for multiple sitemap files
+  // Split and write sitemaps
   const chunks = [];
-  for (let i = 0; i < urls.length; i += MAX_URLS_PER_SITEMAP) {
-    chunks.push(urls.slice(i, i + MAX_URLS_PER_SITEMAP));
+  for (let i = 0; i < urls.length; i += ITEMS_PER_SITEMAP) {
+    chunks.push(urls.slice(i, i + ITEMS_PER_SITEMAP));
   }
 
-  const sitemapDir = path.join(process.cwd(), 'public', 'sitemaps');
-  if (!fs.existsSync(sitemapDir)) {
-    fs.mkdirSync(sitemapDir, { recursive: true });
-  }
+  const indexEntries = [];
 
-  // Write sitemap files
   for (let i = 0; i < chunks.length; i++) {
-    const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
+    const body = chunks[i].map(url => createUrlEntry(url)).join('');
+    const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  ${chunks[i].map(url => createUrlEntry(url)).join('\n')}
-</urlset>`.trim();
+${body}
+</urlset>`;
 
-    fs.writeFileSync(path.join(sitemapDir, `sitemap-${i + 1}.xml`), sitemapContent);
+    const filename = `sitemap-${i + 1}.xml`;
+    await fs.writeFile(path.join(sitemapDir, filename), sitemapXml, 'utf-8');
+
+    indexEntries.push(`
+  <sitemap>
+    <loc>${BASE_URL}/sitemaps/${filename}</loc>
+  </sitemap>`);
   }
 
   // Write sitemap index
-  const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
+  const indexXml = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  ${chunks.map((_, i) => `<sitemap><loc>${SITE_URL}/sitemaps/sitemap-${i + 1}.xml</loc></sitemap>`).join('\n')}
-</sitemapindex>`.trim();
+${indexEntries.join('\n')}
+</sitemapindex>`;
 
-  fs.writeFileSync(path.join(sitemapDir, 'sitemap-index.xml'), sitemapIndex);
+  await fs.writeFile(path.join(sitemapDir, 'sitemap-index.xml'), indexXml, 'utf-8');
 
-  console.log(`Generated ${chunks.length} sitemap files plus index.`);
+  console.log(`✅ Generated ${chunks.length} sitemap files with ${urls.length} total URLs`);
 }
 
-generateSitemaps().catch(err => {
-  console.error('Error generating sitemaps:', err);
+generateSitemaps().catch((err) => {
+  console.error('❌ Error generating sitemaps:', err);
   process.exit(1);
 });
