@@ -1,19 +1,22 @@
-
-
 import fs from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
+const SITE_URL = process.env.SITE_URL || 'https://fmovies4u.com';
 const BASE_URL = 'https://api.themoviedb.org/3';
-const SITE_URL = 'https://fmovies4u.com'; // Change to your actual site
 
-const MAX_URLS_PER_SITEMAP = 500; // keep below 50000 (Google limit), smaller for example
+if (!TMDB_API_KEY) {
+  console.error('Error: TMDB_API_KEY environment variable is not set.');
+  process.exit(1);
+}
+
+const MAX_URLS_PER_SITEMAP = 500; // safe limit
 
 async function fetchTmdb(endpoint, page = 1) {
   const url = `${BASE_URL}${endpoint}?api_key=${TMDB_API_KEY}&page=${page}`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Failed to fetch ${endpoint}`);
+  if (!res.ok) throw new Error(`Failed to fetch ${endpoint} page ${page}: ${res.statusText}`);
   return res.json();
 }
 
@@ -26,7 +29,7 @@ function createUrlEntry(loc, lastmod = new Date().toISOString()) {
 }
 
 async function generateSitemaps() {
-  // Collect URLs for homepage & static pages
+  // Base URLs
   const urls = [
     `${SITE_URL}/`,
     `${SITE_URL}/movie`,
@@ -36,7 +39,7 @@ async function generateSitemaps() {
     `${SITE_URL}/dmca`,
   ];
 
-  // Helper to collect all movie URLs (example: first 1000 movies, page by page)
+  console.log('Fetching popular movies...');
   for (let page = 1; page <= 50; page++) {
     const data = await fetchTmdb('/movie/popular', page);
     for (const movie of data.results) {
@@ -45,7 +48,7 @@ async function generateSitemaps() {
     }
   }
 
-  // Helper to collect all TV show URLs (example: first 1000 shows)
+  console.log('Fetching popular TV shows...');
   for (let page = 1; page <= 50; page++) {
     const data = await fetchTmdb('/tv/popular', page);
     for (const tv of data.results) {
@@ -54,7 +57,7 @@ async function generateSitemaps() {
     }
   }
 
-  // Chunk URLs into batches for multiple sitemap files
+  // Split URLs into chunks
   const chunks = [];
   for (let i = 0; i < urls.length; i += MAX_URLS_PER_SITEMAP) {
     chunks.push(urls.slice(i, i + MAX_URLS_PER_SITEMAP));
@@ -65,26 +68,9 @@ async function generateSitemaps() {
     fs.mkdirSync(sitemapDir, { recursive: true });
   }
 
-  // Write each sitemap file
+  // Write sitemap files
+  console.log(`Writing ${chunks.length} sitemap files...`);
   for (let i = 0; i < chunks.length; i++) {
     const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  ${chunks[i].map(url => createUrlEntry(url)).join('\n')}
-</urlset>`;
-    fs.writeFileSync(path.join(sitemapDir, `sitemap-${i + 1}.xml`), sitemapContent.trim());
-  }
-
-  // Write sitemap index file
-  const sitemapIndex = `<?xml version="1.0" encoding="UTF-8"?>
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  ${chunks.map((_, i) => `<sitemap><loc>${SITE_URL}/sitemaps/sitemap-${i + 1}.xml</loc></sitemap>`).join('\n')}
-</sitemapindex>`;
-  fs.writeFileSync(path.join(sitemapDir, 'sitemap-index.xml'), sitemapIndex.trim());
-
-  console.log(`Generated ${chunks.length} sitemap files plus index.`);
-}
-
-generateSitemaps().catch(err => {
-  console.error('Error generating sitemaps:', err);
-  process.exit(1);
-});
+  ${chunks[i].map(url => createUrlEntry(ur
