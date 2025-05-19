@@ -1,11 +1,10 @@
 name = "sitemap-worker"
+main = "src/worker.ts"   # or .js if not using TypeScript
+type = "module"
 compatibility_date = "2024-05-01"
+
 kv_namespaces = [
   { binding = "SITEMAPS", id = "your-kv-id" }
 ]
-main = "src/worker.ts"
 
 triggers = { crons = ["0 3 * * *"] }
-
-# Enable module syntax
-type = "module"
