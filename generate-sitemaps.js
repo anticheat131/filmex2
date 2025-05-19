@@ -12,14 +12,10 @@ const __dirname = path.dirname(__filename);
 
 const sitemapDir = path.join(__dirname, 'public', 'sitemaps');
 
-// Helper to fetch from TMDB
+// Helper to fetch from TMDB with API key as query param
 async function fetchTmdb(endpoint) {
-  const res = await fetch(`https://api.themoviedb.org/3${endpoint}`, {
-    headers: {
-      Authorization: `Bearer ${process.env.TMDB_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-  });
+  const url = `https://api.themoviedb.org/3${endpoint}${endpoint.includes('?') ? '&' : '?'}api_key=${process.env.TMDB_API_KEY}`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`TMDB error: ${res.status} ${endpoint}`);
   return res.json();
 }
@@ -72,7 +68,7 @@ async function generateSitemaps() {
     page++;
   }
 
-  // Split and write sitemaps
+  // Split URLs into chunks for multiple sitemaps
   const chunks = [];
   for (let i = 0; i < urls.length; i += ITEMS_PER_SITEMAP) {
     chunks.push(urls.slice(i, i + ITEMS_PER_SITEMAP));
@@ -80,6 +76,7 @@ async function generateSitemaps() {
 
   const indexEntries = [];
 
+  // Write each sitemap file
   for (let i = 0; i < chunks.length; i++) {
     const body = chunks[i].map(url => createUrlEntry(url)).join('');
     const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -96,7 +93,7 @@ ${body}
   </sitemap>`);
   }
 
-  // Write sitemap index
+  // Write sitemap index file
   const indexXml = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${indexEntries.join('\n')}
