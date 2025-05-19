@@ -19,12 +19,18 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Debug - print working directory before generation
+        run: pwd
+
       - name: Generate sitemaps
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
         run: |
           echo "Running sitemap generator..."
           node generate-sitemaps.js
+
+      - name: Debug - print working directory after generation
+        run: pwd
 
       - name: Debug - list sitemap files after generation
         run: |
