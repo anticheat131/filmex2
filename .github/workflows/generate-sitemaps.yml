@@ -1,6 +1,8 @@
 name: Generate and Push Sitemaps
 
 on:
+  schedule:
+    - cron: '0 3 * * *'  # Every day at 3:00 AM UTC
   workflow_dispatch:
 
 jobs:
@@ -19,46 +21,15 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Debug - print working directory before generation
-        run: pwd
-
       - name: Generate sitemaps
+        run: node generate-sitemaps.js
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
-        run: |
-          echo "Running sitemap generator..."
-          node generate-sitemaps.js
-
-      - name: Debug - print working directory after generation
-        run: pwd
-
-      - name: Debug - list sitemap files after generation
-        run: |
-          echo "Listing sitemaps files:"
-          ls -la public/sitemaps || echo "No sitemap files found"
-
-      - name: Debug - list all files recursively
-        run: |
-          echo "Recursively listing public/sitemaps:"
-          find public/sitemaps -type f || echo "No files found"
-
-      - name: Debug git status before add
-        run: git status
-
-      - name: Add sitemap files
-        run: git add public/sitemaps/*.xml || echo "No files to add"
-
-      - name: Debug git status after add
-        run: git status
-
-      - name: Debug git diff after add
-        run: git diff --stat || echo "No diffs"
 
       - name: Commit sitemap files
-        run: git commit -m "Update sitemaps [CI]" || echo "No changes to commit"
-
-      - name: Push changes
-        env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          git push https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref }} || echo "Nothing to push"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/sitemaps/*.xml || echo "Nothing to add"
+          git commit -m "Update sitemaps [CI]" || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
