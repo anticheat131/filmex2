@@ -19,8 +19,12 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Debug - print working directory before generation
-        run: pwd
+      - name: Print current directory & list files before generation
+        run: |
+          pwd
+          ls -la
+          ls -la public || echo "No public directory"
+          ls -la public/sitemaps || echo "No sitemap directory yet"
 
       - name: Generate sitemaps
         env:
@@ -29,26 +33,31 @@ jobs:
           echo "Running sitemap generator..."
           node generate-sitemaps.js
 
-      - name: Debug - print working directory after generation
-        run: pwd
+      - name: List sitemap files after generation
+        run: ls -la public/sitemaps || echo "No sitemap files found"
 
-      - name: Debug - list sitemap files after generation
+      - name: Show git status and staged files before add
         run: |
-          echo "Checking sitemap output:"
-          ls -la public/sitemaps || echo "No sitemap files found"
+          git status
+          git diff --name-only
+          git diff --cached --name-only || echo "No files staged yet"
 
-      - name: Add sitemap files
+      - name: Add sitemap files to git
+        run: git add public/sitemaps/*
+
+      - name: Show git status and staged files after add
         run: |
-          git add public/sitemaps/* || echo "No sitemap files to add"
-
-      - name: Debug staged files before commit
-        run: git diff --cached --name-only
+          git status
+          git diff --cached --name-only
 
       - name: Commit sitemap files
         run: |
-          git commit -m "Update sitemaps [CI]" || echo "No sitemap changes to commit"
+          git commit -m "Update sitemaps [CI]" || echo "No changes to commit"
 
-      - name: Push changes
+      - name: Show git log last 3 commits
+        run: git log -3 --oneline
+
+      - name: Push changes to main branch
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
