@@ -1,16 +1,16 @@
-name: Generate Sitemaps
+name: Generate and Push Sitemaps
 
 on:
-  schedule:
-    - cron: '0 3 * * *' # every day at 3:00 AM UTC
-  workflow_dispatch:     # manual trigger
+  push:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Setup Node.js
@@ -21,10 +21,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Generate sitemaps
+      - name: Run sitemap generator
         run: node generate-sitemaps.js
-        env:
-          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
 
       - name: Commit & push sitemap files
         env:
