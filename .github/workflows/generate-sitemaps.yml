@@ -22,7 +22,7 @@ jobs:
         run: npm install
 
       - name: Generate sitemaps
-        run: node generate-sitemaps.cjs
+        run: node generate-sitemaps.js
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
 
