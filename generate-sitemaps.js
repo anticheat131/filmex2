@@ -15,6 +15,7 @@ const sitemapDir = path.join(__dirname, 'public', 'sitemaps');
 // Helper to fetch from TMDB with API key as query param
 async function fetchTmdb(endpoint) {
   const url = `https://api.themoviedb.org/3${endpoint}${endpoint.includes('?') ? '&' : '?'}api_key=${process.env.TMDB_API_KEY}`;
+  console.log(`Fetching TMDB: ${url}`);
   const res = await fetch(url);
   if (!res.ok) throw new Error(`TMDB error: ${res.status} ${endpoint}`);
   return res.json();
@@ -33,6 +34,7 @@ function createUrlEntry(loc) {
 // Generate individual sitemaps
 async function generateSitemaps() {
   await fs.mkdir(sitemapDir, { recursive: true });
+  console.log('Sitemap directory:', sitemapDir);
 
   const urls = [];
 
@@ -68,6 +70,8 @@ async function generateSitemaps() {
     page++;
   }
 
+  console.log(`Total URLs collected: ${urls.length}`);
+
   // Split URLs into chunks for multiple sitemaps
   const chunks = [];
   for (let i = 0; i < urls.length; i += ITEMS_PER_SITEMAP) {
@@ -85,7 +89,9 @@ ${body}
 </urlset>`;
 
     const filename = `sitemap-${i + 1}.xml`;
-    await fs.writeFile(path.join(sitemapDir, filename), sitemapXml, 'utf-8');
+    const filepath = path.join(sitemapDir, filename);
+    console.log(`Writing sitemap file: ${filepath}`);
+    await fs.writeFile(filepath, sitemapXml, 'utf-8');
 
     indexEntries.push(`
   <sitemap>
@@ -99,7 +105,9 @@ ${body}
 ${indexEntries.join('\n')}
 </sitemapindex>`;
 
-  await fs.writeFile(path.join(sitemapDir, 'sitemap-index.xml'), indexXml, 'utf-8');
+  const indexPath = path.join(sitemapDir, 'sitemap-index.xml');
+  console.log(`Writing sitemap index file: ${indexPath}`);
+  await fs.writeFile(indexPath, indexXml, 'utf-8');
 
   console.log(`✅ Generated ${chunks.length} sitemap files with ${urls.length} total URLs`);
 }
