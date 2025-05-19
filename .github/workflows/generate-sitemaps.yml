@@ -29,28 +29,40 @@ jobs:
           echo "Running sitemap generator..."
           node generate-sitemaps.js
 
+      - name: Debug - print working directory after generation
+        run: pwd
+
       - name: Debug - list sitemap files after generation
         run: |
           echo "Checking sitemap output:"
           ls -la public/sitemaps || echo "No sitemap files found"
 
-      - name: Git status before add
+      - name: Debug git status before add
         run: git status
 
       - name: Add sitemap files
         run: git add public/sitemaps/* || echo "No files to add"
 
-      - name: Git status after add
+      - name: Add package-lock.json if changed
+        run: git add package-lock.json || echo "No changes to package-lock.json"
+
+      - name: Debug git status after add
         run: git status
 
-      - name: Git diff after add
+      - name: Debug git diff after add
         run: git diff --stat || echo "No diffs"
 
       - name: Commit sitemap files
         run: git commit -m "Update sitemaps [CI]" || echo "No changes to commit"
 
+      - name: Debug git ref and branch
+        run: |
+          echo "GitHub ref: ${{ github.ref }}"
+          echo "GitHub head ref: ${{ github.head_ref }}"
+          git branch
+
       - name: Push changes
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          git push https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }} main || echo "Nothing to push"
+          git push https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.head_ref || 'main' }} || echo "Nothing to push"
