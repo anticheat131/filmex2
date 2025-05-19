@@ -19,12 +19,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Print current directory & list files before generation
-        run: |
-          pwd
-          ls -la
-          ls -la public || echo "No public directory"
-          ls -la public/sitemaps || echo "No sitemap directory yet"
+      - name: Debug - print working directory before generation
+        run: pwd
 
       - name: Generate sitemaps
         env:
@@ -33,32 +29,36 @@ jobs:
           echo "Running sitemap generator..."
           node generate-sitemaps.js
 
-      - name: List sitemap files after generation
-        run: ls -la public/sitemaps || echo "No sitemap files found"
+      - name: Debug - print working directory after generation
+        run: pwd
 
-      - name: Show git status and staged files before add
+      - name: Debug - list sitemap files after generation
         run: |
-          git status
-          git diff --name-only
-          git diff --cached --name-only || echo "No files staged yet"
+          echo "Listing sitemaps files:"
+          ls -la public/sitemaps || echo "No sitemap files found"
 
-      - name: Add sitemap files to git
-        run: git add public/sitemaps/*
-
-      - name: Show git status and staged files after add
+      - name: Debug - list all files recursively
         run: |
-          git status
-          git diff --cached --name-only
+          echo "Recursively listing public/sitemaps:"
+          find public/sitemaps -type f || echo "No files found"
+
+      - name: Debug git status before add
+        run: git status
+
+      - name: Add sitemap files
+        run: git add public/sitemaps/*.xml || echo "No files to add"
+
+      - name: Debug git status after add
+        run: git status
+
+      - name: Debug git diff after add
+        run: git diff --stat || echo "No diffs"
 
       - name: Commit sitemap files
-        run: |
-          git commit -m "Update sitemaps [CI]" || echo "No changes to commit"
+        run: git commit -m "Update sitemaps [CI]" || echo "No changes to commit"
 
-      - name: Show git log last 3 commits
-        run: git log -3 --oneline
-
-      - name: Push changes to main branch
+      - name: Push changes
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          git push https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }} HEAD:main || echo "Nothing to push"
+          git push https://x-access-token:${PAT_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref }} || echo "Nothing to push"
