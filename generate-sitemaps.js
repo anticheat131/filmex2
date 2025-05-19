@@ -3,18 +3,21 @@ import path from 'path';
 import fetch from 'node-fetch';
 import { fileURLToPath } from 'url';
 
-const BASE_URL = 'https://fmovies4u.com'; // Change as needed
+const BASE_URL = 'https://fmovies4u.com';
 const TOTAL_ITEMS = 1000;
 const ITEMS_PER_SITEMAP = 200;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const sitemapDir = path.join(__dirname, 'public', 'sitemaps');
+
+if (!process.env.TMDB_API_KEY) {
+  console.error("❌ TMDB_API_KEY is not set in environment variables.");
+  process.exit(1);
+}
 
 async function fetchTmdb(endpoint) {
   const url = `https://api.themoviedb.org/3${endpoint}${endpoint.includes('?') ? '&' : '?'}api_key=${process.env.TMDB_API_KEY}`;
-  console.log(`Fetching TMDB: ${url}`);
   const res = await fetch(url);
   if (!res.ok) throw new Error(`TMDB error: ${res.status} ${endpoint}`);
   return res.json();
@@ -22,26 +25,24 @@ async function fetchTmdb(endpoint) {
 
 function createUrlEntry(loc) {
   return `
-    <url>
-      <loc>${loc}</loc>
-      <changefreq>weekly</changefreq>
-      <priority>0.8</priority>
-    </url>`;
+  <url>
+    <loc>${loc}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
 }
 
 async function generateSitemaps() {
   await fs.mkdir(sitemapDir, { recursive: true });
-  console.log('Sitemap directory:', sitemapDir);
 
-  const urls = [];
-
-  // Static pages
-  urls.push(`${BASE_URL}/`);
-  urls.push(`${BASE_URL}/movie`);
-  urls.push(`${BASE_URL}/tv`);
-  urls.push(`${BASE_URL}/privacy-policy`);
-  urls.push(`${BASE_URL}/terms`);
-  urls.push(`${BASE_URL}/dmca`);
+  const urls = [
+    `${BASE_URL}/`,
+    `${BASE_URL}/movie`,
+    `${BASE_URL}/tv`,
+    `${BASE_URL}/privacy-policy`,
+    `${BASE_URL}/terms`,
+    `${BASE_URL}/dmca`,
+  ];
 
   // Movies
   let page = 1;
@@ -67,9 +68,6 @@ async function generateSitemaps() {
     page++;
   }
 
-  console.log(`Total URLs collected: ${urls.length}`);
-
-  // Split URLs into chunks
   const chunks = [];
   for (let i = 0; i < urls.length; i += ITEMS_PER_SITEMAP) {
     chunks.push(urls.slice(i, i + ITEMS_PER_SITEMAP));
@@ -86,7 +84,6 @@ ${body}
 
     const filename = `sitemap-${i + 1}.xml`;
     const filepath = path.join(sitemapDir, filename);
-    console.log(`Writing sitemap file: ${filepath}`);
     await fs.writeFile(filepath, sitemapXml, 'utf-8');
 
     indexEntries.push(`
@@ -101,7 +98,6 @@ ${indexEntries.join('\n')}
 </sitemapindex>`;
 
   const indexPath = path.join(sitemapDir, 'sitemap-index.xml');
-  console.log(`Writing sitemap index file: ${indexPath}`);
   await fs.writeFile(indexPath, indexXml, 'utf-8');
 
   console.log(`✅ Generated ${chunks.length} sitemap files with ${urls.length} total URLs`);
