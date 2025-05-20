@@ -127,13 +127,14 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   }, [mediaId, media.media_type, media.release_date]);
 
   return (
-    <div
-      className={cn(
-        'relative inline-block rounded-xl border border-white/10 bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
-        'hover:border-white/30 hover:shadow-white/10',
-        smaller ? 'scale-90 origin-top-left' : '',
-        className
-      )}
+<div
+  className={cn(
+    'relative inline-block rounded-xl border border-[#131313] bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
+    'hover:border-[#181818] hover:shadow-white/10',
+    smaller ? 'scale-90 origin-top-left' : '',
+    className
+  )}
+
       onClick={handleClick}
       onMouseEnter={() => setShowPopup(true)}
       onMouseLeave={() => setShowPopup(false)}
