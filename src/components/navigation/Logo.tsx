@@ -13,14 +13,18 @@ const Logo = () => {
         textDecoration: 'none',
       }}
     >
-      {/* Soft mist layer behind the text */}
-      <span className="absolute inset-0 pointer-events-none opacity-20 blur-[4px] z-0 bg-gradient-to-br from-white/10 via-white/20 to-transparent" />
+      {/* Fog effect overlay (semi-transparent with blur) */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle at center, rgba(255,255,255,0.15) 0%, transparent 70%)',
+          filter: 'blur(8px)',
+          opacity: 0.4,
+        }}
+      />
 
-      {/* Logo text */}
-      <span
-        className="text-3xl tracking-wide text-white relative z-10"
-        style={{ letterSpacing: '0.05em' }}
-      >
+      {/* Main Logo Text */}
+      <span className="text-3xl tracking-wide text-white relative z-10">
         Filme
         <span className="text-indigo-500">X</span>
       </span>
