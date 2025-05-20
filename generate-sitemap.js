@@ -7,7 +7,7 @@ const SITE_URL = "https://fmovies4u.com";
 const OUTPUT_DIR = "./public";
 
 // Max URLs per sitemap
-const MAX_URLS_PER_SITEMAP = 3000;
+const MAX_URLS_PER_SITEMAP = 100; // Change this to test, e.g. 100 or 3000
 const totalPages = 10;
 
 function slugify(str) {
@@ -32,39 +32,6 @@ async function fetchItems(endpoint) {
     }
   }
   return items;
-}
-
-async function fetchMultipleCategories() {
-  const movieEndpoints = [
-    "/movie/popular",
-    "/movie/top_rated",
-    // add more movie endpoints if you want
-  ];
-
-  const tvEndpoints = [
-    "/tv/popular",
-    "/tv/top_rated",
-    // add more tv endpoints if you want
-  ];
-
-  let movies = [];
-  let tvShows = [];
-
-  for (const endpoint of movieEndpoints) {
-    const items = await fetchItems(endpoint);
-    movies.push(...items);
-  }
-
-  for (const endpoint of tvEndpoints) {
-    const items = await fetchItems(endpoint);
-    tvShows.push(...items);
-  }
-
-  // Remove duplicates by ID
-  movies = [...new Map(movies.map(item => [item.id, item])).values()];
-  tvShows = [...new Map(tvShows.map(item => [item.id, item])).values()];
-
-  return [movies, tvShows];
 }
 
 function generateSitemapXml(urls) {
@@ -106,7 +73,10 @@ async function buildSitemap() {
     `${SITE_URL}/privacypolicy`,
   ];
 
-  const [movies, tv] = await fetchMultipleCategories();
+  const [movies, tv] = await Promise.all([
+    fetchItems("/movie/popular"),
+    fetchItems("/tv/popular"),
+  ]);
 
   console.log(`Total movies fetched: ${movies.length}`);
   console.log(`Total TV shows fetched: ${tv.length}`);
@@ -124,11 +94,15 @@ async function buildSitemap() {
     dynamicUrls.push(`${SITE_URL}/tv/${show.id}-${slug}-${year}`);
   }
 
+  console.log(`Total dynamic URLs generated: ${dynamicUrls.length}`);
+
   const allUrls = [...staticPages, ...dynamicUrls];
+  console.log(`Total URLs to add in sitemaps (static + dynamic): ${allUrls.length}`);
 
   const sitemaps = [];
   for (let i = 0; i < allUrls.length; i += MAX_URLS_PER_SITEMAP) {
     const chunk = allUrls.slice(i, i + MAX_URLS_PER_SITEMAP);
+    console.log(`Writing sitemap file sitemap${sitemaps.length + 1}.xml with ${chunk.length} URLs`);
     const sitemapFilename = `sitemap${sitemaps.length + 1}.xml`;
     const sitemapXml = generateSitemapXml(chunk);
     fs.writeFileSync(`${OUTPUT_DIR}/${sitemapFilename}`, sitemapXml);
@@ -138,7 +112,7 @@ async function buildSitemap() {
   const sitemapIndexXml = generateSitemapIndexXml(sitemaps);
   fs.writeFileSync(`${OUTPUT_DIR}/sitemap_index.xml`, sitemapIndexXml);
 
-  console.log(`Generated ${sitemaps.length} sitemap files + sitemap_index.xml`);
+  console.log(`Generated ${sitemaps.length} sitemap file(s) + sitemap_index.xml`);
 }
 
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
