@@ -84,7 +84,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
 
         const FOUR_MONTHS_DAYS = 120;
         if (diffInDays > FOUR_MONTHS_DAYS) {
-          setQuality('HD'); // Force HD for movies older than 4 months
+          setQuality('HD');
           return;
         }
 
@@ -127,19 +127,18 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   }, [mediaId, media.media_type, media.release_date]);
 
   return (
-<div
-  className={cn(
-    'relative inline-block rounded-xl border border-[#131313] bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
-    'hover:border-[#181818] hover:shadow-white/10',
-    smaller ? 'scale-90 origin-top-left' : '',
-    className
-  )}
-
+    <div
+      className={cn(
+        'relative inline-block rounded-2xl border border-[#131313] bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
+        'hover:border-[#181818] hover:shadow-white/10 hover:scale-[1.02]',
+        smaller ? 'scale-90 origin-top-left' : '',
+        className
+      )}
       onClick={handleClick}
       onMouseEnter={() => setShowPopup(true)}
       onMouseLeave={() => setShowPopup(false)}
     >
-      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl">
+      <div className="relative aspect-[2/3.5] w-full overflow-hidden rounded-2xl">
         <img
           src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium)}
           alt={media.title || media.name || 'Media Poster'}
