@@ -6,8 +6,8 @@ const BASE_URL = "https://api.themoviedb.org/3";
 const SITE_URL = "https://fmovies4u.com";
 const OUTPUT_DIR = "./public";
 
-// Set max URLs per sitemap to 3000
-const MAX_URLS_PER_SITEMAP = 3000;
+// Temporarily lower max URLs per sitemap to 50 to force multiple sitemaps for testing
+const MAX_URLS_PER_SITEMAP = 50; 
 const totalPages = 10;
 
 function slugify(str) {
@@ -55,7 +55,6 @@ ${sitemaps
 }
 
 async function buildSitemap() {
-  // Static pages
   const staticPages = [
     `${SITE_URL}/`,
     `${SITE_URL}/tv`,
@@ -64,7 +63,6 @@ async function buildSitemap() {
     `${SITE_URL}/privacypolicy`,
   ];
 
-  // Fetch movies and tv shows
   const [movies, tv] = await Promise.all([
     fetchItems("/movie/popular"),
     fetchItems("/tv/popular"),
@@ -84,6 +82,8 @@ async function buildSitemap() {
   }
 
   const allUrls = [...staticPages, ...dynamicUrls];
+
+  console.log("Total URLs generated:", allUrls.length);
 
   const sitemaps = [];
   for (let i = 0; i < allUrls.length; i += MAX_URLS_PER_SITEMAP) {
