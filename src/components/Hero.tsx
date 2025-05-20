@@ -10,13 +10,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaPreferences } from '@/hooks/use-media-preferences';
 
 interface HeroProps {
-  // initial “seed” list; can be fewer than 10
-  media: Media[];
+  media: Media[];       // your seed list
   className?: string;
 }
 
 const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
-  const [pool, setPool] = useState<Media[]>(initialMedia);
+  const [pool, setPool] = useState<Media[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -24,31 +23,29 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { preference } = useMediaPreferences();
 
-  // 1) Combine initialMedia with extra fetches if under 10
   useEffect(() => {
-    if (initialMedia.length >= 10) {
-      setPool(initialMedia);
+    const base = initialMedia.filter(item => item.backdrop_path);
+
+    // If we already have 10+ valid backdrops, just use those first 10
+    if (base.length >= 10) {
+      setPool(base.slice(0, 10));
       return;
     }
 
+    // Otherwise, fetch trending movie & TV to top up
     (async () => {
       try {
-        const toFetch = 10 - initialMedia.length;
-        // fetch both movies & tv trending/week; pull half & half
+        const toFetch = 10 - base.length;
         const [mvRes, tvRes] = await Promise.all([
           fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`),
           fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`)
         ]);
-        const mvJson = await mvRes.json();
-        const tvJson = await tvRes.json();
 
-        const extras: Media[] = [
-          ...(mvJson.results || []),
-          ...(tvJson.results || [])
-        ]
-          .filter((item: any) => item.backdrop_path)
-          // sort by popularity desc, then release date desc
+        const [mvJson, tvJson] = await Promise.all([mvRes.json(), tvRes.json()]);
+        const extras = [...(mvJson.results || []), ...(tvJson.results || [])]
+          .filter((m: any) => m.backdrop_path)
           .sort((a: any, b: any) => {
+            // popularity desc, then date desc
             if (b.popularity !== a.popularity) return b.popularity - a.popularity;
             const bd = new Date(b.release_date || b.first_air_date).getTime();
             const ad = new Date(a.release_date || a.first_air_date).getTime();
@@ -56,20 +53,17 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
           })
           .slice(0, toFetch);
 
-        setPool([
-          ...initialMedia.filter(m => m.backdrop_path),
-          ...extras
-        ].slice(0, 10));
-      } catch (e) {
-        // fallback to whatever we had
-        setPool(initialMedia.filter(m => m.backdrop_path).slice(0, 10));
+        setPool([...base, ...extras].slice(0, 10));
+      } catch {
+        // fallback: whatever base we had
+        setPool(base.slice(0, 10));
       }
     })();
   }, [initialMedia]);
 
-  // 2) Apply user-preference ordering and final cap of 10
+  // reorder according to user preference and cap at 10
   const filteredMedia = useMemo(() => {
-    const withBackdrop = pool.filter(item => item.backdrop_path);
+    const withBackdrop = pool; // already backdrop‑filtered
     if (preference && preference !== 'balanced') {
       const pref = withBackdrop.filter(m => m.media_type === preference);
       const others = withBackdrop.filter(m => m.media_type !== preference);
@@ -105,7 +99,7 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
     navigate(`/${featured.media_type}/${featured.id}`);
   };
 
-  // nothing to show?
+  // if still nothing, show a placeholder
   if (!featured) {
     return (
       <section className={`relative w-full h-[72vh] md:h-[81vh] bg-black ${className}`}>
