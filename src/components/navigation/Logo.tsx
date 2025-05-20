@@ -5,7 +5,7 @@ const Logo = () => {
   return (
     <Link
       to="/"
-      className="relative flex items-center gap-1 select-none"
+      className="relative flex items-center gap-1 select-none overflow-hidden"
       aria-label="Filmex Home"
       style={{
         fontFamily: "'Poppins', 'Segoe UI', sans-serif",
@@ -13,21 +13,40 @@ const Logo = () => {
         textDecoration: 'none',
       }}
     >
-      {/* Fog effect overlay (semi-transparent with blur) */}
+      {/* Animated Mist Layer */}
       <div
-        className="absolute inset-0 z-0 pointer-events-none"
+        className="absolute inset-0 z-0 pointer-events-none mist"
         style={{
-          background: 'radial-gradient(circle at center, rgba(255,255,255,0.15) 0%, transparent 70%)',
-          filter: 'blur(8px)',
+          background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.2) 0%, transparent 80%)',
           opacity: 0.4,
         }}
       />
 
-      {/* Main Logo Text */}
+      {/* Logo Text */}
       <span className="text-3xl tracking-wide text-white relative z-10">
-        Filme
-        <span className="text-indigo-500">X</span>
+        Filme<span className="text-indigo-500">X</span>
       </span>
+
+      <style>
+        {`
+          @keyframes mistMove {
+            0% {
+              transform: translateX(-30%) translateY(-10%);
+            }
+            50% {
+              transform: translateX(10%) translateY(10%);
+            }
+            100% {
+              transform: translateX(-30%) translateY(-10%);
+            }
+          }
+          .mist {
+            filter: blur(10px);
+            animation: mistMove 15s ease-in-out infinite;
+            will-change: transform;
+          }
+        `}
+      </style>
     </Link>
   );
 };
