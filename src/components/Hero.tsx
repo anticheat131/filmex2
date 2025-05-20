@@ -109,6 +109,7 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
 
   const title = featured.title || featured.name || '';
   const overview = featured.overview || '';
+  const typeLabel = featured.media_type === 'tv' ? 'TV Show' : 'Movie';
 
   return (
     <section
@@ -142,18 +143,24 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
       </AnimatePresence>
 
       <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-6 md:px-16 text-center text-white max-w-5xl mx-auto">
-        <p
-          className="text-xs md:text-sm text-black/80 bg-white/90 rounded-sm px-2 py-[2px] tracking-widest mb-3 uppercase font-semibold select-none"
-          style={{ letterSpacing: '0.15em' }}
-        >
-          Trending Now
-        </p>
-        <h1 className="text-3xl md:text-6xl font-extrabold max-w-4xl leading-tight">
-          {title}
-        </h1>
-        <p className="mt-4 max-w-3xl text-sm md:text-base text-white/80 line-clamp-4">
-          {overview}
-        </p>
+        <div className="flex gap-2 mb-3">
+          <span
+            className="text-xs md:text-sm text-black/80 bg-white/90 rounded-sm px-2 py-[2px] tracking-widest uppercase font-semibold select-none"
+            style={{ letterSpacing: '0.15em' }}
+          >
+            Trending Now
+          </span>
+          <span
+            className="text-xs md:text-sm text-white bg-blue-600 rounded-sm px-2 py-[2px] uppercase font-semibold select-none"
+            style={{ letterSpacing: '0.05em' }}
+          >
+            {typeLabel}
+          </span>
+        </div>
+
+        <h1 className="text-3xl md:text-6xl font-extrabold max-w-4xl leading-tight">{title}</h1>
+        <p className="mt-4 max-w-3xl text-sm md:text-base text-white/80 line-clamp-4">{overview}</p>
+
         <div className="mt-8 flex gap-4 justify-center flex-wrap">
           <Button
             onClick={handleMoreInfo}
