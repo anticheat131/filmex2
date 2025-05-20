@@ -1,33 +1,4 @@
-import Head from 'next/head';
 
-export default function Home() {
-  return (
-    <>
-      <Head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              "url": "https://fmovies4u.com",
-              "name": "FMovies4U",
-              "sameAs": [
-                "https://fmovies4u.com/movies",
-                "https://fmovies4u.com/tv",
-                "https://fmovies4u.com/dmca"
-              ],
-            }),
-          }}
-        />
-      </Head>
-      {/* Your page content */}
-      <main>
-        {/* ... */}
-      </main>
-    </>
-  );
-}
 
 import { useState, useEffect, Suspense, lazy } from 'react';
 import {
