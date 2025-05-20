@@ -4,7 +4,7 @@ import { Media } from '@/utils/types';
 import { backdropSizes } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { Button } from '@/components/ui/button';
-import { Play, ArrowRight, Video, Star, X } from 'lucide-react';
+import { Play, ArrowRight, Video, Star, X, Calendar, Tag } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaPreferences } from '@/hooks/use-media-preferences';
@@ -32,7 +32,6 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { preference } = useMediaPreferences();
 
-  // build pool
   useEffect(() => {
     (async () => {
       try {
@@ -49,6 +48,7 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
           const key = `${item.media_type}-${item.id}`;
           if (!map.has(key)) map.set(key, item);
         });
+
         const sorted = Array.from(map.values())
           .sort((a, b) => {
             if (b.popularity !== a.popularity) return b.popularity - a.popularity;
@@ -57,6 +57,7 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
             return bd - ad;
           })
           .slice(0, 10);
+
         setPool(sorted);
       } catch {
         setPool(initialMedia.filter(m => m.backdrop_path).slice(0, 10));
@@ -64,7 +65,6 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
     })();
   }, [initialMedia]);
 
-  // preference ordering
   const filteredMedia = useMemo(() => {
     if (preference && preference !== 'balanced') {
       const pref = pool.filter(m => m.media_type === preference);
@@ -76,7 +76,6 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
 
   const featured = filteredMedia[currentIndex] || null;
 
-  // fetch trailer key
   useEffect(() => {
     if (!featured) return;
     (async () => {
@@ -134,20 +133,8 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
           </div>
         )}
         <AnimatePresence mode="wait">
-          <motion.div
-            key={currentIndex}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: isLoaded ? 1 : 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.6 }}
-            className="absolute inset-0"
-          >
-            <img
-              src={getImageUrl(featured.backdrop_path, backdropSizes.original)}
-              alt={title}
-              className="w-full h-full object-cover"
-              onLoad={() => setIsLoaded(true)}
-            />
+          <motion.div key={currentIndex} initial={{ opacity: 0 }} animate={{ opacity: isLoaded ? 1 : 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="absolute inset-0">
+            <img src={getImageUrl(featured.backdrop_path, backdropSizes.original)} alt={title} className="w-full h-full object-cover" onLoad={() => setIsLoaded(true)} />
             <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/90" />
           </motion.div>
         </AnimatePresence>
@@ -155,65 +142,46 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-6 md:px-16 text-center text-white max-w-5xl mx-auto space-y-4">
           {/* Badges */}
           <div className="flex gap-3 items-center">
-            <span className="text-xs md:text-sm bg-white/90 text-black rounded-sm px-2 py-[2px] uppercase font-semibold">
+            <span className="text-xs md:text-sm bg-white/90 text-black rounded-full px-3 py-1 uppercase font-medium tracking-wider">
               Trending Now
             </span>
-            <span className="text-xs md:text-sm bg-blue-600 text-white rounded-sm px-2 py-[2px] uppercase font-semibold">
+            <span className="text-xs md:text-sm bg-blue-600 text-white rounded-full px-3 py-1 uppercase font-medium tracking-wider">
               {featured.media_type === 'tv' ? 'TV Show' : 'Movie'}
             </span>
           </div>
-          {/* Info */}
-          <div className="flex gap-4 text-sm md:text-base text-white/80 items-center">
-            <span>{year}</span>
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-amber-400" />
-              <span>{score}</span>
-            </div>
-            <span>{genres?.join(', ')}</span>
+          {/* Professional Info Tags */}
+          <div className="flex gap-2 flex-wrap justify-center">
+            <span className="bg-white/10 text-white flex items-center gap-1 px-3 py-1 rounded-full text-xs md:text-sm font-medium">
+              <Calendar className="w-4 h-4" /> {year}
+            </span>
+            <span className="bg-white/10 text-white flex items-center gap-1 px-3 py-1 rounded-full text-xs md:text-sm font-medium">
+              <Star className="w-4 h-4 text-amber-400" /> {score}
+            </span>
+            <span className="bg-white/10 text-white flex items-center gap-1 px-3 py-1 rounded-full text-xs md:text-sm font-medium">
+              <Tag className="w-4 h-4" /> {genres?.join(', ')}
+            </span>
           </div>
           {/* Title & Overview */}
           <h1 className="text-3xl md:text-6xl font-extrabold max-w-4xl leading-tight">{title}</h1>
           <p className="max-w-3xl text-sm md:text-base text-white/80 line-clamp-4">{overview}</p>
           {/* Buttons */}
           <div className="flex gap-4 mt-4 justify-center flex-wrap">
-            {trailerKey && (
-              <Button onClick={openTrailer} variant="outline" className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-white">
-                <Video className="w-4 h-4" /> Trailer
-              </Button>
-            )}
-            <Button onClick={handleMoreInfo} variant="outline" className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-white">
-              Details
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-            <Button onClick={handlePlay} className="flex items-center gap-2 bg-black text-white px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-gray-900">
-              <Play className="w-5 h-5" /> Watch
-            </Button>
+            {trailerKey && (<Button onClick={openTrailer} variant="outline" className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-white"><Video className="w-4 h-4" /> Trailer</Button>)}
+            <Button onClick={handleMoreInfo} variant="outline" className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-white">Details<ArrowRight className="w-4 h-4" /></Button>
+            <Button onClick={handlePlay} className="flex items-center gap-2 bg-black text-white px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-gray-900"><Play className="w-5 h-5" /> Watch</Button>
           </div>
         </div>
       </section>
       {/* Trailer Modal */}
       <AnimatePresence>
         {showTrailer && trailerKey && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className="relative w-full max-w-3xl mx-auto">
-              <button
-                onClick={closeTrailer}
-                className="absolute top-2 right-2 text-white bg-black/50 rounded-full p-1 hover:bg-black"
-              >
+              <button onClick={closeTrailer} className="absolute top-2 right-2 text-white bg-black/50 rounded-full p-1 hover:bg-black">
                 <X className="w-6 h-6" />
               </button>
               <div className="aspect-video w-full">
-                <iframe
-                  src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1`}
-                  allow="autoplay; encrypted-media"
-                  allowFullScreen
-                  className="w-full h-full rounded-xl shadow-lg"
-                />
+                <iframe src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1`} allow="autoplay; encrypted-media" allowFullScreen className="w-full h-full rounded-xl shadow-lg"/>
               </div>
             </div>
           </motion.div>
