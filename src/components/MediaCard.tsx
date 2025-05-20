@@ -129,7 +129,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   return (
     <div
       className={cn(
-        'relative inline-block rounded-2xl border border-[#131313] bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
+        'relative inline-block rounded-md border border-[#131313] bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
         'hover:border-[#181818] hover:shadow-white/10 hover:scale-[1.02]',
         smaller ? 'scale-90 origin-top-left' : '',
         className
@@ -138,7 +138,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
       onMouseEnter={() => setShowPopup(true)}
       onMouseLeave={() => setShowPopup(false)}
     >
-      <div className="relative aspect-[2/3.5] w-full overflow-hidden rounded-2xl">
+      <div className="relative aspect-[2/3.5] w-full overflow-hidden rounded-md">
         <img
           src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium)}
           alt={media.title || media.name || 'Media Poster'}
@@ -147,7 +147,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         />
 
         {media.vote_average > 0 && (
-          <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-black/75 text-amber-400 rounded-md text-xs font-semibold shadow-sm">
+          <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-black/75 text-amber-400 rounded-sm text-xs font-semibold shadow-sm">
             <Star className="w-4 h-4 fill-amber-400" />
             {media.vote_average.toFixed(1)}
           </div>
@@ -155,7 +155,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
 
         {quality && (
           <div
-            className={`absolute top-2 left-2 px-3 py-1 text-[11px] font-semibold rounded-lg shadow-md text-white
+            className={`absolute top-2 left-2 px-3 py-1 text-[11px] font-semibold rounded-sm shadow-md text-white
               ${quality === 'HD'
                 ? 'bg-gradient-to-r from-green-600 to-green-500'
                 : 'bg-gradient-to-r from-red-600 to-red-500'}`}
@@ -168,7 +168,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
           <div className="flex justify-center">
             <button
-              className="flex items-center gap-2 px-3 py-1 bg-white text-black text-xs font-semibold rounded-full shadow hover:bg-gray-200 transition"
+              className="flex items-center gap-2 px-3 py-1 bg-white text-black text-xs font-semibold rounded-md shadow hover:bg-gray-200 transition"
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(detailPath);
@@ -205,7 +205,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.2 }}
-            className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-[320px] max-w-full rounded-lg bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
+            className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-[320px] max-w-full rounded-md bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
           >
             <h4 className="font-bold text-lg mb-1">{media.title || media.name}</h4>
             <p className="text-xs mb-2 text-white/70">Release: {fullReleaseDate || 'Unknown'}</p>
