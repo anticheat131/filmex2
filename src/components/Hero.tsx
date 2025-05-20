@@ -23,13 +23,21 @@ const Hero = ({ media, className = '' }: HeroProps) => {
   const { preference } = useMediaPreferences();
 
   const filteredMedia = useMemo(() => {
-    const withBackdrop = media.filter(item => item.backdrop_path);
+    const withBackdrop = media
+      .filter(item => item.backdrop_path && item.vote_average > 5 && item.popularity > 20)
+      .sort((a, b) => {
+        const aDate = new Date(a.release_date || a.first_air_date || '');
+        const bDate = new Date(b.release_date || b.first_air_date || '');
+        return b.popularity - a.popularity || bDate.getTime() - aDate.getTime();
+      });
+
     if (preference && preference !== 'balanced') {
       const preferred = withBackdrop.filter(item => item.media_type === preference);
       const others = withBackdrop.filter(item => item.media_type !== preference);
-      return [...preferred, ...others];
+      return [...preferred, ...others].slice(0, 10);
     }
-    return withBackdrop;
+
+    return withBackdrop.slice(0, 10); // limit to 10 items
   }, [media, preference]);
 
   const featured = filteredMedia[currentIndex];
