@@ -26,48 +26,52 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
   const [paused, setPaused] = useState(false);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [showTrailer, setShowTrailer] = useState(false);
-  const navigate = useNavigate();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const navigate = useNavigate();
   const { preference } = useMediaPreferences();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [mvRes, tvRes] = await Promise.all([
-          fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`),
-          fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`)
-        ]);
-        const [mvJson, tvJson] = await Promise.all([mvRes.json(), tvRes.json()]);
+  const loadTrendingMedia = useCallback(async () => {
+    try {
+      const [mvRes, tvRes] = await Promise.all([
+        fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`),
+        fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`)
+      ]);
+      const [mvJson, tvJson] = await Promise.all([mvRes.json(), tvRes.json()]);
+      const combined = [...initialMedia, ...(mvJson.results || []), ...(tvJson.results || [])];
 
-        const combined = [...initialMedia, ...(mvJson.results || []), ...(tvJson.results || [])];
-        const map = new Map<string, Media>();
-        combined.forEach(item => {
-          if (!item.backdrop_path) return;
-          const key = `${item.media_type}-${item.id}`;
-          if (!map.has(key)) map.set(key, item);
-        });
+      const unique = new Map<string, Media>();
+      combined.forEach(item => {
+        if (!item.backdrop_path) return;
+        const key = `${item.media_type || 'unknown'}-${item.id}`;
+        if (!unique.has(key)) unique.set(key, item);
+      });
 
-        const sorted = Array.from(map.values())
-          .sort((a, b) => {
-            if (b.popularity !== a.popularity) return b.popularity - a.popularity;
-            const bd = new Date(b.release_date || b.first_air_date || '1970-01-01').getTime();
-            const ad = new Date(a.release_date || a.first_air_date || '1970-01-01').getTime();
-            return bd - ad;
-          })
-          .slice(0, 10);
+      const sorted = Array.from(unique.values())
+        .sort((a, b) => {
+          const popDiff = b.popularity - a.popularity;
+          if (popDiff !== 0) return popDiff;
+          const bDate = new Date(b.release_date || b.first_air_date || '1970-01-01').getTime();
+          const aDate = new Date(a.release_date || a.first_air_date || '1970-01-01').getTime();
+          return bDate - aDate;
+        })
+        .slice(0, 10);
 
-        setPool(sorted);
-      } catch {
-        setPool(initialMedia.filter(m => m.backdrop_path).slice(0, 10));
-      }
-    })();
+      setPool(sorted);
+    } catch (error) {
+      console.error('Error loading trending media:', error);
+      setPool(initialMedia.filter(m => m.backdrop_path).slice(0, 10));
+    }
   }, [initialMedia]);
+
+  useEffect(() => {
+    loadTrendingMedia();
+  }, [loadTrendingMedia]);
 
   const filteredMedia = useMemo(() => {
     if (preference && preference !== 'balanced') {
-      const pref = pool.filter(m => m.media_type === preference);
-      const others = pool.filter(m => m.media_type !== preference);
-      return [...pref, ...others].slice(0, 10);
+      const preferred = pool.filter(m => m.media_type === preference);
+      const fallback = pool.filter(m => m.media_type !== preference);
+      return [...preferred, ...fallback].slice(0, 10);
     }
     return pool;
   }, [pool, preference]);
@@ -82,7 +86,7 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
     if (paused || filteredMedia.length <= 1) return;
     intervalRef.current = setInterval(goToNext, 6000);
     return () => clearInterval(intervalRef.current!);
-  }, [paused, filteredMedia.length, goToNext]);
+  }, [paused, goToNext, filteredMedia.length]);
 
   const handlePlay = () => {
     if (!featured) return;
@@ -92,6 +96,7 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
         : `/watch/movie/${featured.id}`
     );
   };
+
   const handleMoreInfo = () => {
     if (!featured) return;
     navigate(`/${featured.media_type}/${featured.id}`);
@@ -174,12 +179,9 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
             </span>
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-bold max-w-3xl leading-tight">
-            {title}
-          </h1>
-          <p className="text-sm md:text-base max-w-2xl text-white/80">
-            {overview}
-          </p>
+          <h1 className="text-3xl md:text-5xl font-bold max-w-3xl leading-tight">{title}</h1>
+          <p className="text-sm md:text-base max-w-2xl text-white/80">{overview}</p>
+
           <div className="flex gap-4 flex-wrap justify-center">
             <Button variant="default" className="flex gap-2 items-center px-6 py-2 text-base" onClick={handlePlay}>
               <Play className="w-5 h-5" /> Play
