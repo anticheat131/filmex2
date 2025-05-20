@@ -34,6 +34,39 @@ async function fetchItems(endpoint) {
   return items;
 }
 
+async function fetchMultipleCategories() {
+  const movieEndpoints = [
+    "/movie/popular",
+    "/movie/top_rated",
+    // add more movie endpoints if you want
+  ];
+
+  const tvEndpoints = [
+    "/tv/popular",
+    "/tv/top_rated",
+    // add more tv endpoints if you want
+  ];
+
+  let movies = [];
+  let tvShows = [];
+
+  for (const endpoint of movieEndpoints) {
+    const items = await fetchItems(endpoint);
+    movies.push(...items);
+  }
+
+  for (const endpoint of tvEndpoints) {
+    const items = await fetchItems(endpoint);
+    tvShows.push(...items);
+  }
+
+  // Remove duplicates by ID
+  movies = [...new Map(movies.map(item => [item.id, item])).values()];
+  tvShows = [...new Map(tvShows.map(item => [item.id, item])).values()];
+
+  return [movies, tvShows];
+}
+
 function generateSitemapXml(urls) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -73,10 +106,7 @@ async function buildSitemap() {
     `${SITE_URL}/privacypolicy`,
   ];
 
-  const [movies, tv] = await Promise.all([
-    fetchItems("/movie/popular"),
-    fetchItems("/tv/popular"),
-  ]);
+  const [movies, tv] = await fetchMultipleCategories();
 
   console.log(`Total movies fetched: ${movies.length}`);
   console.log(`Total TV shows fetched: ${tv.length}`);
