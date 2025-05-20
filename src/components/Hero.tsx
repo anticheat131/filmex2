@@ -4,13 +4,20 @@ import { Media } from '@/utils/types';
 import { backdropSizes } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { Button } from '@/components/ui/button';
-import { Play, ArrowRight } from 'lucide-react';
+import { Play, ArrowRight, Video } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaPreferences } from '@/hooks/use-media-preferences';
 
+const genreMap: Record<number, string> = {
+  28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+  99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
+  27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance',
+  878: 'Sci-Fi', 10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western',
+};
+
 interface HeroProps {
-  media: Media[];       // seed array (may be <10)
+  media: Media[];       
   className?: string;
 }
 
@@ -19,11 +26,11 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const navigate = useNavigate();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { preference } = useMediaPreferences();
 
-  // Build a pool of up to 10 unique items (movies+TV) with backdrops
   useEffect(() => {
     (async () => {
       try {
@@ -33,7 +40,6 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
         ]);
         const [mvJson, tvJson] = await Promise.all([mvRes.json(), tvRes.json()]);
 
-        // combine seed + trending, dedupe by type+id, require backdrop
         const combined = [...initialMedia, ...(mvJson.results || []), ...(tvJson.results || [])];
         const map = new Map<string, Media>();
         combined.forEach(item => {
@@ -42,7 +48,6 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
           if (!map.has(key)) map.set(key, item);
         });
 
-        // sort by popularity ↓ then date ↓, take top 10
         const sorted = Array.from(map.values())
           .sort((a, b) => {
             if (b.popularity !== a.popularity) return b.popularity - a.popularity;
@@ -54,13 +59,11 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
 
         setPool(sorted);
       } catch {
-        // fallback to seed items if fetch fails
         setPool(initialMedia.filter(m => m.backdrop_path).slice(0, 10));
       }
     })();
   }, [initialMedia]);
 
-  // reorder according to user preference, cap at 10
   const filteredMedia = useMemo(() => {
     if (preference && preference !== 'balanced') {
       const pref = pool.filter(m => m.media_type === preference);
@@ -71,6 +74,21 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
   }, [pool, preference]);
 
   const featured = filteredMedia[currentIndex] || null;
+
+  useEffect(() => {
+    if (!featured) return;
+    (async () => {
+      try {
+        const url = `https://api.themoviedb.org/3/${featured.media_type}/${featured.id}/videos?api_key=${import.meta.env.VITE_TMDB_API_KEY}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const trailer = (data.results || []).find((v: any) => v.type === 'Trailer' && v.site === 'YouTube');
+        setTrailerKey(trailer ? trailer.key : null);
+      } catch {
+        setTrailerKey(null);
+      }
+    })();
+  }, [featured]);
 
   const goToNext = useCallback(() => {
     setCurrentIndex(i => (i + 1) % filteredMedia.length);
@@ -96,10 +114,9 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
     navigate(`/${featured.media_type}/${featured.id}`);
   };
 
-  // if still no content, show placeholder
   if (!featured) {
     return (
-      <section className={`relative w-full h-[72vh] md:h-[81vh] bg-black ${className}`}>
+      <section className={`relative w-full h-[72vh] md:h-[81vh] bg-black ${className}`}>  
         <div className="flex items-center justify-center h-full text-white">
           No featured content available.
         </div>
@@ -110,6 +127,9 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
   const title = featured.title || featured.name || '';
   const overview = featured.overview || '';
   const typeLabel = featured.media_type === 'tv' ? 'TV Show' : 'Movie';
+  const year = (new Date(featured.release_date || featured.first_air_date || '')).getFullYear();
+  const genres = (featured.genre_ids || []).map(id => genreMap[id]).filter(Boolean).slice(0, 3);
+  const score = featured.vote_average.toFixed(1);
 
   return (
     <section
@@ -157,25 +177,32 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
             {typeLabel}
           </span>
         </div>
-
         <h1 className="text-3xl md:text-6xl font-extrabold max-w-4xl leading-tight">{title}</h1>
+        <p className="mt-2 text-sm md:text-base text-white/80">{`${year} • ${score}⭐ • ${genres.join(', ')}`}</p>
         <p className="mt-4 max-w-3xl text-sm md:text-base text-white/80 line-clamp-4">{overview}</p>
-
-        <div className="mt-8 flex gap-4 justify-center flex-wrap">
+        <div className="mt-6 flex gap-4 justify-center flex-wrap">
+          {trailerKey && (
+            <Button
+              onClick={() => window.open(`https://www.youtube.com/watch?v=${trailerKey}`, '_blank')}
+              variant="outline"
+              className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow-md hover:bg-white/100 hover:border-white"
+            >
+              <Video className="w-4 h-4" /> Trailer
+            </Button>
+          )}
           <Button
             onClick={handleMoreInfo}
             variant="outline"
-            className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-6 py-3 rounded-md font-semibold text-sm shadow-md hover:bg-white/100 hover:border-white"
+            className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow-md hover:bg-white/100 hover:border-white"
           >
             Details
             <ArrowRight className="w-4 h-4" />
           </Button>
           <Button
             onClick={handlePlay}
-            className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-md font-semibold text-sm shadow-md hover:bg-gray-900"
+            className="flex items-center gap-2 bg-black text-white px-5 py-2 rounded-md font-semibold text-sm shadow-md hover:bg-gray-900"
           >
-            <Play className="w-5 h-5 text-white" />
-            Watch
+            <Play className="w-5 h-5 text-white" /> Watch
           </Button>
         </div>
       </div>
