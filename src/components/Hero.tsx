@@ -4,7 +4,7 @@ import { Media } from '@/utils/types';
 import { backdropSizes } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { Button } from '@/components/ui/button';
-import { Play, Info, ArrowRight } from 'lucide-react';
+import { Play, ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaPreferences } from '@/hooks/use-media-preferences';
@@ -24,10 +24,10 @@ const Hero = ({ media, className = '' }: HeroProps) => {
 
   const filteredMedia = useMemo(() => {
     const withBackdrop = media
-      .filter(item => item.backdrop_path && item.vote_average > 5 && item.popularity > 20)
+      .filter(item => item && item.backdrop_path && item.vote_average > 5 && item.popularity > 20)
       .sort((a, b) => {
-        const aDate = new Date(a.release_date || a.first_air_date || '');
-        const bDate = new Date(b.release_date || b.first_air_date || '');
+        const aDate = new Date(a.release_date || a.first_air_date || '2000-01-01');
+        const bDate = new Date(b.release_date || b.first_air_date || '2000-01-01');
         return b.popularity - a.popularity || bDate.getTime() - aDate.getTime();
       });
 
@@ -37,7 +37,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
       return [...preferred, ...others].slice(0, 10);
     }
 
-    return withBackdrop.slice(0, 10); // limit to 10 items
+    return withBackdrop.slice(0, 10); // max 10 items
   }, [media, preference]);
 
   const featured = filteredMedia[currentIndex];
@@ -67,14 +67,14 @@ const Hero = ({ media, className = '' }: HeroProps) => {
     navigate(`/${featured.media_type}/${featured.id}`);
   };
 
-  const title = featured?.title || featured?.name || '';
-  const overview = featured?.overview || '';
+  if (!featured) return null; // ⛔ prevent rendering if nothing valid
+
+  const title = featured.title || featured.name || '';
+  const overview = featured.overview || '';
 
   return (
     <section
-      className={`
-        relative w-full h-[72vh] md:h-[81vh] overflow-hidden bg-black ${className}
-      `}
+      className={`relative w-full h-[72vh] md:h-[81vh] overflow-hidden bg-black ${className}`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -103,7 +103,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
         </motion.div>
       </AnimatePresence>
 
-      {/* Content overlay */}
+      {/* Overlay Content */}
       <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-6 md:px-16 text-center text-white max-w-5xl mx-auto">
         <p className="text-xs md:text-sm text-black/80 bg-white/90 rounded-sm px-2 py-[2px] tracking-widest mb-3 uppercase font-semibold select-none" style={{ letterSpacing: '0.15em' }}>
           Trending Now
