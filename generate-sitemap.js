@@ -6,8 +6,8 @@ const BASE_URL = "https://api.themoviedb.org/3";
 const SITE_URL = "https://fmovies4u.com";
 const OUTPUT_DIR = "./public";
 
-// Temporarily lower max URLs per sitemap to 50 to force multiple sitemaps for testing
-const MAX_URLS_PER_SITEMAP = 50; 
+// Max URLs per sitemap
+const MAX_URLS_PER_SITEMAP = 3000;
 const totalPages = 10;
 
 function slugify(str) {
@@ -17,9 +17,19 @@ function slugify(str) {
 async function fetchItems(endpoint) {
   let items = [];
   for (let page = 1; page <= totalPages; page++) {
-    const res = await fetch(`${BASE_URL}${endpoint}?api_key=${API_KEY}&page=${page}`);
-    const data = await res.json();
-    if (data.results) items.push(...data.results);
+    try {
+      const res = await fetch(`${BASE_URL}${endpoint}?api_key=${API_KEY}&page=${page}`);
+      const data = await res.json();
+      if (!res.ok) {
+        console.error(`API error on ${endpoint} page ${page}:`, data);
+        break;
+      }
+      console.log(`Fetched ${data.results?.length || 0} items from ${endpoint} page ${page}`);
+      if (data.results) items.push(...data.results);
+    } catch (error) {
+      console.error(`Fetch error on ${endpoint} page ${page}:`, error);
+      break;
+    }
   }
   return items;
 }
@@ -68,6 +78,9 @@ async function buildSitemap() {
     fetchItems("/tv/popular"),
   ]);
 
+  console.log(`Total movies fetched: ${movies.length}`);
+  console.log(`Total TV shows fetched: ${tv.length}`);
+
   const dynamicUrls = [];
 
   for (const movie of movies) {
@@ -82,8 +95,6 @@ async function buildSitemap() {
   }
 
   const allUrls = [...staticPages, ...dynamicUrls];
-
-  console.log("Total URLs generated:", allUrls.length);
 
   const sitemaps = [];
   for (let i = 0; i < allUrls.length; i += MAX_URLS_PER_SITEMAP) {
