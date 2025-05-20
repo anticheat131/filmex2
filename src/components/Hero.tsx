@@ -4,7 +4,7 @@ import { Media } from '@/utils/types';
 import { backdropSizes } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { Button } from '@/components/ui/button';
-import { Play, ArrowRight, Video } from 'lucide-react';
+import { Play, ArrowRight, Video, Star } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaPreferences } from '@/hooks/use-media-preferences';
@@ -17,7 +17,7 @@ const genreMap: Record<number, string> = {
 };
 
 interface HeroProps {
-  media: Media[];       
+  media: Media[];
   className?: string;
 }
 
@@ -116,7 +116,7 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
 
   if (!featured) {
     return (
-      <section className={`relative w-full h-[72vh] md:h-[81vh] bg-black ${className}`}>  
+      <section className={`relative w-full h-[72vh] md:h-[81vh] bg-black ${className}`}>
         <div className="flex items-center justify-center h-full text-white">
           No featured content available.
         </div>
@@ -162,47 +162,50 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
         </motion.div>
       </AnimatePresence>
 
-      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-6 md:px-16 text-center text-white max-w-5xl mx-auto">
-        <div className="flex gap-2 mb-3">
-          <span
-            className="text-xs md:text-sm text-black/80 bg-white/90 rounded-sm px-2 py-[2px] tracking-widest uppercase font-semibold select-none"
-            style={{ letterSpacing: '0.15em' }}
-          >
+      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-6 md:px-16 text-center text-white max-w-5xl mx-auto space-y-4">
+        <div className="flex gap-3 items-center">
+          <span className="text-xs md:text-sm bg-white/90 text-black rounded-sm px-2 py-[2px] uppercase font-semibold">
             Trending Now
           </span>
-          <span
-            className="text-xs md:text-sm text-white bg-blue-600 rounded-sm px-2 py-[2px] uppercase font-semibold select-none"
-            style={{ letterSpacing: '0.05em' }}
-          >
+          <span className="text-xs md:text-sm bg-blue-600 text-white rounded-sm px-2 py-[2px] uppercase font-semibold">
             {typeLabel}
           </span>
         </div>
+        <div className="flex gap-4 text-sm md:text-base text-white/80 items-center">
+          <span>{year}</span>
+          <div className="flex items-center gap-1">
+            <Star className="w-4 h-4 text-amber-400" />
+            <span>{score}</span>
+          </div>
+          <span>{genres.join(', ')}</span>
+        </div>
         <h1 className="text-3xl md:text-6xl font-extrabold max-w-4xl leading-tight">{title}</h1>
-        <p className="mt-2 text-sm md:text-base text-white/80">{`${year} • ${score}⭐ • ${genres.join(', ')}`}</p>
-        <p className="mt-4 max-w-3xl text-sm md:text-base text-white/80 line-clamp-4">{overview}</p>
-        <div className="mt-6 flex gap-4 justify-center flex-wrap">
+        <p className="max-w-3xl text-sm md:text-base text-white/80 line-clamp-4">{overview}</p>
+        <div className="flex gap-4 mt-4 justify-center flex-wrap">
           {trailerKey && (
             <Button
               onClick={() => window.open(`https://www.youtube.com/watch?v=${trailerKey}`, '_blank')}
               variant="outline"
-              className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow-md hover:bg-white/100 hover:border-white"
+              className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-white"
             >
-              <Video className="w-4 h-4" /> Trailer
+              <Video className="w-4 h-4" />
+              Trailer
             </Button>
           )}
           <Button
             onClick={handleMoreInfo}
             variant="outline"
-            className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow-md hover:bg-white/100 hover:border-white"
+            className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-white"
           >
             Details
             <ArrowRight className="w-4 h-4" />
           </Button>
           <Button
             onClick={handlePlay}
-            className="flex items-center gap-2 bg-black text-white px-5 py-2 rounded-md font-semibold text-sm shadow-md hover:bg-gray-900"
+            className="flex items-center gap-2 bg-black text-white px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-gray-900"
           >
-            <Play className="w-5 h-5 text-white" /> Watch
+            <Play className="w-5 h-5" />
+            Watch
           </Button>
         </div>
       </div>
