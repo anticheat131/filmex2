@@ -6,67 +6,96 @@ const BASE_URL = "https://api.themoviedb.org/3";
 const SITE_URL = "https://fmovies4u.com";
 const OUTPUT_DIR = "./public";
 
-// Number of pages to fetch per endpoint
-const totalPages = 10;
-// Desired number of sitemap files
-const desiredSitemaps = 15;
+const MAX_URLS_PER_SITEMAP = 1000; // max URLs per sitemap file
+const START_YEAR = 1990;
+const END_YEAR = 2025;
+const MAX_PAGES_PER_YEAR = 5; // adjust if needed to control API calls
 
 function slugify(str) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
-async function fetchItems(endpoint) {
+// Fetch movies by year with pagination
+async function fetchMoviesByYear(year) {
   let items = [];
-  for (let page = 1; page <= totalPages; page++) {
-    try {
-      const res = await fetch(`${BASE_URL}${endpoint}?api_key=${API_KEY}&page=${page}`);
-      const data = await res.json();
-      if (!res.ok) {
-        console.error(`API error on ${endpoint} page ${page}:`, data);
-        break;
-      }
-      console.log(`Fetched ${data.results?.length || 0} items from ${endpoint} page ${page}`);
-      if (data.results) items.push(...data.results);
-    } catch (error) {
-      console.error(`Fetch error on ${endpoint} page ${page}:`, error);
+  for (let page = 1; page <= MAX_PAGES_PER_YEAR; page++) {
+    const url = `${BASE_URL}/discover/movie?api_key=${API_KEY}` +
+      `&primary_release_date.gte=${year}-01-01` +
+      `&primary_release_date.lte=${year}-12-31` +
+      `&page=${page}`;
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error(`Error fetching movies for year ${year} page ${page}`, await res.text());
       break;
     }
+    const data = await res.json();
+    if (!data.results || data.results.length === 0) break;
+
+    items.push(...data.results);
+
+    if (page >= data.total_pages) break; // no more pages
   }
   return items;
 }
 
+// Fetch TV shows by year with pagination
+async function fetchTVByYear(year) {
+  let items = [];
+  for (let page = 1; page <= MAX_PAGES_PER_YEAR; page++) {
+    const url = `${BASE_URL}/discover/tv?api_key=${API_KEY}` +
+      `&first_air_date.gte=${year}-01-01` +
+      `&first_air_date.lte=${year}-12-31` +
+      `&page=${page}`;
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error(`Error fetching TV shows for year ${year} page ${page}`, await res.text());
+      break;
+    }
+    const data = await res.json();
+    if (!data.results || data.results.length === 0) break;
+
+    items.push(...data.results);
+
+    if (page >= data.total_pages) break;
+  }
+  return items;
+}
+
+// Generate XML for URLs in a sitemap file
 function generateSitemapXml(urls) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls
-  .map(
-    (url) => `
+    .map(
+      (url) => `
   <url>
     <loc>${url}</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>`
-  )
-  .join("")}
+    )
+    .join("")}
 </urlset>`;
 }
 
+// Generate sitemap index XML pointing to all sitemap files
 function generateSitemapIndexXml(sitemaps) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${sitemaps
-  .map(
-    (sitemap) => `
+    .map(
+      (sitemap) => `
   <sitemap>
     <loc>${SITE_URL}/${sitemap}</loc>
   </sitemap>`
-  )
-  .join("")}
+    )
+    .join("")}
 </sitemapindex>`;
 }
 
 async function buildSitemap() {
-  // Static site pages
   const staticPages = [
     `${SITE_URL}/`,
     `${SITE_URL}/tv`,
@@ -75,51 +104,57 @@ async function buildSitemap() {
     `${SITE_URL}/privacypolicy`,
   ];
 
-  // Fetch movies and TV shows
-  const [movies, tv] = await Promise.all([
-    fetchItems("/movie/popular"),
-    fetchItems("/tv/popular"),
-  ]);
+  let allMovies = [];
+  let allTV = [];
 
-  console.log(`Unique movies fetched: ${movies.length}`);
-  console.log(`Unique TV shows fetched: ${tv.length}`);
+  for (let year = START_YEAR; year <= END_YEAR; year++) {
+    console.log(`Fetching movies for year ${year}`);
+    const movies = await fetchMoviesByYear(year);
+    allMovies.push(...movies);
 
-  // Compose URLs
+    console.log(`Fetching TV shows for year ${year}`);
+    const tvShows = await fetchTVByYear(year);
+    allTV.push(...tvShows);
+  }
+
+  // Deduplicate movies by id
+  const uniqueMovies = [...new Map(allMovies.map(m => [m.id, m])).values()];
+  const uniqueTV = [...new Map(allTV.map(t => [t.id, t])).values()];
+
+  console.log(`Unique movies fetched: ${uniqueMovies.length}`);
+  console.log(`Unique TV shows fetched: ${uniqueTV.length}`);
+
   const dynamicUrls = [];
 
-  for (const movie of movies) {
-    const slug = slugify(movie.title);
+  for (const movie of uniqueMovies) {
+    const slug = slugify(movie.title || "");
     dynamicUrls.push(`${SITE_URL}/movie/${movie.id}-${slug}`);
   }
 
-  for (const show of tv) {
-    const slug = slugify(show.name);
+  for (const show of uniqueTV) {
+    const slug = slugify(show.name || "");
     const year = show.first_air_date ? new Date(show.first_air_date).getFullYear() : "";
     dynamicUrls.push(`${SITE_URL}/tv/${show.id}-${slug}-${year}`);
   }
 
   const allUrls = [...staticPages, ...dynamicUrls];
 
-  // Calculate max URLs per sitemap for desired number of sitemaps
-  const maxUrlsPerSitemap = Math.ceil(allUrls.length / desiredSitemaps);
+  console.log(`Total URLs to include in sitemap: ${allUrls.length}`);
 
-  console.log(`Splitting ${allUrls.length} URLs into about ${desiredSitemaps} sitemaps (~${maxUrlsPerSitemap} URLs per sitemap)`);
-
-  // Write sitemaps
   const sitemaps = [];
-  for (let i = 0; i < allUrls.length; i += maxUrlsPerSitemap) {
-    const chunk = allUrls.slice(i, i + maxUrlsPerSitemap);
+
+  for (let i = 0; i < allUrls.length; i += MAX_URLS_PER_SITEMAP) {
+    const chunk = allUrls.slice(i, i + MAX_URLS_PER_SITEMAP);
     const sitemapFilename = `sitemap${sitemaps.length + 1}.xml`;
     const sitemapXml = generateSitemapXml(chunk);
     fs.writeFileSync(`${OUTPUT_DIR}/${sitemapFilename}`, sitemapXml);
     sitemaps.push(sitemapFilename);
+    console.log(`Generated ${sitemapFilename} with ${chunk.length} URLs`);
   }
 
-  // Write sitemap index
   const sitemapIndexXml = generateSitemapIndexXml(sitemaps);
   fs.writeFileSync(`${OUTPUT_DIR}/sitemap_index.xml`, sitemapIndexXml);
-
-  console.log(`Generated ${sitemaps.length} sitemap files + sitemap_index.xml`);
+  console.log(`Generated sitemap_index.xml pointing to ${sitemaps.length} sitemaps`);
 }
 
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
