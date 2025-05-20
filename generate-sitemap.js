@@ -6,7 +6,7 @@ const BASE_URL = "https://api.themoviedb.org/3";
 const SITE_URL = "https://fmovies4u.com";
 const OUTPUT_DIR = "./public";
 const MAX_URLS_PER_SITEMAP = 40000; // safe margin under 50k limit
-const totalPages = 10;
+const totalPages = 50;  // updated from 10 to 50
 
 function slugify(str) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
