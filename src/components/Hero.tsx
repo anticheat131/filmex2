@@ -5,7 +5,6 @@ import { backdropSizes } from '@/utils/api';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { Button } from '@/components/ui/button';
 import { Play, ArrowRight, Video, Star, X, Calendar, Tag } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaPreferences } from '@/hooks/use-media-preferences';
 
@@ -13,7 +12,7 @@ const genreMap: Record<number, string> = {
   28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
   99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
   27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance',
-  878: 'Sci-Fi', 10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western',
+  878: 'Sci‑Fi', 10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western',
 };
 
 interface HeroProps {
@@ -24,7 +23,6 @@ interface HeroProps {
 const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
   const [pool, setPool] = useState<Media[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [paused, setPaused] = useState(false);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [showTrailer, setShowTrailer] = useState(false);
@@ -32,6 +30,7 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { preference } = useMediaPreferences();
 
+  // Build pool of up to 10 unique, backdrop-equipped items
   useEffect(() => {
     (async () => {
       try {
@@ -65,6 +64,7 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
     })();
   }, [initialMedia]);
 
+  // Apply user preference ordering
   const filteredMedia = useMemo(() => {
     if (preference && preference !== 'balanced') {
       const pref = pool.filter(m => m.media_type === preference);
@@ -76,11 +76,14 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
 
   const featured = filteredMedia[currentIndex] || null;
 
+  // Fetch YouTube trailer key
   useEffect(() => {
     if (!featured) return;
     (async () => {
       try {
-        const res = await fetch(`https://api.themoviedb.org/3/${featured.media_type}/${featured.id}/videos?api_key=${import.meta.env.VITE_TMDB_API_KEY}`);
+        const res = await fetch(
+          `https://api.themoviedb.org/3/${featured.media_type}/${featured.id}/videos?api_key=${import.meta.env.VITE_TMDB_API_KEY}`
+        );
         const data = await res.json();
         const trailer = data.results?.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube');
         setTrailerKey(trailer?.key || null);
@@ -90,9 +93,9 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
     })();
   }, [featured]);
 
+  // Advance immediately with zero-duration fade
   const goToNext = useCallback(() => {
     setCurrentIndex(i => (i + 1) % filteredMedia.length);
-    setIsLoaded(false);
   }, [filteredMedia.length]);
 
   useEffect(() => {
@@ -103,7 +106,11 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
 
   const handlePlay = () => {
     if (!featured) return;
-    navigate(featured.media_type === 'tv' ? `/watch/tv/${featured.id}/1/1` : `/watch/movie/${featured.id}`);
+    navigate(
+      featured.media_type === 'tv'
+        ? `/watch/tv/${featured.id}/1/1`
+        : `/watch/movie/${featured.id}`
+    );
   };
   const handleMoreInfo = () => {
     if (!featured) return;
@@ -127,16 +134,25 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        {!isLoaded && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center">
-            <Skeleton className="w-full h-full" />
-          </div>
-        )}
         <AnimatePresence mode="wait">
-          <motion.div key={currentIndex} initial={{ opacity: 0 }} animate={{ opacity: isLoaded ? 1 : 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="absolute inset-0">
-            <img src={getImageUrl(featured.backdrop_path, backdropSizes.original)} alt={title} className="w-full h-full object-cover" onLoad={() => setIsLoaded(true)} />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/90" />
-          </motion.div>
+          <motion.img
+            key={currentIndex}
+            src={getImageUrl(featured.backdrop_path, backdropSizes.original)}
+            alt={title}
+            className="absolute inset-0 w-full h-full object-cover"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0 }}
+          />
+          <motion.div
+            key={`overlay-${currentIndex}`}
+            className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/90"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0 }}
+          />
         </AnimatePresence>
 
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-6 md:px-16 text-center text-white max-w-5xl mx-auto space-y-4">
@@ -154,8 +170,8 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
             <span className="bg-white/10 text-white flex items-center gap-1 px-3 py-1 rounded-full text-xs md:text-sm font-medium">
               <Calendar className="w-4 h-4" /> {year}
             </span>
-            <span className="bg-white/10 text-white flex items-center gap-1 px-3 py-1 rounded-full text-xs md:text-sm font-medium">
-              <Star className="w-4 h-4 text-amber-400" /> {score}
+            <span className="bg-amber-900/30 text-amber-300 flex items-center gap-1 px-3 py-1 rounded-full text-xs md:text-sm font-medium">
+              <Star className="w-4 h-4" /> {score}
             </span>
             <span className="bg-white/10 text-white flex items-center gap-1 px-3 py-1 rounded-full text-xs md:text-sm font-medium">
               <Tag className="w-4 h-4" /> {genres?.join(', ')}
@@ -166,22 +182,41 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
           <p className="max-w-3xl text-sm md:text-base text-white/80 line-clamp-4">{overview}</p>
           {/* Buttons */}
           <div className="flex gap-4 mt-4 justify-center flex-wrap">
-            {trailerKey && (<Button onClick={openTrailer} variant="outline" className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-white"><Video className="w-4 h-4" /> Trailer</Button>)}
-            <Button onClick={handleMoreInfo} variant="outline" className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-white">Details<ArrowRight className="w-4 h-4" /></Button>
-            <Button onClick={handlePlay} className="flex items-center gap-2 bg-black text-white px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-gray-900"><Play className="w-5 h-5" /> Watch</Button>
+            {trailerKey && (
+              <Button onClick={openTrailer} variant="outline" className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-white">
+                <Video className="w-4 h-4" /> Trailer
+              </Button>
+            )}
+            <Button onClick={handleMoreInfo} variant="outline" className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-white">
+              Details <ArrowRight className="w-4 h-4" />
+            </Button>
+            <Button onClick={handlePlay} className="flex items-center gap-2 bg-black text-white px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-gray-900">
+              <Play className="w-5 h-5" /> Watch
+            </Button>
           </div>
         </div>
       </section>
+
       {/* Trailer Modal */}
       <AnimatePresence>
         {showTrailer && trailerKey && (
-          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
             <div className="relative w-full max-w-3xl mx-auto">
               <button onClick={closeTrailer} className="absolute top-2 right-2 text-white bg-black/50 rounded-full p-1 hover:bg-black">
                 <X className="w-6 h-6" />
               </button>
               <div className="aspect-video w-full">
-                <iframe src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1`} allow="autoplay; encrypted-media" allowFullScreen className="w-full h-full rounded-xl shadow-lg"/>
+                <iframe
+                  src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1`}
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                  className="w-full h-full rounded-xl shadow-lg"
+                />
               </div>
             </div>
           </motion.div>
