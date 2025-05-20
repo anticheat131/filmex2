@@ -7,7 +7,7 @@ const SITE_URL = "https://fmovies4u.com";
 const OUTPUT_DIR = "./public";
 
 // Max URLs per sitemap
-const MAX_URLS_PER_SITEMAP = 100;
+const MAX_URLS_PER_SITEMAP = 3000;
 const totalPages = 10;
 
 function slugify(str) {
