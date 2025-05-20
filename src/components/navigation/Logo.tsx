@@ -11,14 +11,16 @@ const Logo = () => {
         fontFamily: "'Poppins', 'Segoe UI', sans-serif",
         fontWeight: 700,
         textDecoration: 'none',
+        width: '200px',
+        height: '60px',
       }}
     >
-      {/* Animated Mist Layer */}
+      {/* Strong mist overlay */}
       <div
         className="absolute inset-0 z-0 pointer-events-none mist"
         style={{
-          background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.2) 0%, transparent 80%)',
-          opacity: 0.4,
+          background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.4) 0%, transparent 80%)',
+          opacity: 0.7,
         }}
       />
 
@@ -27,22 +29,18 @@ const Logo = () => {
         Filme<span className="text-indigo-500">X</span>
       </span>
 
+      {/* Animating mist */}
       <style>
         {`
           @keyframes mistMove {
-            0% {
-              transform: translateX(-30%) translateY(-10%);
-            }
-            50% {
-              transform: translateX(10%) translateY(10%);
-            }
-            100% {
-              transform: translateX(-30%) translateY(-10%);
-            }
+            0% { transform: translateX(-40%) translateY(-20%); }
+            50% { transform: translateX(20%) translateY(10%); }
+            100% { transform: translateX(-40%) translateY(-20%); }
           }
+
           .mist {
-            filter: blur(10px);
-            animation: mistMove 15s ease-in-out infinite;
+            filter: blur(20px);
+            animation: mistMove 12s ease-in-out infinite;
             will-change: transform;
           }
         `}
