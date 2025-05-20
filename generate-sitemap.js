@@ -5,8 +5,10 @@ const API_KEY = process.env.TMDB_API_KEY;
 const BASE_URL = "https://api.themoviedb.org/3";
 const SITE_URL = "https://fmovies4u.com";
 const OUTPUT_DIR = "./public";
-const MAX_URLS_PER_SITEMAP = 40000; // safe margin under 50k limit
-const totalPages = 50;  // updated from 10 to 50
+
+// Set max URLs per sitemap to 3000
+const MAX_URLS_PER_SITEMAP = 3000;
+const totalPages = 10;
 
 function slugify(str) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -53,17 +55,16 @@ ${sitemaps
 }
 
 async function buildSitemap() {
-  // 1. Static pages to always include
+  // Static pages
   const staticPages = [
     `${SITE_URL}/`,
     `${SITE_URL}/tv`,
     `${SITE_URL}/movie`,
     `${SITE_URL}/dmca`,
     `${SITE_URL}/privacypolicy`,
-    // Add more static pages here if needed
   ];
 
-  // 2. Fetch TMDB popular movies and tv shows
+  // Fetch movies and tv shows
   const [movies, tv] = await Promise.all([
     fetchItems("/movie/popular"),
     fetchItems("/tv/popular"),
@@ -82,10 +83,8 @@ async function buildSitemap() {
     dynamicUrls.push(`${SITE_URL}/tv/${show.id}-${slug}-${year}`);
   }
 
-  // Combine all URLs
   const allUrls = [...staticPages, ...dynamicUrls];
 
-  // Split into multiple sitemap files if needed
   const sitemaps = [];
   for (let i = 0; i < allUrls.length; i += MAX_URLS_PER_SITEMAP) {
     const chunk = allUrls.slice(i, i + MAX_URLS_PER_SITEMAP);
@@ -95,11 +94,10 @@ async function buildSitemap() {
     sitemaps.push(sitemapFilename);
   }
 
-  // Generate sitemap index
   const sitemapIndexXml = generateSitemapIndexXml(sitemaps);
   fs.writeFileSync(`${OUTPUT_DIR}/sitemap_index.xml`, sitemapIndexXml);
 
-  console.log(`Generated ${sitemaps.length} sitemap file(s) plus sitemap_index.xml`);
+  console.log(`Generated ${sitemaps.length} sitemap files + sitemap_index.xml`);
 }
 
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
