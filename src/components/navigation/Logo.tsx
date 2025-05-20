@@ -5,31 +5,30 @@ const Logo = () => {
   return (
     <Link
       to="/"
-      className="relative flex items-center gap-1 select-none overflow-hidden"
+      className="relative inline-block select-none"
       aria-label="Filmex Home"
       style={{
         fontFamily: "'Poppins', 'Segoe UI', sans-serif",
         fontWeight: 700,
         textDecoration: 'none',
-        width: '200px',
-        height: '60px',
       }}
     >
-      {/* Strong mist overlay */}
-      <div
-        className="absolute inset-0 z-0 pointer-events-none mist"
-        style={{
-          background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.4) 0%, transparent 80%)',
-          opacity: 0.7,
-        }}
-      />
+      <span className="relative inline-block">
+        {/* Mist overlay sized to the text */}
+        <span
+          className="absolute inset-0 pointer-events-none mist"
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.4) 0%, transparent 80%)',
+            opacity: 0.7,
+          }}
+        />
 
-      {/* Logo Text */}
-      <span className="text-3xl tracking-wide text-white relative z-10">
-        Filme<span className="text-indigo-500">X</span>
+        {/* Logo Text */}
+        <span className="text-3xl tracking-wide text-white relative z-10">
+          Filme<span className="text-indigo-500">X</span>
+        </span>
       </span>
 
-      {/* Animating mist */}
       <style>
         {`
           @keyframes mistMove {
