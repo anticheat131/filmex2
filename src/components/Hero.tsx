@@ -76,24 +76,7 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
 
   const featured = filteredMedia[currentIndex] || null;
 
-  // Fetch YouTube trailer key
-  useEffect(() => {
-    if (!featured) return;
-    (async () => {
-      try {
-        const res = await fetch(
-          `https://api.themoviedb.org/3/${featured.media_type}/${featured.id}/videos?api_key=${import.meta.env.VITE_TMDB_API_KEY}`
-        );
-        const data = await res.json();
-        const trailer = data.results?.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube');
-        setTrailerKey(trailer?.key || null);
-      } catch {
-        setTrailerKey(null);
-      }
-    })();
-  }, [featured]);
-
-  // Advance immediately with zero-duration fade
+  // Immediately transition slides
   const goToNext = useCallback(() => {
     setCurrentIndex(i => (i + 1) % filteredMedia.length);
   }, [filteredMedia.length]);
@@ -116,8 +99,27 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
     if (!featured) return;
     navigate(`/${featured.media_type}/${featured.id}`);
   };
-  const openTrailer = () => setShowTrailer(true);
-  const closeTrailer = () => setShowTrailer(false);
+
+  // Fetch trailer on demand
+  const openTrailer = async () => {
+    if (!featured) return;
+    try {
+      const res = await fetch(
+        `https://api.themoviedb.org/3/${featured.media_type}/${featured.id}/videos?api_key=${import.meta.env.VITE_TMDB_API_KEY}`
+      );
+      const data = await res.json();
+      const trailer = data.results?.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube');
+      setTrailerKey(trailer?.key || null);
+      setShowTrailer(true);
+    } catch {
+      setTrailerKey(null);
+    }
+  };
+
+  const closeTrailer = () => {
+    setShowTrailer(false);
+    setTrailerKey(null);
+  };
 
   if (!featured) return null;
 
@@ -125,7 +127,7 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
   const overview = featured.overview || '';
   const year = new Date(featured.release_date || featured.first_air_date || '').getFullYear();
   const score = featured.vote_average.toFixed(1);
-  const genres = featured.genre_ids?.map(id => genreMap[id]).filter(Boolean).slice(0,3);
+  const genres = featured.genre_ids?.map(id => genreMap[id]).filter(Boolean).slice(0, 3);
 
   return (
     <>
@@ -175,55 +177,4 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
             </span>
             <span className="bg-white/10 text-white flex items-center gap-1 px-3 py-1 rounded-full text-xs md:text-sm font-medium">
               <Tag className="w-4 h-4" /> {genres?.join(', ')}
-            </span>
-          </div>
-          {/* Title & Overview */}
-          <h1 className="text-3xl md:text-6xl font-extrabold max-w-4xl leading-tight">{title}</h1>
-          <p className="max-w-3xl text-sm md:text-base text-white/80 line-clamp-4">{overview}</p>
-          {/* Buttons */}
-          <div className="flex gap-4 mt-4 justify-center flex-wrap">
-            {trailerKey && (
-              <Button onClick={openTrailer} variant="outline" className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-white">
-                <Video className="w-4 h-4" /> Trailer
-              </Button>
-            )}
-            <Button onClick={handleMoreInfo} variant="outline" className="flex items-center gap-2 border-white/70 bg-white/90 text-black px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-white">
-              Details <ArrowRight className="w-4 h-4" />
-            </Button>
-            <Button onClick={handlePlay} className="flex items-center gap-2 bg-black text-white px-5 py-2 rounded-md font-semibold text-sm shadow hover:bg-gray-900">
-              <Play className="w-5 h-5" /> Watch
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Trailer Modal */}
-      <AnimatePresence>
-        {showTrailer && trailerKey && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div className="relative w-full max-w-3xl mx-auto">
-              <button onClick={closeTrailer} className="absolute top-2 right-2 text-white bg-black/50 rounded-full p-1 hover:bg-black">
-                <X className="w-6 h-6" />
-              </button>
-              <div className="aspect-video w-full">
-                <iframe
-                  src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1`}
-                  allow="autoplay; encrypted-media"
-                  allowFullScreen
-                  className="w-full h-full rounded-xl shadow-lg"
-                />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  );
-};
-
-export default Hero;
+            </>
