@@ -1,35 +1,34 @@
-name: Generate and Push Sitemaps
+name: Generate Sitemap
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # Every day at 3:00 AM UTC
+    - cron: "0 0 * * *"  # Every day at midnight UTC
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Set up Node
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: 18
 
       - name: Install dependencies
-        run: npm install
+        run: npm install node-fetch@2
 
-      - name: Generate sitemaps
-        run: node generate-sitemaps.js
+      - name: Generate Sitemap
+        run: node generate-sitemap.js
         env:
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
 
-      - name: Commit sitemap files
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/sitemaps/*.xml || echo "Nothing to add"
-          git commit -m "Update sitemaps [CI]" || echo "No changes to commit"
-          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: fmovies4u
+          directory: ./public
