@@ -10,11 +10,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaPreferences } from '@/hooks/use-media-preferences';
 
 interface HeroProps {
+  // initial “seed” list; can be fewer than 10
   media: Media[];
   className?: string;
 }
 
-const Hero = ({ media, className = '' }: HeroProps) => {
+const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
+  const [pool, setPool] = useState<Media[]>(initialMedia);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -22,32 +24,62 @@ const Hero = ({ media, className = '' }: HeroProps) => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { preference } = useMediaPreferences();
 
-  // — UPDATED: grab up to 10 items with backdrops, sorted by popularity then by newest
-  const filteredMedia = useMemo(() => {
-    const withBackdrop = media.filter(item => item.backdrop_path);
-
-    const sorted = [...withBackdrop].sort((a, b) => {
-      // popularity descending
-      if (b.popularity !== a.popularity) {
-        return b.popularity - a.popularity;
-      }
-      // then date descending
-      const aDate = new Date(a.release_date || a.first_air_date || '1970-01-01').getTime();
-      const bDate = new Date(b.release_date || b.first_air_date || '1970-01-01').getTime();
-      return bDate - aDate;
-    });
-
-    // if user prefers only movies or only TV, put those first
-    if (preference && preference !== 'balanced') {
-      const preferred = sorted.filter(item => item.media_type === preference);
-      const others = sorted.filter(item => item.media_type !== preference);
-      return [...preferred, ...others].slice(0, 10);
+  // 1) Combine initialMedia with extra fetches if under 10
+  useEffect(() => {
+    if (initialMedia.length >= 10) {
+      setPool(initialMedia);
+      return;
     }
 
-    return sorted.slice(0, 10);
-  }, [media, preference]);
+    (async () => {
+      try {
+        const toFetch = 10 - initialMedia.length;
+        // fetch both movies & tv trending/week; pull half & half
+        const [mvRes, tvRes] = await Promise.all([
+          fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`),
+          fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`)
+        ]);
+        const mvJson = await mvRes.json();
+        const tvJson = await tvRes.json();
 
-  const featured = filteredMedia[currentIndex];
+        const extras: Media[] = [
+          ...(mvJson.results || []),
+          ...(tvJson.results || [])
+        ]
+          .filter((item: any) => item.backdrop_path)
+          // sort by popularity desc, then release date desc
+          .sort((a: any, b: any) => {
+            if (b.popularity !== a.popularity) return b.popularity - a.popularity;
+            const bd = new Date(b.release_date || b.first_air_date).getTime();
+            const ad = new Date(a.release_date || a.first_air_date).getTime();
+            return bd - ad;
+          })
+          .slice(0, toFetch);
+
+        setPool([
+          ...initialMedia.filter(m => m.backdrop_path),
+          ...extras
+        ].slice(0, 10));
+      } catch (e) {
+        // fallback to whatever we had
+        setPool(initialMedia.filter(m => m.backdrop_path).slice(0, 10));
+      }
+    })();
+  }, [initialMedia]);
+
+  // 2) Apply user-preference ordering and final cap of 10
+  const filteredMedia = useMemo(() => {
+    const withBackdrop = pool.filter(item => item.backdrop_path);
+    if (preference && preference !== 'balanced') {
+      const pref = withBackdrop.filter(m => m.media_type === preference);
+      const others = withBackdrop.filter(m => m.media_type !== preference);
+      return [...pref, ...others].slice(0, 10);
+    }
+    return withBackdrop.slice(0, 10);
+  }, [pool, preference]);
+
+  const featured = filteredMedia[currentIndex] || null;
+
   const goToNext = useCallback(() => {
     setCurrentIndex(i => (i + 1) % filteredMedia.length);
     setIsLoaded(false);
@@ -59,6 +91,7 @@ const Hero = ({ media, className = '' }: HeroProps) => {
     return () => clearInterval(intervalRef.current!);
   }, [paused, filteredMedia.length, goToNext]);
 
+  // navigation handlers
   const handlePlay = () => {
     if (!featured) return;
     navigate(
@@ -67,13 +100,12 @@ const Hero = ({ media, className = '' }: HeroProps) => {
         : `/watch/movie/${featured.id}`
     );
   };
-
   const handleMoreInfo = () => {
     if (!featured) return;
     navigate(`/${featured.media_type}/${featured.id}`);
   };
 
-  // if nothing to show, don't break the page
+  // nothing to show?
   if (!featured) {
     return (
       <section className={`relative w-full h-[72vh] md:h-[81vh] bg-black ${className}`}>
