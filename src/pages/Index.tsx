@@ -5,8 +5,6 @@ import {
   getPopularTVShows,
   getTopRatedMovies,
   getTopRatedTVShows,
-  getNewlyReleasedMovies,
-  getNewlyReleasedTVShows,
 } from '@/utils/api';
 import { Media } from '@/utils/types';
 import { useAuth } from '@/hooks';
@@ -83,36 +81,21 @@ const Index = () => {
       try {
         const [
           trendingData,
-          newlyReleasedMoviesData,
-          newlyReleasedTVData,
           popularMoviesData,
           popularTVData,
           topMoviesData,
           topTVData,
         ] = await Promise.all([
           getTrending(),
-          getNewlyReleasedMovies(),
-          getNewlyReleasedTVShows(),
           getPopularMovies(),
           getPopularTVShows(),
           getTopRatedMovies(),
           getTopRatedTVShows(),
         ]);
 
-        // Combine newly released movies and TV shows
-        const newlyReleasedCombined = [...newlyReleasedMoviesData, ...newlyReleasedTVData];
+        const filteredTrendingData = trendingData.filter(item => item.backdrop_path);
 
-        // Combine trending + newly released and filter items that have backdrop images
-        const combinedTrending = [...trendingData, ...newlyReleasedCombined].filter(item => item.backdrop_path);
-
-        // Sort by release date descending (newest first)
-        combinedTrending.sort((a, b) => {
-          const dateA = new Date(a.release_date || a.first_air_date).getTime();
-          const dateB = new Date(b.release_date || b.first_air_date).getTime();
-          return dateB - dateA;
-        });
-
-        setTrendingMedia(applyQuality(combinedTrending)); // Set combined trending + new releases
+        setTrendingMedia(applyQuality(filteredTrendingData));
         setPopularMovies(applyQuality(popularMoviesData));
         setPopularTVShows(applyQuality(popularTVData));
         setTopRatedMovies(applyQuality(topMoviesData));
@@ -152,6 +135,7 @@ const Index = () => {
           <RowSkeleton />
         </div>
       ) : (
+        // Wrap main content in container with left & right borders here
         <div
           className="mx-auto mt-8 md:mt-12 transition-opacity duration-300 px-6"
           style={{
@@ -163,8 +147,10 @@ const Index = () => {
           <div
             className={`${contentVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
           >
-            <div className="pt-16">
-              {sliderMedia.length > 0 && <Hero media={sliderMedia} className="hero" />}
+            <div className="pt-16">{/* Padding-top for navbar */}
+              {sliderMedia.length > 0 && (
+                <Hero media={sliderMedia} className="hero" />
+              )}
             </div>
 
             {user && <ContinueWatching />}
