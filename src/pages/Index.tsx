@@ -34,14 +34,19 @@ const Index = () => {
   const applyQuality = (items: Media[]) =>
     items.map(item => {
       let quality = 'HD';
+
       if (typeof item.hd === 'boolean') {
         quality = item.hd ? 'HD' : 'CAM';
-      } else if (item.video_source?.toLowerCase().includes('cam')) {
-        quality = 'CAM';
+      } else if (item.video_source && typeof item.video_source === 'string') {
+        quality = item.video_source.toLowerCase().includes('cam') ? 'CAM' : 'HD';
       } else if (!item.backdrop_path) {
         quality = 'CAM';
       }
-      return { ...item, quality };
+
+      return {
+        ...item,
+        quality,
+      };
     });
 
   useEffect(() => {
@@ -72,15 +77,12 @@ const Index = () => {
   useEffect(() => {
     const fetchPrimaryData = async () => {
       try {
-        const [trendingMovies, trendingTV] = await Promise.all([
-          getTrending('movie'),
-          getTrending('tv'),
-        ]);
+        const trendingData = await getTrending();
 
         const fiveMonthsAgo = new Date();
         fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5);
 
-        const trendingFiltered = [...trendingMovies, ...trendingTV].filter(item => {
+        const filteredTrendingData = trendingData.filter(item => {
           const dateStr = item.release_date || item.first_air_date;
           if (!dateStr) return false;
           const releaseDate = new Date(dateStr);
@@ -99,7 +101,7 @@ const Index = () => {
           getTopRatedTVShows(),
         ]);
 
-        setTrendingMedia(applyQuality(trendingFiltered));
+        setTrendingMedia(applyQuality(filteredTrendingData));
         setPopularMovies(applyQuality(popularMoviesData));
         setPopularTVShows(applyQuality(popularTVData));
         setTopRatedMovies(applyQuality(topMoviesData));
@@ -147,11 +149,7 @@ const Index = () => {
             borderRight: '1px solid rgb(57, 55, 55)',
           }}
         >
-          <div
-            className={`${
-              contentVisible ? 'opacity-100' : 'opacity-0'
-            } transition-opacity duration-300`}
-          >
+          <div className={`${contentVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
             <div className="pt-16">
               {sliderMedia.length > 0 && (
                 <Hero media={sliderMedia} className="hero" />
@@ -159,9 +157,7 @@ const Index = () => {
             </div>
 
             {user && <ContinueWatching />}
-            {trendingMedia.length > 0 && (
-              <ContentRow title="Trending Now" media={trendingMedia} featured />
-            )}
+            <ContentRow title="Trending Now" media={trendingMedia} featured />
             <ContentRow title="Popular Movies" media={popularMovies} />
             <ContentRow title="Popular TV Shows" media={popularTVShows} />
             <ContentRow title="Top Rated Movies" media={topRatedMovies} />
