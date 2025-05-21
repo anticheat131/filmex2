@@ -8,7 +8,7 @@ import MediaGrid from '@/components/MediaGrid';
 import { MediaGridSkeleton } from '@/components/MediaSkeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, ChevronDown } from 'lucide-react';
+import { Flame, ChevronDown } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -36,7 +36,7 @@ const Trending = () => {
           const dateStr = item.release_date || item.first_air_date;
           const releaseDate = dateStr ? new Date(dateStr).getTime() : 0;
           const daysAgo = (now - releaseDate) / (1000 * 60 * 60 * 24);
-          const recencyScore = Math.max(0, 100 - daysAgo); // newer is better
+          const recencyScore = Math.max(0, 100 - daysAgo); // newer = higher score
           const popularityScore = item.popularity || 0;
           const score = recencyScore * 1.5 + popularityScore;
 
@@ -71,8 +71,8 @@ const Trending = () => {
       <main className="flex-1">
         <div className="container px-4 py-8">
           <div className="flex items-center gap-3 mb-8 pt-10">
-            <TrendingUp className="h-8 w-8 text-accent" />
-            <h1 className="text-3xl font-bold text-white">Trending</h1>
+            <Flame className="h-8 w-8 text-accent" />
+            <h1 className="text-3xl font-bold text-white">New & Trending</h1>
           </div>
 
           <Tabs defaultValue="week" onValueChange={(value) => handleTimeWindowChange(value as 'day' | 'week')}>
@@ -85,10 +85,10 @@ const Trending = () => {
               {trendingQuery.isLoading ? (
                 <MediaGridSkeleton />
               ) : trendingQuery.isError ? (
-                <div className="py-12 text-center text-white">Error loading trending content. Please try again.</div>
+                <div className="py-12 text-center text-white">Error loading content. Please try again.</div>
               ) : (
                 <>
-                  <MediaGrid media={extendedMedia} title="Trending Today" />
+                  <MediaGrid media={extendedMedia} title="New & Trending Today" />
                   {hasMore && (
                     <div className="flex justify-center my-8">
                       <Button
@@ -112,10 +112,10 @@ const Trending = () => {
               {trendingQuery.isLoading ? (
                 <MediaGridSkeleton />
               ) : trendingQuery.isError ? (
-                <div className="py-12 text-center text-white">Error loading trending content. Please try again.</div>
+                <div className="py-12 text-center text-white">Error loading content. Please try again.</div>
               ) : (
                 <>
-                  <MediaGrid media={extendedMedia} title="Trending This Week" />
+                  <MediaGrid media={extendedMedia} title="New & Trending This Week" />
                   {hasMore && (
                     <div className="flex justify-center my-8">
                       <Button
