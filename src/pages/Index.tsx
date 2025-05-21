@@ -80,15 +80,22 @@ const Index = () => {
       try {
         const trendingData = await getTrending();
 
-        // Calculate date 2 months ago
         const twoMonthsAgo = new Date();
         twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
 
-        // Filter trending to only items with release date in last 2 months and with backdrop
+        // Filter to include only movies and TV shows with release/air date in last 2 months and a backdrop
         const filteredTrending = trendingData.filter(item => {
           if (!item.backdrop_path) return false;
 
-          const releaseDateStr = item.release_date || item.first_air_date;
+          let releaseDateStr = '';
+          if (item.media_type === 'movie') {
+            releaseDateStr = item.release_date || '';
+          } else if (item.media_type === 'tv') {
+            releaseDateStr = item.first_air_date || '';
+          } else {
+            return false; // ignore other types
+          }
+
           if (!releaseDateStr) return false;
 
           const releaseDate = new Date(releaseDateStr);
