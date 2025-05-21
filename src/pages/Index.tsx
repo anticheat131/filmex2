@@ -1,10 +1,11 @@
 import { useState, useEffect, Suspense, lazy } from 'react';
 import {
-  getTrending,
   getPopularMovies,
   getPopularTVShows,
   getTopRatedMovies,
   getTopRatedTVShows,
+  getNewlyReleasedMovies,
+  getNewlyReleasedTVShows,
 } from '@/utils/api';
 import { Media } from '@/utils/types';
 import { useAuth } from '@/hooks';
@@ -32,10 +33,9 @@ const Index = () => {
   const [contentVisible, setContentVisible] = useState(false);
   const [secondaryLoaded, setSecondaryLoaded] = useState(false);
 
-  // Helper to add quality info to all media items
   const applyQuality = (items: Media[]) =>
     items.map(item => {
-      let quality = 'HD'; // default
+      let quality = 'HD';
 
       if (typeof item.hd === 'boolean') {
         quality = item.hd ? 'HD' : 'CAM';
@@ -80,22 +80,30 @@ const Index = () => {
     const fetchPrimaryData = async () => {
       try {
         const [
-          trendingData,
+          newlyReleasedMovies,
+          newlyReleasedTVShows,
           popularMoviesData,
           popularTVData,
           topMoviesData,
           topTVData,
         ] = await Promise.all([
-          getTrending(),
+          getNewlyReleasedMovies(),
+          getNewlyReleasedTVShows(),
           getPopularMovies(),
           getPopularTVShows(),
           getTopRatedMovies(),
           getTopRatedTVShows(),
         ]);
 
-        const filteredTrendingData = trendingData.filter(item => item.backdrop_path);
+        const combinedNewReleases = [...newlyReleasedMovies, ...newlyReleasedTVShows]
+          .filter(item => item.backdrop_path)
+          .sort((a, b) => {
+            const dateA = new Date(a.release_date || a.first_air_date).getTime();
+            const dateB = new Date(b.release_date || b.first_air_date).getTime();
+            return dateB - dateA;
+          });
 
-        setTrendingMedia(applyQuality(filteredTrendingData));
+        setTrendingMedia(applyQuality(combinedNewReleases));
         setPopularMovies(applyQuality(popularMoviesData));
         setPopularTVShows(applyQuality(popularTVData));
         setTopRatedMovies(applyQuality(topMoviesData));
@@ -135,7 +143,6 @@ const Index = () => {
           <RowSkeleton />
         </div>
       ) : (
-        // Wrap main content in container with left & right borders here
         <div
           className="mx-auto mt-8 md:mt-12 transition-opacity duration-300 px-6"
           style={{
@@ -147,7 +154,7 @@ const Index = () => {
           <div
             className={`${contentVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
           >
-            <div className="pt-16">{/* Padding-top for navbar */}
+            <div className="pt-16">
               {sliderMedia.length > 0 && (
                 <Hero media={sliderMedia} className="hero" />
               )}
