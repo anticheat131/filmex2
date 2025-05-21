@@ -17,7 +17,6 @@ import Spinner from '@/components/ui/spinner';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Lazy-loaded secondary content
 const SecondaryContent = lazy(() => import('./components/SecondaryContent'));
 
 const Index = () => {
@@ -80,10 +79,9 @@ const Index = () => {
       try {
         const trendingData = await getTrending();
 
-        const twoMonthsAgo = new Date();
-        twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+        const fiveMonthsAgo = new Date();
+        fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5);
 
-        // Filter to include only movies and TV shows with release/air date in last 2 months and a backdrop
         const filteredTrending = trendingData.filter(item => {
           if (!item.backdrop_path) return false;
 
@@ -93,7 +91,7 @@ const Index = () => {
           } else if (item.media_type === 'tv') {
             releaseDateStr = item.first_air_date || '';
           } else {
-            return false; // ignore other types
+            return false;
           }
 
           if (!releaseDateStr) return false;
@@ -101,7 +99,7 @@ const Index = () => {
           const releaseDate = new Date(releaseDateStr);
           if (isNaN(releaseDate.getTime())) return false;
 
-          return releaseDate >= twoMonthsAgo;
+          return releaseDate >= fiveMonthsAgo;
         });
 
         const [popularMoviesData, popularTVData, topMoviesData, topTVData] =
@@ -147,7 +145,7 @@ const Index = () => {
 
       {isLoading ? (
         <div className="flex flex-col gap-8 pt-24 px-6">
-          <Skeleton className="w-full h-[60vh] rounded-lg" /> {/* Hero skeleton */}
+          <Skeleton className="w-full h-[60vh] rounded-lg" />
           <RowSkeleton />
           <RowSkeleton />
         </div>
@@ -160,13 +158,9 @@ const Index = () => {
             borderRight: '1px solid rgb(57, 55, 55)',
           }}
         >
-          <div
-            className={`${contentVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
-          >
+          <div className={`${contentVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
             <div className="pt-16">
-              {sliderMedia.length > 0 && (
-                <Hero media={sliderMedia} className="hero" />
-              )}
+              {sliderMedia.length > 0 && <Hero media={sliderMedia} className="hero" />}
             </div>
 
             {user && <ContinueWatching />}
@@ -177,13 +171,7 @@ const Index = () => {
             <ContentRow title="Top Rated TV Shows" media={topRatedTVShows} />
 
             {secondaryLoaded && (
-              <Suspense
-                fallback={
-                  <div className="py-8">
-                    <Spinner size="lg" className="mx-auto" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<div className="py-8"><Spinner size="lg" className="mx-auto" /></div>}>
                 <SecondaryContent />
               </Suspense>
             )}
