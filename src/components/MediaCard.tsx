@@ -34,7 +34,10 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   const detailPath =
     media.media_type === 'movie' ? `/movie/${mediaId}-${slug}` : `/tv/${mediaId}-${slug}`;
 
-  const genreNames = (media.genre_ids || []).map(id => genreMap[id]).filter(Boolean).slice(0, 2);
+  const genreNames = (media.genre_ids || [])
+    .map(id => genreMap[id])
+    .filter(Boolean)
+    .slice(0, 2);
 
   const runtimeMinutes =
     media.media_type === 'movie'
