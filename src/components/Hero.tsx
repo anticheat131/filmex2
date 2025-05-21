@@ -30,48 +30,53 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
   const navigate = useNavigate();
   const { preference } = useMediaPreferences();
 
-  // Helper: check if release date is within last 30 days
-  const isRecent = (dateStr: string | undefined | null) => {
-    if (!dateStr) return false;
-    const releaseDate = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - releaseDate.getTime();
-    const diffDays = diffMs / (1000 * 60 * 60 * 24);
-    return diffDays <= 30 && diffDays >= 0;
-  };
-
-  const loadTrendingNewest = useCallback(async () => {
+  const loadTrendingMedia = useCallback(async () => {
     try {
       const [mvRes, tvRes] = await Promise.all([
         fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`),
-        fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`),
+        fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`)
       ]);
       const [mvJson, tvJson] = await Promise.all([mvRes.json(), tvRes.json()]);
+      const combined = [...initialMedia, ...(mvJson.results || []), ...(tvJson.results || [])];
 
-      // Combine movie and tv trending results
-      const combined = [...(mvJson.results || []), ...(tvJson.results || [])];
+      // Filter only newest (last 14 days) and trending
+      const twoWeeksAgo = new Date();
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
-      // Filter to only recent (released in last 30 days)
-      const recentTrending = combined.filter(item =>
-        isRecent(item.release_date || item.first_air_date)
-      );
+      const filteredNewestTrending = combined.filter(item => {
+        if (!item.backdrop_path) return false;
+        const dateStr = item.release_date || item.first_air_date;
+        if (!dateStr) return false;
+        const date = new Date(dateStr);
+        return date >= twoWeeksAgo;
+      });
 
-      // Sort by popularity descending
-      const sorted = recentTrending.sort((a, b) => b.popularity - a.popularity);
+      const unique = new Map<string, Media>();
+      filteredNewestTrending.forEach(item => {
+        const key = `${item.media_type || 'unknown'}-${item.id}`;
+        if (!unique.has(key)) unique.set(key, item);
+      });
 
-      // Limit to 10 items max
-      const limited = sorted.slice(0, 10);
+      const sorted = Array.from(unique.values())
+        .sort((a, b) => {
+          const popDiff = b.popularity - a.popularity;
+          if (popDiff !== 0) return popDiff;
+          const bDate = new Date(b.release_date || b.first_air_date || '1970-01-01').getTime();
+          const aDate = new Date(a.release_date || a.first_air_date || '1970-01-01').getTime();
+          return bDate - aDate;
+        })
+        .slice(0, 10);
 
-      setPool(limited);
+      setPool(sorted);
     } catch (error) {
-      console.error('Failed to load trending newest:', error);
+      console.error('Error loading trending media:', error);
       setPool(initialMedia.filter(m => m.backdrop_path).slice(0, 10));
     }
   }, [initialMedia]);
 
   useEffect(() => {
-    loadTrendingNewest();
-  }, [loadTrendingNewest]);
+    loadTrendingMedia();
+  }, [loadTrendingMedia]);
 
   const filteredMedia = useMemo(() => {
     if (preference && preference !== 'balanced') {
@@ -167,7 +172,7 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-6 md:px-16 text-center text-white max-w-5xl mx-auto space-y-4">
           <div className="flex gap-3 items-center">
             <span className="text-xs md:text-sm bg-white/90 text-black rounded-full px-3 py-1 uppercase font-medium tracking-wider">
-              Trending & Newest
+              Trending
             </span>
             <span className="text-xs md:text-sm bg-blue-600 text-white rounded-full px-3 py-1 uppercase font-medium tracking-wider">
               {featured.media_type === 'tv' ? 'TV Show' : 'Movie'}
