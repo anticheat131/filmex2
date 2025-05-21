@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getTrending } from '@/utils/api';
 import { Media, ensureExtendedMediaArray } from '@/utils/types';
 import Navbar from '@/components/Navbar';
@@ -16,74 +15,72 @@ const ITEMS_PER_PAGE = 20;
 const Trending = () => {
   const [timeWindow, setTimeWindow] = useState<'day' | 'week'>('week');
   const [page, setPage] = useState(1);
-  const queryClient = useQueryClient();
-  const [allTrending, setAllTrending] = useState<Media[]>([]);
-  
+  const [scoredTrending, setScoredTrending] = useState<Media[]>([]);
+
   const trendingQuery = useQuery({
     queryKey: ['trending', timeWindow, page],
     queryFn: () => getTrending(timeWindow, page),
-    placeholderData: keepPreviousData,
+    keepPreviousData: true,
   });
 
-  // Update accumulated trending items when new data arrives
   useEffect(() => {
     if (trendingQuery.data) {
-      setAllTrending(prev => {
-        const newItems = trendingQuery.data
-          .filter(item => !prev.some(p => p.id === item.id))
-          .map(item => ({
-            ...item,
-            media_type: item.media_type as "movie" | "tv"
-          }));
-        return [...prev, ...newItems];
-      });
-    }
-  }, [trendingQuery.data]);
+      const validItems = trendingQuery.data.filter(
+        (item) => item.poster_path && (item.release_date || item.first_air_date)
+      );
 
-  // Prefetch next page
-  useEffect(() => {
-    if (trendingQuery.data?.length === ITEMS_PER_PAGE) {
-      queryClient.prefetchQuery({
-        queryKey: ['trending', timeWindow, page + 1],
-        queryFn: () => getTrending(timeWindow, page + 1),
-      });
+      const now = Date.now();
+
+      const scored = validItems
+        .map(item => {
+          const dateStr = item.release_date || item.first_air_date;
+          const releaseDate = dateStr ? new Date(dateStr).getTime() : 0;
+          const daysAgo = (now - releaseDate) / (1000 * 60 * 60 * 24);
+          const recencyScore = Math.max(0, 100 - daysAgo); // newer is better
+          const popularityScore = item.popularity || 0;
+          const score = recencyScore * 1.5 + popularityScore;
+
+          return {
+            ...item,
+            media_type: item.media_type as 'movie' | 'tv',
+            _score: score,
+          };
+        })
+        .sort((a, b) => b._score - a._score)
+        .slice(0, page * ITEMS_PER_PAGE);
+
+      setScoredTrending(scored);
     }
-  }, [page, timeWindow, queryClient, trendingQuery.data]);
-  
-  const handleShowMore = () => {
-    setPage(prev => prev + 1);
-  };
-  
-  // Check if there are more items to load
+  }, [trendingQuery.data, page]);
+
+  const handleShowMore = () => setPage(prev => prev + 1);
   const hasMore = trendingQuery.data?.length === ITEMS_PER_PAGE;
-  
-  // Reset accumulated data when changing time window
+
   const handleTimeWindowChange = (value: 'day' | 'week') => {
     setTimeWindow(value);
     setPage(1);
-    setAllTrending([]);
+    setScoredTrending([]);
   };
 
-  // Convert Media[] to ExtendedMedia[] for MediaGrid
-  const extendedMedia = ensureExtendedMediaArray(allTrending);
-  
+  const extendedMedia = ensureExtendedMediaArray(scoredTrending);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      
+
       <main className="flex-1">
         <div className="container px-4 py-8">
           <div className="flex items-center gap-3 mb-8 pt-10">
             <TrendingUp className="h-8 w-8 text-accent" />
             <h1 className="text-3xl font-bold text-white">Trending</h1>
           </div>
-          
+
           <Tabs defaultValue="week" onValueChange={(value) => handleTimeWindowChange(value as 'day' | 'week')}>
             <TabsList className="mb-8">
               <TabsTrigger value="day">Today</TabsTrigger>
               <TabsTrigger value="week">This Week</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="day">
               {trendingQuery.isLoading ? (
                 <MediaGridSkeleton />
@@ -92,10 +89,9 @@ const Trending = () => {
               ) : (
                 <>
                   <MediaGrid media={extendedMedia} title="Trending Today" />
-                  
                   {hasMore && (
                     <div className="flex justify-center my-8">
-                      <Button 
+                      <Button
                         onClick={handleShowMore}
                         variant="outline"
                         className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300"
@@ -111,7 +107,7 @@ const Trending = () => {
                 </>
               )}
             </TabsContent>
-            
+
             <TabsContent value="week">
               {trendingQuery.isLoading ? (
                 <MediaGridSkeleton />
@@ -120,10 +116,9 @@ const Trending = () => {
               ) : (
                 <>
                   <MediaGrid media={extendedMedia} title="Trending This Week" />
-                  
                   {hasMore && (
                     <div className="flex justify-center my-8">
-                      <Button 
+                      <Button
                         onClick={handleShowMore}
                         variant="outline"
                         className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300"
@@ -142,7 +137,7 @@ const Trending = () => {
           </Tabs>
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );
