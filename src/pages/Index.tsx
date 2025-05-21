@@ -1,5 +1,6 @@
 import { useState, useEffect, Suspense, lazy } from 'react';
 import {
+  getTrending,
   getPopularMovies,
   getPopularTVShows,
   getTopRatedMovies,
@@ -77,34 +78,53 @@ const Index = () => {
   useEffect(() => {
     const fetchPrimaryData = async () => {
       try {
-        const [
-          popularMoviesData,
-          popularTVData,
-          topMoviesData,
-          topTVData,
-        ] = await Promise.all([
-          getPopularMovies(),
-          getPopularTVShows(),
-          getTopRatedMovies(),
-          getTopRatedTVShows(),
-        ]);
+        // Fetch trending today movies and tv shows combined
+        const trendingData = await getTrending();
 
-        // Filter for newly released content (released in last 3 months)
-        const combinedNewReleases = [...popularMoviesData, ...popularTVData]
-          .filter(item => {
+        // Fetch popular movies and tv shows
+        const [popularMoviesData, popularTVData, topMoviesData, topTVData] =
+          await Promise.all([
+            getPopularMovies(),
+            getPopularTVShows(),
+            getTopRatedMovies(),
+            getTopRatedTVShows(),
+          ]);
+
+        // Filter newly released (last 3 months) from popular
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+        const newlyReleased = [...popularMoviesData, ...popularTVData].filter(
+          (item) => {
             if (!item.backdrop_path) return false;
             const releaseDate = new Date(item.release_date || item.first_air_date);
-            const threeMonthsAgo = new Date();
-            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
             return releaseDate >= threeMonthsAgo;
-          })
-          .sort((a, b) => {
-            const dateA = new Date(a.release_date || a.first_air_date).getTime();
-            const dateB = new Date(b.release_date || b.first_air_date).getTime();
-            return dateB - dateA;
-          });
+          }
+        );
 
-        setTrendingMedia(applyQuality(combinedNewReleases));
+        // Combine trending + newly released lists, remove duplicates by id
+        const combinedMap = new Map<string | number, Media>();
+
+        // Add trending first (assumed already filtered by trending today)
+        trendingData.forEach((item) => {
+          if (item.backdrop_path) combinedMap.set(item.id, item);
+        });
+
+        // Add newly released, but only if not already in trending
+        newlyReleased.forEach((item) => {
+          if (item.backdrop_path && !combinedMap.has(item.id)) {
+            combinedMap.set(item.id, item);
+          }
+        });
+
+        // Convert back to array and sort by release date descending
+        const combinedList = Array.from(combinedMap.values()).sort((a, b) => {
+          const dateA = new Date(a.release_date || a.first_air_date).getTime();
+          const dateB = new Date(b.release_date || b.first_air_date).getTime();
+          return dateB - dateA;
+        });
+
+        setTrendingMedia(applyQuality(combinedList));
         setPopularMovies(applyQuality(popularMoviesData));
         setPopularTVShows(applyQuality(popularTVData));
         setTopRatedMovies(applyQuality(topMoviesData));
