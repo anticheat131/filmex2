@@ -31,34 +31,6 @@ const MediaCard = ({
   minimal = false,
   smaller = false,
 }: MediaCardProps) => {
-  // --- FILTER LOGIC: ONLY SHOW IF TRENDING TODAY AND NEWLY RELEASED ---
-
-  // Trending today check — expects media.trending_date (ISO string) or customize as needed
-  const isTrendingToday = (() => {
-    if (!media.trending_date) return false;
-    const trendingDate = new Date(media.trending_date);
-    const today = new Date();
-    return (
-      trendingDate.getDate() === today.getDate() &&
-      trendingDate.getMonth() === today.getMonth() &&
-      trendingDate.getFullYear() === today.getFullYear()
-    );
-  })();
-
-  // Newly released within last 30 days
-  const fullReleaseDate =
-    media.media_type === 'movie' ? media.release_date : media.first_air_date;
-  const releaseDate = new Date(fullReleaseDate || '');
-  const now = new Date();
-  const daysSinceRelease = Math.floor(
-    (now.getTime() - releaseDate.getTime()) / (1000 * 60 * 60 * 24)
-  );
-  const isNewlyReleased = !isNaN(releaseDate.getTime()) && daysSinceRelease <= 30;
-
-  if (!isTrendingToday || !isNewlyReleased) {
-    return null;
-  }
-
   const [imageError, setImageError] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
@@ -83,6 +55,9 @@ const MediaCard = ({
       ? media.episode_run_time[0]
       : undefined;
 
+  const fullReleaseDate =
+    media.media_type === 'movie' ? media.release_date : media.first_air_date;
+  const releaseDate = new Date(fullReleaseDate || '');
   const formattedMonthYear = !isNaN(releaseDate.getTime())
     ? `${releaseDate.toLocaleString('default', { month: 'long' })} ${releaseDate.getFullYear()}`
     : 'Unknown';
