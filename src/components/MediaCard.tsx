@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Star } from 'lucide-react';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { posterSizes } from '@/utils/api';
@@ -27,8 +26,6 @@ const slugifyTitle = (title: string) =>
 
 const MediaCard = ({ media, className, minimal = false, smaller = false }: MediaCardProps) => {
   const [imageError, setImageError] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
-  const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
   const [quality, setQuality] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -62,16 +59,6 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
       }),
     ]);
     navigate(detailPath);
-  };
-
-  const handleMouseEnter = useCallback((e: React.MouseEvent) => {
-    const { clientX, clientY } = e;
-    setPopupPos({ x: clientX, y: clientY });
-    setShowPopup(true);
-  }, []);
-
-  const handleMouseLeave = () => {
-    setShowPopup(false);
   };
 
   useEffect(() => {
@@ -132,9 +119,6 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         className
       )}
       onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseMove={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
       <div className="relative aspect-[2/3.5] w-full overflow-hidden rounded-md">
         <img
@@ -192,35 +176,6 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
 
         <p className="text-center text-white/50 text-[11px] pt-1">{formattedMonthYear}</p>
       </div>
-
-      <AnimatePresence>
-        {showPopup && (
-          <motion.div
-            key="popup"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.15 }}
-            className="fixed z-50 w-[320px] max-w-full rounded-md bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
-            style={{
-              top: popupPos.y + 10,
-              left: popupPos.x - 160,
-            }}
-          >
-            <h4 className="font-bold text-lg mb-1">{media.title || media.name}</h4>
-            <p className="text-xs mb-2 text-white/70">Release: {fullReleaseDate || 'Unknown'}</p>
-            <p className="text-xs mb-2 text-white/70">Genres: {genreNames?.join(', ') || 'Unknown'}</p>
-            {media.vote_average > 0 && (
-              <p className="flex items-center text-amber-400 mb-2">
-                <Star className="h-4 w-4 mr-1 fill-amber-400" /> {media.vote_average.toFixed(1)}
-              </p>
-            )}
-            <p className="text-xs max-h-28 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-              {media.overview || 'No description available.'}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </article>
   );
 };
