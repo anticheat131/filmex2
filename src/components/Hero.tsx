@@ -32,18 +32,38 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
 
   const loadTrendingMedia = useCallback(async () => {
     try {
-      const [mvRes, tvRes] = await Promise.all([
+      const today = new Date().toISOString().split('T')[0];
+
+      const [mvTrendingRes, tvTrendingRes, mvNewRes, tvNewRes] = await Promise.all([
         fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`),
-        fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`)
+        fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`),
+        fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${import.meta.env.VITE_TMDB_API_KEY}&sort_by=release_date.desc&release_date.lte=${today}`),
+        fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${import.meta.env.VITE_TMDB_API_KEY}&sort_by=first_air_date.desc&first_air_date.lte=${today}`)
       ]);
-      const [mvJson, tvJson] = await Promise.all([mvRes.json(), tvRes.json()]);
-      const combined = [...initialMedia, ...(mvJson.results || []), ...(tvJson.results || [])];
+
+      const [mvTrending, tvTrending, mvNew, tvNew] = await Promise.all([
+        mvTrendingRes.json(),
+        tvTrendingRes.json(),
+        mvNewRes.json(),
+        tvNewRes.json()
+      ]);
+
+      const combined = [
+        ...initialMedia,
+        ...(mvTrending.results || []),
+        ...(tvTrending.results || []),
+        ...(mvNew.results || []),
+        ...(tvNew.results || [])
+      ];
 
       const unique = new Map<string, Media>();
       combined.forEach(item => {
         if (!item.backdrop_path) return;
-        const key = `${item.media_type || 'unknown'}-${item.id}`;
-        if (!unique.has(key)) unique.set(key, item);
+        const mediaType = item.media_type || (item.first_air_date ? 'tv' : 'movie');
+        const key = `${mediaType}-${item.id}`;
+        if (!unique.has(key)) {
+          unique.set(key, { ...item, media_type: mediaType });
+        }
       });
 
       const sorted = Array.from(unique.values())
@@ -58,7 +78,7 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
 
       setPool(sorted);
     } catch (error) {
-      console.error('Error loading trending media:', error);
+      console.error('Error loading media:', error);
       setPool(initialMedia.filter(m => m.backdrop_path).slice(0, 10));
     }
   }, [initialMedia]);
