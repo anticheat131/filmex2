@@ -77,40 +77,39 @@ const Index = () => {
   useEffect(() => {
     const fetchPrimaryData = async () => {
       try {
-        const trendingData = await getTrending();
+        const [trendingMovies, trendingTV] = await Promise.all([
+          getTrending('movie'),
+          getTrending('tv'),
+        ]);
 
         const fiveMonthsAgo = new Date();
         fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5);
 
-        const filteredTrending = trendingData.filter(item => {
-          if (!item.backdrop_path) return false;
+        const combinedTrending = [...trendingMovies, ...trendingTV].filter(item => {
+          const dateStr = item.release_date || item.first_air_date;
+          if (!dateStr) return false;
 
-          let releaseDateStr = '';
-          if (item.media_type === 'movie') {
-            releaseDateStr = item.release_date || '';
-          } else if (item.media_type === 'tv') {
-            releaseDateStr = item.first_air_date || '';
-          } else {
-            return false;
-          }
-
-          if (!releaseDateStr) return false;
-
-          const releaseDate = new Date(releaseDateStr);
-          if (isNaN(releaseDate.getTime())) return false;
-
-          return releaseDate >= fiveMonthsAgo;
+          const releaseDate = new Date(dateStr);
+          return (
+            !isNaN(releaseDate.getTime()) &&
+            releaseDate >= fiveMonthsAgo &&
+            item.backdrop_path
+          );
         });
 
-        const [popularMoviesData, popularTVData, topMoviesData, topTVData] =
-          await Promise.all([
-            getPopularMovies(),
-            getPopularTVShows(),
-            getTopRatedMovies(),
-            getTopRatedTVShows(),
-          ]);
+        const [
+          popularMoviesData,
+          popularTVData,
+          topMoviesData,
+          topTVData,
+        ] = await Promise.all([
+          getPopularMovies(),
+          getPopularTVShows(),
+          getTopRatedMovies(),
+          getTopRatedTVShows(),
+        ]);
 
-        setTrendingMedia(applyQuality(filteredTrending));
+        setTrendingMedia(applyQuality(combinedTrending));
         setPopularMovies(applyQuality(popularMoviesData));
         setPopularTVShows(applyQuality(popularTVData));
         setTopRatedMovies(applyQuality(topMoviesData));
@@ -158,9 +157,15 @@ const Index = () => {
             borderRight: '1px solid rgb(57, 55, 55)',
           }}
         >
-          <div className={`${contentVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
+          <div
+            className={`${
+              contentVisible ? 'opacity-100' : 'opacity-0'
+            } transition-opacity duration-300`}
+          >
             <div className="pt-16">
-              {sliderMedia.length > 0 && <Hero media={sliderMedia} className="hero" />}
+              {sliderMedia.length > 0 && (
+                <Hero media={sliderMedia} className="hero" />
+              )}
             </div>
 
             {user && <ContinueWatching />}
@@ -171,7 +176,13 @@ const Index = () => {
             <ContentRow title="Top Rated TV Shows" media={topRatedTVShows} />
 
             {secondaryLoaded && (
-              <Suspense fallback={<div className="py-8"><Spinner size="lg" className="mx-auto" /></div>}>
+              <Suspense
+                fallback={
+                  <div className="py-8">
+                    <Spinner size="lg" className="mx-auto" />
+                  </div>
+                }
+              >
                 <SecondaryContent />
               </Suspense>
             )}
