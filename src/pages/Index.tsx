@@ -82,12 +82,18 @@ const Index = () => {
         const fiveMonthsAgo = new Date();
         fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5);
 
-        const filteredTrendingData = trendingData.filter(item => {
-          const dateStr = item.release_date || item.first_air_date;
-          if (!dateStr) return false;
-          const releaseDate = new Date(dateStr);
-          return releaseDate >= fiveMonthsAgo && item.backdrop_path;
-        });
+        const filteredTrendingData = trendingData
+          .filter(item => {
+            const dateStr = item.release_date || item.first_air_date;
+            if (!item.backdrop_path || !dateStr) return false;
+            const date = new Date(dateStr);
+            return date >= fiveMonthsAgo;
+          })
+          .sort((a, b) => {
+            const dateA = new Date(a.release_date || a.first_air_date).getTime();
+            const dateB = new Date(b.release_date || b.first_air_date).getTime();
+            return dateB - dateA;
+          });
 
         const [
           popularMoviesData,
@@ -101,7 +107,7 @@ const Index = () => {
           getTopRatedTVShows(),
         ]);
 
-        setTrendingMedia(applyQuality(filteredTrendingData));
+        setTrendingMedia(applyQuality(filteredTrendingData.slice(0, 15)));
         setPopularMovies(applyQuality(popularMoviesData));
         setPopularTVShows(applyQuality(popularTVData));
         setTopRatedMovies(applyQuality(topMoviesData));
@@ -136,7 +142,7 @@ const Index = () => {
 
       {isLoading ? (
         <div className="flex flex-col gap-8 pt-24 px-6">
-          <Skeleton className="w-full h-[60vh] rounded-lg" />
+          <Skeleton className="w-full h-[60vh] rounded-lg" /> {/* Hero skeleton */}
           <RowSkeleton />
           <RowSkeleton />
         </div>
