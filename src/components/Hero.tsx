@@ -30,71 +30,48 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
   const navigate = useNavigate();
   const { preference } = useMediaPreferences();
 
-  const loadTrendingMedia = useCallback(async () => {
+  // Helper: check if release date is within last 30 days
+  const isRecent = (dateStr: string | undefined | null) => {
+    if (!dateStr) return false;
+    const releaseDate = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - releaseDate.getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    return diffDays <= 30 && diffDays >= 0;
+  };
+
+  const loadTrendingNewest = useCallback(async () => {
     try {
-      const [mvRes, tvRes, newMvRes, newTvRes] = await Promise.all([
+      const [mvRes, tvRes] = await Promise.all([
         fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`),
         fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`),
-        fetch(`https://api.themoviedb.org/3/discover/movie?sort_by=release_date.desc&api_key=${import.meta.env.VITE_TMDB_API_KEY}&page=1`),
-        fetch(`https://api.themoviedb.org/3/discover/tv?sort_by=first_air_date.desc&api_key=${import.meta.env.VITE_TMDB_API_KEY}&page=1`)
       ]);
+      const [mvJson, tvJson] = await Promise.all([mvRes.json(), tvRes.json()]);
 
-      const [mvJson, tvJson, newMvJson, newTvJson] = await Promise.all([
-        mvRes.json(),
-        tvRes.json(),
-        newMvRes.json(),
-        newTvRes.json(),
-      ]);
+      // Combine movie and tv trending results
+      const combined = [...(mvJson.results || []), ...(tvJson.results || [])];
 
-      // Combine initial, trending, and newest
-      const combined = [
-        ...initialMedia,
-        ...(mvJson.results || []),
-        ...(tvJson.results || []),
-        ...(newMvJson.results || []),
-        ...(newTvJson.results || []),
-      ];
+      // Filter to only recent (released in last 30 days)
+      const recentTrending = combined.filter(item =>
+        isRecent(item.release_date || item.first_air_date)
+      );
 
-      const unique = new Map<string, Media>();
-      combined.forEach(item => {
-        if (!item.backdrop_path) return;
-        const key = `${item.media_type || 'unknown'}-${item.id}`;
-        if (!unique.has(key)) unique.set(key, item);
-      });
+      // Sort by popularity descending
+      const sorted = recentTrending.sort((a, b) => b.popularity - a.popularity);
 
-      const allItems = Array.from(unique.values());
+      // Limit to 10 items max
+      const limited = sorted.slice(0, 10);
 
-      // Extract newest (3 items)
-      const newestItems = allItems
-        .filter(m => (m.release_date || m.first_air_date))
-        .sort((a, b) =>
-          new Date(b.release_date || b.first_air_date).getTime() -
-          new Date(a.release_date || a.first_air_date).getTime()
-        )
-        .slice(0, 3);
-
-      // Extract trending (7 items), excluding newest already taken
-      const trendingItems = allItems
-        .sort((a, b) => b.popularity - a.popularity)
-        .filter(item =>
-          !newestItems.some(
-            newItem => newItem.id === item.id && newItem.media_type === item.media_type
-          )
-        )
-        .slice(0, 7);
-
-      const sorted = [...newestItems, ...trendingItems];
-
-      setPool(sorted);
+      setPool(limited);
     } catch (error) {
-      console.error('Error loading trending media:', error);
+      console.error('Failed to load trending newest:', error);
       setPool(initialMedia.filter(m => m.backdrop_path).slice(0, 10));
     }
   }, [initialMedia]);
 
   useEffect(() => {
-    loadTrendingMedia();
-  }, [loadTrendingMedia]);
+    loadTrendingNewest();
+  }, [loadTrendingNewest]);
 
   const filteredMedia = useMemo(() => {
     if (preference && preference !== 'balanced') {
@@ -190,7 +167,7 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-6 md:px-16 text-center text-white max-w-5xl mx-auto space-y-4">
           <div className="flex gap-3 items-center">
             <span className="text-xs md:text-sm bg-white/90 text-black rounded-full px-3 py-1 uppercase font-medium tracking-wider">
-              Trending Now
+              Trending & Newest
             </span>
             <span className="text-xs md:text-sm bg-blue-600 text-white rounded-full px-3 py-1 uppercase font-medium tracking-wider">
               {featured.media_type === 'tv' ? 'TV Show' : 'Movie'}
