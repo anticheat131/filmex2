@@ -4,8 +4,6 @@ import {
   getPopularTVShows,
   getTopRatedMovies,
   getTopRatedTVShows,
-  getNewlyReleasedMovies,
-  getNewlyReleasedTVShows,
 } from '@/utils/api';
 import { Media } from '@/utils/types';
 import { useAuth } from '@/hooks';
@@ -80,23 +78,26 @@ const Index = () => {
     const fetchPrimaryData = async () => {
       try {
         const [
-          newlyReleasedMovies,
-          newlyReleasedTVShows,
           popularMoviesData,
           popularTVData,
           topMoviesData,
           topTVData,
         ] = await Promise.all([
-          getNewlyReleasedMovies(),
-          getNewlyReleasedTVShows(),
           getPopularMovies(),
           getPopularTVShows(),
           getTopRatedMovies(),
           getTopRatedTVShows(),
         ]);
 
-        const combinedNewReleases = [...newlyReleasedMovies, ...newlyReleasedTVShows]
-          .filter(item => item.backdrop_path)
+        // Filter for newly released content (released in last 3 months)
+        const combinedNewReleases = [...popularMoviesData, ...popularTVData]
+          .filter(item => {
+            if (!item.backdrop_path) return false;
+            const releaseDate = new Date(item.release_date || item.first_air_date);
+            const threeMonthsAgo = new Date();
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+            return releaseDate >= threeMonthsAgo;
+          })
           .sort((a, b) => {
             const dateA = new Date(a.release_date || a.first_air_date).getTime();
             const dateB = new Date(b.release_date || b.first_air_date).getTime();
