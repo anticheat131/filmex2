@@ -34,19 +34,14 @@ const Index = () => {
   const applyQuality = (items: Media[]) =>
     items.map(item => {
       let quality = 'HD';
-
       if (typeof item.hd === 'boolean') {
         quality = item.hd ? 'HD' : 'CAM';
-      } else if (item.video_source && typeof item.video_source === 'string') {
-        quality = item.video_source.toLowerCase().includes('cam') ? 'CAM' : 'HD';
+      } else if (item.video_source?.toLowerCase().includes('cam')) {
+        quality = 'CAM';
       } else if (!item.backdrop_path) {
         quality = 'CAM';
       }
-
-      return {
-        ...item,
-        quality,
-      };
+      return { ...item, quality };
     });
 
   useEffect(() => {
@@ -85,16 +80,11 @@ const Index = () => {
         const fiveMonthsAgo = new Date();
         fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5);
 
-        const combinedTrending = [...trendingMovies, ...trendingTV].filter(item => {
+        const trendingFiltered = [...trendingMovies, ...trendingTV].filter(item => {
           const dateStr = item.release_date || item.first_air_date;
           if (!dateStr) return false;
-
           const releaseDate = new Date(dateStr);
-          return (
-            !isNaN(releaseDate.getTime()) &&
-            releaseDate >= fiveMonthsAgo &&
-            item.backdrop_path
-          );
+          return releaseDate >= fiveMonthsAgo && item.backdrop_path;
         });
 
         const [
@@ -109,7 +99,7 @@ const Index = () => {
           getTopRatedTVShows(),
         ]);
 
-        setTrendingMedia(applyQuality(combinedTrending));
+        setTrendingMedia(applyQuality(trendingFiltered));
         setPopularMovies(applyQuality(popularMoviesData));
         setPopularTVShows(applyQuality(popularTVData));
         setTopRatedMovies(applyQuality(topMoviesData));
@@ -169,7 +159,9 @@ const Index = () => {
             </div>
 
             {user && <ContinueWatching />}
-            <ContentRow title="Trending Now" media={trendingMedia} featured />
+            {trendingMedia.length > 0 && (
+              <ContentRow title="Trending Now" media={trendingMedia} featured />
+            )}
             <ContentRow title="Popular Movies" media={popularMovies} />
             <ContentRow title="Popular TV Shows" media={popularTVShows} />
             <ContentRow title="Top Rated Movies" media={topRatedMovies} />
