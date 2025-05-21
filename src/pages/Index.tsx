@@ -34,7 +34,6 @@ const Index = () => {
   const applyQuality = (items: Media[]) =>
     items.map(item => {
       let quality = 'HD';
-
       if (typeof item.hd === 'boolean') {
         quality = item.hd ? 'HD' : 'CAM';
       } else if (item.video_source && typeof item.video_source === 'string') {
@@ -42,11 +41,7 @@ const Index = () => {
       } else if (!item.backdrop_path) {
         quality = 'CAM';
       }
-
-      return {
-        ...item,
-        quality,
-      };
+      return { ...item, quality };
     });
 
   useEffect(() => {
@@ -77,36 +72,29 @@ const Index = () => {
   useEffect(() => {
     const fetchPrimaryData = async () => {
       try {
-        const trendingData = await getTrending();
-
-        const fiveMonthsAgo = new Date();
-        fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5);
-
-        const filteredTrendingData = trendingData
-          .filter(item => {
-            const dateStr = item.release_date || item.first_air_date;
-            if (!item.backdrop_path || !dateStr) return false;
-            const date = new Date(dateStr);
-            return date >= fiveMonthsAgo;
-          })
-          .sort((a, b) => {
-            const dateA = new Date(a.release_date || a.first_air_date).getTime();
-            const dateB = new Date(b.release_date || b.first_air_date).getTime();
-            return dateB - dateA;
-          });
-
         const [
+          trendingData,
           popularMoviesData,
           popularTVData,
           topMoviesData,
           topTVData,
         ] = await Promise.all([
+          getTrending(),
           getPopularMovies(),
           getPopularTVShows(),
           getTopRatedMovies(),
           getTopRatedTVShows(),
         ]);
 
+        const filteredTrendingData = trendingData
+          .filter(item => item.backdrop_path)
+          .sort((a, b) => {
+            const dateA = new Date(a.release_date || a.first_air_date).getTime();
+            const dateB = new Date(b.release_date || b.first_air_date).getTime();
+            return dateB - dateA;
+          });
+
+        // Limit to 15 trending items
         setTrendingMedia(applyQuality(filteredTrendingData.slice(0, 15)));
         setPopularMovies(applyQuality(popularMoviesData));
         setPopularTVShows(applyQuality(popularTVData));
@@ -142,7 +130,7 @@ const Index = () => {
 
       {isLoading ? (
         <div className="flex flex-col gap-8 pt-24 px-6">
-          <Skeleton className="w-full h-[60vh] rounded-lg" /> {/* Hero skeleton */}
+          <Skeleton className="w-full h-[60vh] rounded-lg" />
           <RowSkeleton />
           <RowSkeleton />
         </div>
@@ -155,7 +143,9 @@ const Index = () => {
             borderRight: '1px solid rgb(57, 55, 55)',
           }}
         >
-          <div className={`${contentVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
+          <div
+            className={`${contentVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+          >
             <div className="pt-16">
               {sliderMedia.length > 0 && (
                 <Hero media={sliderMedia} className="hero" />
