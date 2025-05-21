@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Star } from 'lucide-react';
@@ -23,28 +23,21 @@ interface MediaCardProps {
 }
 
 const slugifyTitle = (title: string) =>
-  title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
+  title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
 const MediaCard = ({ media, className, minimal = false, smaller = false }: MediaCardProps) => {
   const [imageError, setImageError] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
   const [quality, setQuality] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const mediaId = media.media_id || media.id;
   const slug = slugifyTitle(media.title || media.name || '');
   const detailPath =
-    media.media_type === 'movie'
-      ? `/movie/${mediaId}-${slug}`
-      : `/tv/${mediaId}-${slug}`;
+    media.media_type === 'movie' ? `/movie/${mediaId}-${slug}` : `/tv/${mediaId}-${slug}`;
 
-  const genreNames = (media.genre_ids || [])
-    .map(id => genreMap[id])
-    .filter(Boolean)
-    .slice(0, 2);
+  const genreNames = (media.genre_ids || []).map(id => genreMap[id]).filter(Boolean).slice(0, 2);
 
   const runtimeMinutes =
     media.media_type === 'movie'
@@ -59,8 +52,6 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
     ? `${releaseDate.toLocaleString('default', { month: 'long' })} ${releaseDate.getFullYear()}`
     : 'Unknown';
 
-  const handleImageError = () => setImageError(true);
-
   const handleClick = async () => {
     await Promise.all([
       trackMediaPreference(media.media_type, 'select'),
@@ -71,6 +62,16 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
       }),
     ]);
     navigate(detailPath);
+  };
+
+  const handleMouseEnter = useCallback((e: React.MouseEvent) => {
+    const { clientX, clientY } = e;
+    setPopupPos({ x: clientX, y: clientY });
+    setShowPopup(true);
+  }, []);
+
+  const handleMouseLeave = () => {
+    setShowPopup(false);
   };
 
   useEffect(() => {
@@ -102,23 +103,19 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           }))
         );
 
-        const validDigital = allTypes.some(rd =>
-          rd.type === 4 &&
-          rd.date <= now &&
-          !rd.note.includes('pre-order')
+        const validDigital = allTypes.some(
+          rd => rd.type === 4 && rd.date <= now && !rd.note.includes('pre-order')
         );
 
         const allTypesSet = new Set(allTypes.map(rd => rd.type));
         const onlyTheatrical = [...allTypesSet].every(t => t === 2 || t === 3);
 
-        if (allTypes.length === 0) {
-          setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
-        } else if (onlyTheatrical) {
+        if (allTypes.length === 0 || onlyTheatrical) {
           setQuality(diffInDays >= 60 ? 'HD' : 'CAM');
         } else {
           setQuality(validDigital ? 'HD' : 'CAM');
         }
-      } catch (e) {
+      } catch {
         setQuality(null);
       }
     };
@@ -127,7 +124,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
   }, [mediaId, media.media_type, media.release_date]);
 
   return (
-    <div
+    <article
       className={cn(
         'relative inline-block rounded-md border border-[#131313] bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
         'hover:border-[#181818] hover:shadow-white/10 hover:scale-[1.02]',
@@ -135,14 +132,15 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         className
       )}
       onClick={handleClick}
-      onMouseEnter={() => setShowPopup(true)}
-      onMouseLeave={() => setShowPopup(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseMove={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div className="relative aspect-[2/3.5] w-full overflow-hidden rounded-md">
         <img
           src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium)}
           alt={media.title || media.name || 'Media Poster'}
-          onError={handleImageError}
+          onError={() => setImageError(true)}
           className="w-full h-full object-cover"
         />
 
@@ -155,10 +153,12 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
 
         {quality && (
           <div
-            className={`absolute top-2 left-2 px-3 py-1 text-[11px] font-semibold rounded-sm shadow-md text-white
-              ${quality === 'HD'
+            className={cn(
+              'absolute top-2 left-2 px-3 py-1 text-[11px] font-semibold rounded-sm shadow-md text-white',
+              quality === 'HD'
                 ? 'bg-gradient-to-r from-green-600 to-green-500'
-                : 'bg-gradient-to-r from-red-600 to-red-500'}`}
+                : 'bg-gradient-to-r from-red-600 to-red-500'
+            )}
             style={{ letterSpacing: '0.05em', textShadow: '0 0 3px rgba(0,0,0,0.6)' }}
           >
             {quality}
@@ -166,32 +166,28 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
         )}
 
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
-          <div className="flex justify-center">
-            <button
-              className="flex items-center gap-2 px-3 py-1 bg-white text-black text-xs font-semibold rounded-md shadow hover:bg-gray-200 transition"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(detailPath);
-              }}
-            >
-              Details <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            className="flex items-center gap-2 px-3 py-1 bg-white text-black text-xs font-semibold rounded-md shadow hover:bg-gray-200 transition"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(detailPath);
+            }}
+          >
+            Details <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
       </div>
 
       <div className="px-3 pb-3 pt-2 text-white text-sm space-y-1">
-        <h3 className="text-center text-sm font-medium text-white line-clamp-1">
+        <h3 className="text-center text-sm font-medium line-clamp-1">
           {media.title || media.name}
         </h3>
 
         <div className="flex justify-between items-end text-xs">
-          <p className="text-white/70 line-clamp-1 text-left">{genreNames.length > 0 ? genreNames.join(', ') : '—'}</p>
-          {runtimeMinutes && (
-            <p className="text-white/60 text-xs text-right min-w-[35%]">{runtimeMinutes} min</p>
-          )}
+          <p className="text-white/70 line-clamp-1">{genreNames.length > 0 ? genreNames.join(', ') : '—'}</p>
+          {runtimeMinutes && <p className="text-white/60">{runtimeMinutes} min</p>}
         </div>
 
         <p className="text-center text-white/50 text-[11px] pt-1">{formattedMonthYear}</p>
@@ -204,8 +200,12 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.2 }}
-            className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-3 w-[320px] max-w-full rounded-md bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
+            transition={{ duration: 0.15 }}
+            className="fixed z-50 w-[320px] max-w-full rounded-md bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
+            style={{
+              top: popupPos.y + 10,
+              left: popupPos.x - 160,
+            }}
           >
             <h4 className="font-bold text-lg mb-1">{media.title || media.name}</h4>
             <p className="text-xs mb-2 text-white/70">Release: {fullReleaseDate || 'Unknown'}</p>
@@ -221,7 +221,7 @@ const MediaCard = ({ media, className, minimal = false, smaller = false }: Media
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </article>
   );
 };
 
