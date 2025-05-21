@@ -32,53 +32,62 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
 
   const loadTrendingMedia = useCallback(async () => {
     try {
-      const today = new Date().toISOString().split('T')[0];
-
-      const [mvTrendingRes, tvTrendingRes, mvNewRes, tvNewRes] = await Promise.all([
+      const [mvRes, tvRes, newMvRes, newTvRes] = await Promise.all([
         fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`),
         fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${import.meta.env.VITE_TMDB_API_KEY}`),
-        fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${import.meta.env.VITE_TMDB_API_KEY}&sort_by=release_date.desc&release_date.lte=${today}`),
-        fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${import.meta.env.VITE_TMDB_API_KEY}&sort_by=first_air_date.desc&first_air_date.lte=${today}`)
+        fetch(`https://api.themoviedb.org/3/discover/movie?sort_by=release_date.desc&api_key=${import.meta.env.VITE_TMDB_API_KEY}&page=1`),
+        fetch(`https://api.themoviedb.org/3/discover/tv?sort_by=first_air_date.desc&api_key=${import.meta.env.VITE_TMDB_API_KEY}&page=1`)
       ]);
 
-      const [mvTrending, tvTrending, mvNew, tvNew] = await Promise.all([
-        mvTrendingRes.json(),
-        tvTrendingRes.json(),
-        mvNewRes.json(),
-        tvNewRes.json()
+      const [mvJson, tvJson, newMvJson, newTvJson] = await Promise.all([
+        mvRes.json(),
+        tvRes.json(),
+        newMvRes.json(),
+        newTvRes.json(),
       ]);
 
+      // Combine initial, trending, and newest
       const combined = [
         ...initialMedia,
-        ...(mvTrending.results || []),
-        ...(tvTrending.results || []),
-        ...(mvNew.results || []),
-        ...(tvNew.results || [])
+        ...(mvJson.results || []),
+        ...(tvJson.results || []),
+        ...(newMvJson.results || []),
+        ...(newTvJson.results || []),
       ];
 
       const unique = new Map<string, Media>();
       combined.forEach(item => {
         if (!item.backdrop_path) return;
-        const mediaType = item.media_type || (item.first_air_date ? 'tv' : 'movie');
-        const key = `${mediaType}-${item.id}`;
-        if (!unique.has(key)) {
-          unique.set(key, { ...item, media_type: mediaType });
-        }
+        const key = `${item.media_type || 'unknown'}-${item.id}`;
+        if (!unique.has(key)) unique.set(key, item);
       });
 
-      const sorted = Array.from(unique.values())
-        .sort((a, b) => {
-          const popDiff = b.popularity - a.popularity;
-          if (popDiff !== 0) return popDiff;
-          const bDate = new Date(b.release_date || b.first_air_date || '1970-01-01').getTime();
-          const aDate = new Date(a.release_date || a.first_air_date || '1970-01-01').getTime();
-          return bDate - aDate;
-        })
-        .slice(0, 10);
+      const allItems = Array.from(unique.values());
+
+      // Extract newest (3 items)
+      const newestItems = allItems
+        .filter(m => (m.release_date || m.first_air_date))
+        .sort((a, b) =>
+          new Date(b.release_date || b.first_air_date).getTime() -
+          new Date(a.release_date || a.first_air_date).getTime()
+        )
+        .slice(0, 3);
+
+      // Extract trending (7 items), excluding newest already taken
+      const trendingItems = allItems
+        .sort((a, b) => b.popularity - a.popularity)
+        .filter(item =>
+          !newestItems.some(
+            newItem => newItem.id === item.id && newItem.media_type === item.media_type
+          )
+        )
+        .slice(0, 7);
+
+      const sorted = [...newestItems, ...trendingItems];
 
       setPool(sorted);
     } catch (error) {
-      console.error('Error loading media:', error);
+      console.error('Error loading trending media:', error);
       setPool(initialMedia.filter(m => m.backdrop_path).slice(0, 10));
     }
   }, [initialMedia]);
