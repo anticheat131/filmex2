@@ -1,8 +1,13 @@
 import AddTestItem from '@/components/debug/AddTestItem';
 
-...
-
-<AddTestItem />
+export default function IndexPage() {
+  return (
+    <div>
+      {/* Other content */}
+      <AddTestItem />
+    </div>
+  );
+}
 import { useState, useEffect, Suspense, lazy } from 'react';
 import {
   getTrending,
