@@ -1,3 +1,4 @@
+import AddTestItem from '@/components/debug/AddTestItem';
 import { useState, useEffect, Suspense, lazy } from 'react';
 import {
   getTrending,
