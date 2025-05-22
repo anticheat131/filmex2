@@ -138,7 +138,7 @@ const Index = () => {
         <div
           className="mx-auto mt-8 md:mt-12 transition-opacity duration-300 px-6"
           style={{
-            maxWidth: '1600px',
+            maxWidth: '1920px',
             borderLeft: '1px solid rgb(57, 55, 55)',
             borderRight: '1px solid rgb(57, 55, 55)',
           }}
