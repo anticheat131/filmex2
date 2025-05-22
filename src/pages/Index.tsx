@@ -1,17 +1,3 @@
-import AddTestItem from '@/components/debug/AddTestItem';
-
-function Index() {
-  return (
-    <div>
-      {/* Your homepage content */}
-
-      {/* Insert the test component here */}
-      <AddTestItem />
-    </div>
-  );
-}
-
-export default Index;
 import { useState, useEffect, Suspense, lazy } from 'react';
 import {
   getTrending,
@@ -30,6 +16,7 @@ import Footer from '@/components/Footer';
 import Spinner from '@/components/ui/spinner';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 import { Skeleton } from '@/components/ui/skeleton';
+import AddTestItem from '@/components/debug/AddTestItem';
 
 const SecondaryContent = lazy(() => import('./components/SecondaryContent'));
 
@@ -108,7 +95,6 @@ const Index = () => {
             return dateB - dateA;
           });
 
-        // Limit to 15 trending items
         setTrendingMedia(applyQuality(filteredTrendingData.slice(0, 15)));
         setPopularMovies(applyQuality(popularMoviesData));
         setPopularTVShows(applyQuality(popularTVData));
@@ -168,6 +154,9 @@ const Index = () => {
 
             {user && <ContinueWatching />}
             <ContentRow title="Trending Now" media={trendingMedia} featured />
+
+            <AddTestItem />
+
             <ContentRow title="Popular Movies" media={popularMovies} />
             <ContentRow title="Popular TV Shows" media={popularTVShows} />
             <ContentRow title="Top Rated Movies" media={topRatedMovies} />
