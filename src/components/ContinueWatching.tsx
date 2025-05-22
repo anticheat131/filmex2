@@ -6,12 +6,7 @@ import { WatchHistoryItem } from '@/contexts/types/watch-history';
 import { Play, Clock, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDistanceToNow } from 'date-fns';
 
 import { db } from '@/firebase';
@@ -30,55 +25,46 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // Debug user info
-  console.log('Current user:', user);
-
-  // Fetch user continue watching items from Firestore
   useEffect(() => {
-    if (!user) {
-      setContinuableItems([]);
-      return;
-    }
+    if (!user) return;
 
     const fetchContinueWatching = async () => {
       try {
         const docRef = doc(db, 'continueWatching', user.uid);
         const docSnap = await getDoc(docRef);
-
         if (docSnap.exists()) {
           const data = docSnap.data();
-          console.log('Fetched continueWatching data:', data);
+          const rawItems = data.items || [];
 
-          // Defensive fallback if items is not an array
-          const items = Array.isArray(data.items) ? data.items : [];
+          console.log('Raw Firestore items:', rawItems);
+
+          // Convert Firestore Timestamps to JS Dates (for created_at)
+          const items = rawItems.map((item: any) => ({
+            ...item,
+            created_at: item.created_at?.toDate ? item.created_at.toDate() : new Date(item.created_at),
+          }));
+
+          console.log('Processed items:', items);
+
           setContinuableItems(items.slice(0, maxItems));
         } else {
-          // Initialize empty doc if none exists
-          await setDoc(docRef, { items: [] });
+          await setDoc(doc(db, 'continueWatching', user.uid), { items: [] });
           setContinuableItems([]);
         }
       } catch (error) {
         console.error('Error fetching continue watching:', error);
-        setContinuableItems([]);
       }
     };
 
     fetchContinueWatching();
   }, [user, maxItems]);
 
-  // Update arrow visibility on scroll and on load
   const handleScroll = () => {
     if (!rowRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = rowRef.current;
     setShowLeftArrow(scrollLeft > 0);
     setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
   };
-
-  useEffect(() => {
-    // Update arrows after items load and render
-    if (!rowRef.current) return;
-    handleScroll();
-  }, [continuableItems]);
 
   const scrollLeft = () => {
     if (!rowRef.current) return;
@@ -90,21 +76,17 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
     rowRef.current.scrollBy({ left: rowRef.current.clientWidth * 0.75, behavior: 'smooth' });
   };
 
-  // Remove item from Firestore and local state
   const handleRemoveItem = async (id: string) => {
     if (!user) return;
     try {
       const docRef = doc(db, 'continueWatching', user.uid);
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) return;
-
       const data = docSnap.data();
       if (!data.items) return;
 
       const updatedItems = data.items.filter((item: WatchHistoryItem) => item.id !== id);
-
       await updateDoc(docRef, { items: updatedItems });
-
       setContinuableItems(updatedItems.slice(0, maxItems));
     } catch (error) {
       console.error('Error removing item from Firestore:', error);
@@ -129,7 +111,8 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   return (
     <div className="px-4 md:px-8 mt-8 mb-6">
       <h2 className="text-xl md:text-2xl font-bold text-white mb-4 flex items-center">
-        <Clock className="h-5 w-5 mr-2 text-accent" /> Continue Watching
+        <Clock className="h-5 w-5 mr-2 text-accent" />
+        Continue Watching
       </h2>
 
       <div
@@ -154,104 +137,81 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
           animate={{ opacity: 1 }}
           transition={{ staggerChildren: 0.1 }}
         >
-          {continuableItems.map((item) => {
-            // Debug each item to see if all expected fields exist
-            console.log('Rendering continue watching item:', item);
-
-            // Defensive fallbacks for missing data
-            const backdrop = item.backdrop_path || '';
-            const title = item.title || item.name || 'Untitled';
-            const createdAt = item.created_at ? new Date(item.created_at) : new Date();
-            const watchPosition = item.watch_position || 0;
-            const duration = item.duration || 1; // avoid division by zero
-
-            return (
-              <motion.div
-                key={item.id}
-                className="relative flex-none w-[280px] md:w-[300px] aspect-video bg-card rounded-lg overflow-hidden group cursor-pointer hover-card"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileHover={{ scale: 1.02 }}
-                onClick={() => handleContinueWatching(item)}
+          {continuableItems.map((item) => (
+            <motion.div
+              key={item.id}
+              className="relative flex-none w-[280px] md:w-[300px] aspect-video bg-card rounded-lg overflow-hidden group cursor-pointer hover-card"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.02 }}
+              onClick={() => handleContinueWatching(item)}
+            >
+              <button
+                className="absolute top-2 right-2 z-20 bg-black/70 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-600"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveItem(item.id);
+                }}
               >
-                <button
-                  className="absolute top-2 right-2 z-20 bg-black/70 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-600"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveItem(item.id);
-                  }}
-                >
-                  ×
-                </button>
+                ×
+              </button>
 
-                {backdrop ? (
-                  <img
-                    src={`https://image.tmdb.org/t/p/w500${backdrop}`}
-                    alt={title}
-                    className="w-full h-full object-cover transition-transform group-hover:scale-110 group-hover:brightness-110"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-700 flex items-center justify-center text-white">
-                    No Image
-                  </div>
-                )}
+              <img
+                src={`https://image.tmdb.org/t/p/w500${item.backdrop_path}`}
+                alt={item.title}
+                className="w-full h-full object-cover transition-transform group-hover:scale-110 group-hover:brightness-110"
+              />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
 
-                <div className="absolute bottom-4 left-4 right-4 z-10">
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg">
-                      {title}
-                    </h3>
-                    <TooltipProvider delayDuration={300}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 rounded-full bg-black/30 hover:bg-accent/80 transition-colors -mt-1"
-                            onClick={(e) => handleNavigateToDetails(e, item)}
-                          >
-                            <Info className="h-3.5 w-3.5 text-white" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">
-                          <p>View details</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs text-white/70 mb-2">
-                    <span className="flex items-center">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {formatDistanceToNow(createdAt, { addSuffix: true })}
-                    </span>
-                    {item.media_type === 'tv' && (
-                      <span>
-                        S{item.season} E{item.episode}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mb-3 relative">
-                    <Progress
-                      value={(watchPosition / duration) * 100}
-                      className="h-1"
-                    />
-                    <div className="text-xs text-white/70 mt-1 text-right">
-                      {Math.floor((duration - watchPosition) / 60)} min left
-                    </div>
-                  </div>
-
-                  <Button className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1" size="sm">
-                    <Play className="h-3 w-3" />
-                    Continue
-                  </Button>
+              <div className="absolute bottom-4 left-4 right-4 z-10">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg">{item.title}</h3>
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 rounded-full bg-black/30 hover:bg-accent/80 transition-colors -mt-1"
+                          onClick={(e) => handleNavigateToDetails(e, item)}
+                        >
+                          <Info className="h-3.5 w-3.5 text-white" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p>View details</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
-              </motion.div>
-            );
-          })}
+
+                <div className="flex items-center justify-between text-xs text-white/70 mb-2">
+                  <span className="flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                  </span>
+                  {item.media_type === 'tv' && (
+                    <span>
+                      S{item.season} E{item.episode}
+                    </span>
+                  )}
+                </div>
+
+                <div className="mb-3 relative">
+                  <Progress value={(item.watch_position / item.duration) * 100} className="h-1" />
+                  <div className="text-xs text-white/70 mt-1 text-right">
+                    {Math.floor((item.duration - item.watch_position) / 60)} min left
+                  </div>
+                </div>
+
+                <Button className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1" size="sm">
+                  <Play className="h-3 w-3" />
+                  Continue
+                </Button>
+              </div>
+            </motion.div>
+          ))}
         </motion.div>
 
         {showRightArrow && (
