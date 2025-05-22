@@ -154,9 +154,7 @@ const Index = () => {
 
             {user && <ContinueWatching />}
             <ContentRow title="Trending Now" media={trendingMedia} featured />
-
-            <AddTestItem />
-
+            <AddTestItem /> {/* Inserted test component here */}
             <ContentRow title="Popular Movies" media={popularMovies} />
             <ContentRow title="Popular TV Shows" media={popularTVShows} />
             <ContentRow title="Top Rated Movies" media={topRatedMovies} />
