@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import ContentRow from '@/components/ContentRow';
-import ContinueWatching from '@/components/ContinueWatching';
+// import ContinueWatching from '@/components/ContinueWatching'; // COMMENTED OUT
 import Footer from '@/components/Footer';
 import Spinner from '@/components/ui/spinner';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
@@ -152,7 +152,8 @@ const Index = () => {
               )}
             </div>
 
-            {user && <ContinueWatching />}
+            {/* {user && <ContinueWatching />} */}
+
             <ContentRow title="Trending Now" media={trendingMedia} featured />
             <ContentRow title="Popular Movies" media={popularMovies} />
             <ContentRow title="Popular TV Shows" media={popularTVShows} />
