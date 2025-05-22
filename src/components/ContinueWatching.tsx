@@ -37,12 +37,13 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
       try {
         const docRef = doc(db, 'continueWatching', user.uid);
         const docSnap = await getDoc(docRef);
+
         if (docSnap.exists()) {
           const data = docSnap.data();
 
           // Filter out hidden items and convert Firestore timestamps
           const items = (data.items || [])
-            .filter((item: any) => !item.hidden)  // <-- filter hidden here
+            .filter((item: any) => !item.hidden)
             .map((item: any) => ({
               ...item,
               created_at: item.created_at?.toDate ? item.created_at.toDate() : new Date(item.created_at),
@@ -98,6 +99,7 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
 
       await updateDoc(docRef, { items: updatedItems });
 
+      // Update local state filtered to visible only and limit maxItems
       setContinuableItems(updatedItems.filter(item => !item.hidden).slice(0, maxItems));
     } catch (error) {
       console.error('Error hiding item in Firestore:', error);
@@ -166,6 +168,7 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
                     e.stopPropagation();
                     handleRemoveItem(item.id);
                   }}
+                  aria-label={`Remove ${item.title}`}
                 >
                   ×
                 </button>
