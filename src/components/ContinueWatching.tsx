@@ -1,181 +1,224 @@
-
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import PlyrPlayer from '@/components/PlyrPlayer';
-import { useEffect, useRef, useState } from 'react';
-import { registerIframeOrigin, setProxyHeaders, resetServiceWorkerData } from '@/utils/iframe-proxy-sw';
-import { createProxyStreamUrl, proxyAndRewriteM3u8 } from '@/utils/cors-proxy-api';
+import { useAuth } from '@/hooks/useAuth';
+import { useWatchHistory } from '@/hooks/use-watch-history';
+import { WatchHistoryItem } from '@/contexts/types/watch-history';
+import { Play, Clock, ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { formatDistanceToNow } from 'date-fns';
 
-interface VideoPlayerProps {
-  isLoading: boolean;
-  isCustomSource: boolean;
-  streamUrl: string | null;
-  iframeUrl: string;
-  title: string;
-  poster?: string;
-  headers?: Record<string, string>;
-  onLoaded: () => void;
-  onError: (error: string) => void;
+interface ContinueWatchingProps {
+  maxItems?: number;
 }
 
-const VideoPlayer = ({
-  isLoading,
-  isCustomSource,
-  streamUrl,
-  iframeUrl,
-  title,
-  poster,
-  headers,
-  onLoaded,
-  onError
-}: VideoPlayerProps) => {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [processedStreamUrl, setProcessedStreamUrl] = useState<string | null>(null);
-  const [iframeAttempts, setIframeAttempts] = useState(0);
-  
-  // Reset service worker data when component unmounts
-  useEffect(() => {
-    return () => {
-      // Clean up when component unmounts to prevent issues with future player instances
-      resetServiceWorkerData();
-    };
-  }, []);
-  
-  // Register iframe origin when URL changes
-  useEffect(() => {
-    if (!isCustomSource && iframeUrl) {
-      registerIframeOrigin(iframeUrl);
-      
-      // Reset iframe attempts counter when URL changes
-      setIframeAttempts(0);
-    }
-  }, [isCustomSource, iframeUrl]);
+const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
+  const { user } = useAuth();
+  const { watchHistory } = useWatchHistory();
+  const [continuableItems, setContinuableItems] = useState<WatchHistoryItem[]>([]);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+  const [isHovering, setIsHovering] = useState(false);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
-  // Process M3U8 stream URLs to handle CORS issues
-  useEffect(() => {
-    if (isCustomSource && streamUrl) {
-      // If we have custom headers, register them with the service worker
-      if (headers && Object.keys(headers).length > 0) {
-        try {
-          const domain = new URL(streamUrl).hostname;
-          setProxyHeaders(domain, headers);
-        } catch (e) {
-          console.error('Failed to set proxy headers:', e);
-        }
-      }
+  const processedHistory = useMemo(() => {
+    if (watchHistory.length === 0) return [];
 
-      // Process based on URL type
-      if (streamUrl.endsWith('.m3u8')) {
-        // For M3U8 streams, we might need to rewrite URLs inside the playlist
-        if (headers && Object.keys(headers).length > 0) {
-          // If we have headers and it's an m3u8, we may need to rewrite the file
-          proxyAndRewriteM3u8(streamUrl, headers)
-            .then(processedM3u8 => {
-              // Create a blob URL for the processed M3U8
-              const blob = new Blob([processedM3u8], { type: 'application/vnd.apple.mpegurl' });
-              const blobUrl = URL.createObjectURL(blob);
-              setProcessedStreamUrl(blobUrl);
-            })
-            .catch(err => {
-              console.error('Failed to process M3U8:', err);
-              // Fallback to simple proxy
-              setProcessedStreamUrl(createProxyStreamUrl(streamUrl, headers));
-            });
-        } else {
-          // No headers, just proxy the stream
-          setProcessedStreamUrl(createProxyStreamUrl(streamUrl));
-        }
-      } else {
-        // For other types of streams, just proxy them
-        setProcessedStreamUrl(createProxyStreamUrl(streamUrl, headers));
-      }
-    } else {
-      setProcessedStreamUrl(null);
-    }
-  }, [isCustomSource, streamUrl, headers]);
-
-  // Handle iframe load error
-  const handleIframeError = () => {
-    console.error('Iframe failed to load:', iframeUrl);
-    
-    // Increment attempts counter
-    setIframeAttempts(prev => prev + 1);
-    
-    // After 3 attempts, report the error
-    if (iframeAttempts >= 2) {
-      onError('Failed to load iframe content after multiple attempts');
-    }
-  };
-  
-  // Handle iframe load success
-  const handleIframeLoad = () => {
-    console.log('Iframe loaded successfully');
-    onLoaded();
-    
-    // Apply CSS to the iframe to prevent pointer events on overlays (helps block some popups)
-    if (iframeRef.current && iframeRef.current.contentWindow) {
+    const validItems = watchHistory.filter(item => {
+      if (!item.created_at) return false;
       try {
-        const style = document.createElement('style');
-        style.textContent = `
-          div[class*="popup"], div[class*="ad"], div[id*="popup"], div[id*="ad"],
-          iframe:not([src*="${new URL(iframeUrl).host}"]) {
-            display: none !important;
-            pointer-events: none !important;
-          }
-        `;
-        iframeRef.current.contentDocument?.head.appendChild(style);
-      } catch (e) {
-        // This will likely fail due to CORS, but it's worth trying
-        console.log('Could not inject CSS into iframe (expected due to CORS)');
+        const date = new Date(item.created_at);
+        return !isNaN(date.getTime());
+      } catch {
+        return false;
       }
+    });
+
+    const uniqueMediaMap = new Map<string, WatchHistoryItem>();
+
+    validItems.forEach(item => {
+      const key = `${item.media_type}-${item.media_id}${item.media_type === 'tv' ? `-s${item.season}-e${item.episode}` : ''}`;
+      if (!uniqueMediaMap.has(key) || new Date(item.created_at) > new Date(uniqueMediaMap.get(key)!.created_at)) {
+        uniqueMediaMap.set(key, item);
+      }
+    });
+
+    return Array.from(uniqueMediaMap.values()).sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [watchHistory]);
+
+  useEffect(() => {
+    setContinuableItems(processedHistory.slice(0, maxItems));
+  }, [processedHistory, maxItems]);
+
+  const handleScroll = () => {
+    if (!rowRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = rowRef.current;
+    setShowLeftArrow(scrollLeft > 0);
+    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+  };
+
+  const scrollLeft = () => {
+    if (!rowRef.current) return;
+    rowRef.current.scrollBy({ left: -rowRef.current.clientWidth * 0.75, behavior: 'smooth' });
+  };
+
+  const scrollRight = () => {
+    if (!rowRef.current) return;
+    rowRef.current.scrollBy({ left: rowRef.current.clientWidth * 0.75, behavior: 'smooth' });
+  };
+
+  const handleRemoveItem = (id: string) => {
+    try {
+      const raw = localStorage.getItem('fdf_watch_history') || '[]';
+      const parsed = JSON.parse(raw);
+
+      const filtered = parsed.filter((item: any) => item.id !== id);
+      localStorage.setItem('fdf_watch_history', JSON.stringify(filtered));
+      setContinuableItems(prev => prev.filter(item => item.id !== id));
+    } catch (error) {
+      console.error('Error removing item from localStorage:', error);
     }
   };
+
+  const handleContinueWatching = (item: WatchHistoryItem) => {
+    if (item.media_type === 'movie') {
+      navigate(`/watch/${item.media_type}/${item.media_id}`);
+    } else {
+      navigate(`/watch/${item.media_type}/${item.media_id}/${item.season}/${item.episode}`);
+    }
+  };
+
+  const handleNavigateToDetails = (e: React.MouseEvent, item: WatchHistoryItem) => {
+    e.stopPropagation();
+    navigate(`/${item.media_type}/${item.media_id}`);
+  };
+
+  if (!user || continuableItems.length === 0) return null;
 
   return (
-    <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl">
-      {isLoading ? (
-        <motion.div 
+    <div className="px-4 md:px-8 mt-8 mb-6">
+      <h2 className="text-xl md:text-2xl font-bold text-white mb-4 flex items-center">
+        <Clock className="h-5 w-5 mr-2 text-accent" />
+        Continue Watching
+      </h2>
+
+      <div
+        className="relative group"
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+      >
+        {showLeftArrow && (
+          <button
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-black/70 text-white transition-all hidden md:flex"
+            onClick={scrollLeft}
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+        )}
+
+        <motion.div
+          ref={rowRef}
+          className="flex overflow-x-auto hide-scrollbar gap-4 pb-4"
+          onScroll={handleScroll}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/60 flex items-center justify-center"
+          transition={{ staggerChildren: 0.1 }}
         >
-          <div className="w-16 h-16 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
-        </motion.div>
-      ) : null}
+          {continuableItems.map(item => (
+            <motion.div
+              key={item.id}
+              className="relative flex-none w-[280px] md:w-[300px] aspect-video bg-card rounded-lg overflow-hidden group cursor-pointer hover-card"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.02 }}
+              onClick={() => handleContinueWatching(item)}
+            >
+              {/* ✕ Close button */}
+              <button
+                className="absolute top-2 right-2 z-20 bg-black/70 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-600"
+                onClick={e => {
+                  e.stopPropagation();
+                  handleRemoveItem(item.id);
+                }}
+              >
+                ×
+              </button>
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="w-full h-full"
-      >
-        {isCustomSource && (processedStreamUrl || streamUrl) ? (
-          <PlyrPlayer            src={processedStreamUrl || streamUrl}
-            title={title}
-            poster={poster}
-            mediaType="movie"
-            mediaId="custom"
-            onLoaded={onLoaded}
-            onError={onError}
-          />
-        ) : (          <iframe
-            ref={iframeRef}
-            src={iframeUrl}
-            className="w-full h-full"            
-            allowFullScreen
-            allow="autoplay; encrypted-media; picture-in-picture"
-            referrerPolicy="no-referrer"
-            loading="lazy"
-            onLoad={handleIframeLoad}
-            onError={handleIframeError}
-            key={`iframe-${iframeUrl}-${iframeAttempts}`}
-            // Don't use sandbox as it's not supported by the video sources
-            // Instead, we're using our service worker to block pop-ups
-          />
+              <img
+                src={`https://image.tmdb.org/t/p/w500${item.backdrop_path}`}
+                alt={item.title}
+                className="w-full h-full object-cover transition-transform group-hover:scale-110 group-hover:brightness-110"
+              />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
+
+              <div className="absolute bottom-4 left-4 right-4 z-10">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg">{item.title}</h3>
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 rounded-full bg-black/30 hover:bg-accent/80 transition-colors -mt-1"
+                          onClick={e => handleNavigateToDetails(e, item)}
+                        >
+                          <Info className="h-3.5 w-3.5 text-white" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p>View details</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-white/70 mb-2">
+                  <span className="flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                  </span>
+                  {item.media_type === 'tv' && <span>S{item.season} E{item.episode}</span>}
+                </div>
+
+                <div className="mb-3 relative">
+                  <Progress value={(item.watch_position / item.duration) * 100} className="h-1" />
+                  <div className="text-xs text-white/70 mt-1 text-right">
+                    {Math.floor((item.duration - item.watch_position) / 60)} min left
+                  </div>
+                </div>
+
+                <Button className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1" size="sm">
+                  <Play className="h-3 w-3" />
+                  Continue
+                </Button>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {showRightArrow && (
+          <button
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-black/70 text-white transition-all hidden md:flex"
+            onClick={scrollRight}
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 };
 
-export default VideoPlayer;
+export default ContinueWatching;
