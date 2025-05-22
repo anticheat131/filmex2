@@ -76,6 +76,26 @@ const VideoPlayer = ({
 
   const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Save Continue Watching immediately on page open
+  useEffect(() => {
+    if (!user || !mediaId) return;
+
+    const initialItem = {
+      id: mediaId.toString(),
+      media_id: mediaId,
+      media_type: mediaType,
+      title,
+      backdrop_path: backdropPath || '',
+      created_at: new Date(),
+      watch_position: 0, // start at 0 on page open
+      duration,
+      season: season || null,
+      episode: episode || null,
+    };
+
+    saveContinueWatching(user.uid, initialItem).catch(console.error);
+  }, [user, mediaId, mediaType, title, backdropPath, duration, season, episode]);
+
   useEffect(() => {
     return () => {
       resetServiceWorkerData();
