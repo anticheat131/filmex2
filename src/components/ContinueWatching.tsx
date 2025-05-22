@@ -14,6 +14,13 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatDistanceToNow } from 'date-fns';
+import { db } from '@/lib/firebase'; // <- Make sure this is correct
+import {
+  collection,
+  doc,
+  getDocs,
+  setDoc,
+} from 'firebase/firestore';
 
 interface ContinueWatchingProps {
   maxItems?: number;
@@ -23,11 +30,23 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const { user } = useAuth();
   const { watchHistory } = useWatchHistory();
   const [continuableItems, setContinuableItems] = useState<WatchHistoryItem[]>([]);
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // Load dismissed IDs from Firestore
+  useEffect(() => {
+    const fetchDismissed = async () => {
+      if (!user?.uid) return;
+      const snapshot = await getDocs(collection(db, 'users', user.uid, 'dismissedItems'));
+      const ids = snapshot.docs.map(doc => doc.id);
+      setDismissedIds(ids);
+    };
+    fetchDismissed();
+  }, [user]);
 
   const processedHistory = useMemo(() => {
     if (watchHistory.length === 0) return [];
@@ -57,8 +76,11 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   }, [watchHistory]);
 
   useEffect(() => {
-    setContinuableItems(processedHistory.slice(0, maxItems));
-  }, [processedHistory, maxItems]);
+    const filtered = processedHistory
+      .filter(item => !dismissedIds.includes(item.id))
+      .slice(0, maxItems);
+    setContinuableItems(filtered);
+  }, [processedHistory, maxItems, dismissedIds]);
 
   const handleScroll = () => {
     if (!rowRef.current) return;
@@ -77,16 +99,15 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
     rowRef.current.scrollBy({ left: rowRef.current.clientWidth * 0.75, behavior: 'smooth' });
   };
 
-  const handleRemoveItem = (id: string) => {
+  const handleRemoveItem = async (id: string) => {
+    if (!user?.uid) return;
     try {
-      const raw = localStorage.getItem('fdf_watch_history') || '[]';
-      const parsed = JSON.parse(raw);
-
-      const filtered = parsed.filter((item: any) => item.id !== id);
-      localStorage.setItem('fdf_watch_history', JSON.stringify(filtered));
-      setContinuableItems(prev => prev.filter(item => item.id !== id));
+      await setDoc(doc(db, 'users', user.uid, 'dismissedItems', id), {
+        dismissed_at: new Date(),
+      });
+      setDismissedIds(prev => [...prev, id]);
     } catch (error) {
-      console.error('Error removing item from localStorage:', error);
+      console.error('Error dismissing item in Firestore:', error);
     }
   };
 
@@ -143,7 +164,6 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
               whileHover={{ scale: 1.02 }}
               onClick={() => handleContinueWatching(item)}
             >
-              {/* ✕ Close button */}
               <button
                 className="absolute top-2 right-2 z-20 bg-black/70 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-600"
                 onClick={e => {
