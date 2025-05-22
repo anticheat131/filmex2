@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import ContentRow from '@/components/ContentRow';
-// import ContinueWatching from '@/components/ContinueWatching'; // COMMENTED OUT
+import ContinueWatching from '@/components/ContinueWatching';
 import Footer from '@/components/Footer';
 import Spinner from '@/components/ui/spinner';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
@@ -138,7 +138,7 @@ const Index = () => {
         <div
           className="mx-auto mt-8 md:mt-12 transition-opacity duration-300 px-6"
           style={{
-            maxWidth: '1600px',
+            maxWidth: '1280px',
             borderLeft: '1px solid rgb(57, 55, 55)',
             borderRight: '1px solid rgb(57, 55, 55)',
           }}
@@ -152,8 +152,7 @@ const Index = () => {
               )}
             </div>
 
-            {/* {user && <ContinueWatching />} */}
-
+            {user && <ContinueWatching />}
             <ContentRow title="Trending Now" media={trendingMedia} featured />
             <ContentRow title="Popular Movies" media={popularMovies} />
             <ContentRow title="Popular TV Shows" media={popularTVShows} />
