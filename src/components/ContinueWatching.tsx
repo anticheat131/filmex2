@@ -40,11 +40,13 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
 
-          // Convert Firestore timestamps to JS Date objects
-          const items = (data.items || []).map((item: any) => ({
-            ...item,
-            created_at: item.created_at?.toDate ? item.created_at.toDate() : new Date(item.created_at),
-          }));
+          // Filter out hidden items and convert Firestore timestamps
+          const items = (data.items || [])
+            .filter((item: any) => !item.hidden)  // <-- filter hidden here
+            .map((item: any) => ({
+              ...item,
+              created_at: item.created_at?.toDate ? item.created_at.toDate() : new Date(item.created_at),
+            }));
 
           setContinuableItems(items.slice(0, maxItems));
         } else {
@@ -86,13 +88,19 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
       const data = docSnap.data();
       if (!data.items) return;
 
-      const updatedItems = data.items.filter((item: WatchHistoryItem) => item.id !== id);
+      // Mark the item as hidden instead of removing it
+      const updatedItems = data.items.map((item: WatchHistoryItem) => {
+        if (item.id === id) {
+          return { ...item, hidden: true };
+        }
+        return item;
+      });
 
       await updateDoc(docRef, { items: updatedItems });
 
-      setContinuableItems(updatedItems.slice(0, maxItems));
+      setContinuableItems(updatedItems.filter(item => !item.hidden).slice(0, maxItems));
     } catch (error) {
-      console.error('Error removing item from Firestore:', error);
+      console.error('Error hiding item in Firestore:', error);
     }
   };
 
