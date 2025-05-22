@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
-import { useWatchHistory } from '@/hooks/use-watch-history';
 import { WatchHistoryItem } from '@/contexts/types/watch-history';
 import { Play, Clock, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,12 +13,14 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatDistanceToNow } from 'date-fns';
-import { db } from '@/lib/firebase'; // <- Make sure this is correct
+
+import { db } from '@/firebase';
 import {
-  collection,
   doc,
-  getDocs,
+  getDoc,
   setDoc,
+  updateDoc,
+  arrayRemove,
 } from 'firebase/firestore';
 
 interface ContinueWatchingProps {
@@ -28,59 +29,37 @@ interface ContinueWatchingProps {
 
 const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const { user } = useAuth();
-  const { watchHistory } = useWatchHistory();
   const [continuableItems, setContinuableItems] = useState<WatchHistoryItem[]>([]);
-  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // Load dismissed IDs from Firestore
+  // Fetch user continue watching items from Firestore
   useEffect(() => {
-    const fetchDismissed = async () => {
-      if (!user?.uid) return;
-      const snapshot = await getDocs(collection(db, 'users', user.uid, 'dismissedItems'));
-      const ids = snapshot.docs.map(doc => doc.id);
-      setDismissedIds(ids);
-    };
-    fetchDismissed();
-  }, [user]);
+    if (!user) return;
 
-  const processedHistory = useMemo(() => {
-    if (watchHistory.length === 0) return [];
-
-    const validItems = watchHistory.filter(item => {
-      if (!item.created_at) return false;
+    const fetchContinueWatching = async () => {
       try {
-        const date = new Date(item.created_at);
-        return !isNaN(date.getTime());
-      } catch {
-        return false;
+        const docRef = doc(db, 'continueWatching', user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          // Assuming items stored as array of WatchHistoryItem objects
+          setContinuableItems(data.items?.slice(0, maxItems) || []);
+        } else {
+          // No data yet for user, initialize with empty array
+          await setDoc(doc(db, 'continueWatching', user.uid), { items: [] });
+          setContinuableItems([]);
+        }
+      } catch (error) {
+        console.error('Error fetching continue watching:', error);
       }
-    });
+    };
 
-    const uniqueMediaMap = new Map<string, WatchHistoryItem>();
-
-    validItems.forEach(item => {
-      const key = `${item.media_type}-${item.media_id}${item.media_type === 'tv' ? `-s${item.season}-e${item.episode}` : ''}`;
-      if (!uniqueMediaMap.has(key) || new Date(item.created_at) > new Date(uniqueMediaMap.get(key)!.created_at)) {
-        uniqueMediaMap.set(key, item);
-      }
-    });
-
-    return Array.from(uniqueMediaMap.values()).sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-  }, [watchHistory]);
-
-  useEffect(() => {
-    const filtered = processedHistory
-      .filter(item => !dismissedIds.includes(item.id))
-      .slice(0, maxItems);
-    setContinuableItems(filtered);
-  }, [processedHistory, maxItems, dismissedIds]);
+    fetchContinueWatching();
+  }, [user, maxItems]);
 
   const handleScroll = () => {
     if (!rowRef.current) return;
@@ -99,15 +78,28 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
     rowRef.current.scrollBy({ left: rowRef.current.clientWidth * 0.75, behavior: 'smooth' });
   };
 
+  // Remove item from Firestore and local state
   const handleRemoveItem = async (id: string) => {
-    if (!user?.uid) return;
+    if (!user) return;
     try {
-      await setDoc(doc(db, 'users', user.uid, 'dismissedItems', id), {
-        dismissed_at: new Date(),
-      });
-      setDismissedIds(prev => [...prev, id]);
+      const docRef = doc(db, 'continueWatching', user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) return;
+
+      const data = docSnap.data();
+      if (!data.items) return;
+
+      // Filter out the item to remove
+      const updatedItems = data.items.filter((item: WatchHistoryItem) => item.id !== id);
+
+      // Update Firestore doc
+      await updateDoc(docRef, { items: updatedItems });
+
+      // Update local state
+      setContinuableItems(updatedItems.slice(0, maxItems));
     } catch (error) {
-      console.error('Error dismissing item in Firestore:', error);
+      console.error('Error removing item from Firestore:', error);
     }
   };
 
@@ -164,6 +156,7 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
               whileHover={{ scale: 1.02 }}
               onClick={() => handleContinueWatching(item)}
             >
+              {/* ✕ Close button */}
               <button
                 className="absolute top-2 right-2 z-20 bg-black/70 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-600"
                 onClick={e => {
