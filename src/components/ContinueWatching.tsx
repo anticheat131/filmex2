@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,13 +15,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 
 import { db } from '@/firebase';
-import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  arrayRemove,
-} from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 interface ContinueWatchingProps {
   maxItems?: number;
@@ -36,37 +30,55 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
+  // Debug user info
+  console.log('Current user:', user);
+
   // Fetch user continue watching items from Firestore
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setContinuableItems([]);
+      return;
+    }
 
     const fetchContinueWatching = async () => {
       try {
         const docRef = doc(db, 'continueWatching', user.uid);
         const docSnap = await getDoc(docRef);
+
         if (docSnap.exists()) {
           const data = docSnap.data();
-          // Assuming items stored as array of WatchHistoryItem objects
-          setContinuableItems(data.items?.slice(0, maxItems) || []);
+          console.log('Fetched continueWatching data:', data);
+
+          // Defensive fallback if items is not an array
+          const items = Array.isArray(data.items) ? data.items : [];
+          setContinuableItems(items.slice(0, maxItems));
         } else {
-          // No data yet for user, initialize with empty array
-          await setDoc(doc(db, 'continueWatching', user.uid), { items: [] });
+          // Initialize empty doc if none exists
+          await setDoc(docRef, { items: [] });
           setContinuableItems([]);
         }
       } catch (error) {
         console.error('Error fetching continue watching:', error);
+        setContinuableItems([]);
       }
     };
 
     fetchContinueWatching();
   }, [user, maxItems]);
 
+  // Update arrow visibility on scroll and on load
   const handleScroll = () => {
     if (!rowRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = rowRef.current;
     setShowLeftArrow(scrollLeft > 0);
     setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
   };
+
+  useEffect(() => {
+    // Update arrows after items load and render
+    if (!rowRef.current) return;
+    handleScroll();
+  }, [continuableItems]);
 
   const scrollLeft = () => {
     if (!rowRef.current) return;
@@ -84,19 +96,15 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
     try {
       const docRef = doc(db, 'continueWatching', user.uid);
       const docSnap = await getDoc(docRef);
-
       if (!docSnap.exists()) return;
 
       const data = docSnap.data();
       if (!data.items) return;
 
-      // Filter out the item to remove
       const updatedItems = data.items.filter((item: WatchHistoryItem) => item.id !== id);
 
-      // Update Firestore doc
       await updateDoc(docRef, { items: updatedItems });
 
-      // Update local state
       setContinuableItems(updatedItems.slice(0, maxItems));
     } catch (error) {
       console.error('Error removing item from Firestore:', error);
@@ -121,8 +129,7 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   return (
     <div className="px-4 md:px-8 mt-8 mb-6">
       <h2 className="text-xl md:text-2xl font-bold text-white mb-4 flex items-center">
-        <Clock className="h-5 w-5 mr-2 text-accent" />
-        Continue Watching
+        <Clock className="h-5 w-5 mr-2 text-accent" /> Continue Watching
       </h2>
 
       <div
@@ -147,78 +154,104 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
           animate={{ opacity: 1 }}
           transition={{ staggerChildren: 0.1 }}
         >
-          {continuableItems.map(item => (
-            <motion.div
-              key={item.id}
-              className="relative flex-none w-[280px] md:w-[300px] aspect-video bg-card rounded-lg overflow-hidden group cursor-pointer hover-card"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileHover={{ scale: 1.02 }}
-              onClick={() => handleContinueWatching(item)}
-            >
-              {/* ✕ Close button */}
-              <button
-                className="absolute top-2 right-2 z-20 bg-black/70 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-600"
-                onClick={e => {
-                  e.stopPropagation();
-                  handleRemoveItem(item.id);
-                }}
+          {continuableItems.map((item) => {
+            // Debug each item to see if all expected fields exist
+            console.log('Rendering continue watching item:', item);
+
+            // Defensive fallbacks for missing data
+            const backdrop = item.backdrop_path || '';
+            const title = item.title || item.name || 'Untitled';
+            const createdAt = item.created_at ? new Date(item.created_at) : new Date();
+            const watchPosition = item.watch_position || 0;
+            const duration = item.duration || 1; // avoid division by zero
+
+            return (
+              <motion.div
+                key={item.id}
+                className="relative flex-none w-[280px] md:w-[300px] aspect-video bg-card rounded-lg overflow-hidden group cursor-pointer hover-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.02 }}
+                onClick={() => handleContinueWatching(item)}
               >
-                ×
-              </button>
+                <button
+                  className="absolute top-2 right-2 z-20 bg-black/70 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-600"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveItem(item.id);
+                  }}
+                >
+                  ×
+                </button>
 
-              <img
-                src={`https://image.tmdb.org/t/p/w500${item.backdrop_path}`}
-                alt={item.title}
-                className="w-full h-full object-cover transition-transform group-hover:scale-110 group-hover:brightness-110"
-              />
-
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
-
-              <div className="absolute bottom-4 left-4 right-4 z-10">
-                <div className="flex justify-between items-start mb-1">
-                  <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg">{item.title}</h3>
-                  <TooltipProvider delayDuration={300}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 rounded-full bg-black/30 hover:bg-accent/80 transition-colors -mt-1"
-                          onClick={e => handleNavigateToDetails(e, item)}
-                        >
-                          <Info className="h-3.5 w-3.5 text-white" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top">
-                        <p>View details</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-white/70 mb-2">
-                  <span className="flex items-center">
-                    <Clock className="h-3 w-3 mr-1" />
-                    {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                  </span>
-                  {item.media_type === 'tv' && <span>S{item.season} E{item.episode}</span>}
-                </div>
-
-                <div className="mb-3 relative">
-                  <Progress value={(item.watch_position / item.duration) * 100} className="h-1" />
-                  <div className="text-xs text-white/70 mt-1 text-right">
-                    {Math.floor((item.duration - item.watch_position) / 60)} min left
+                {backdrop ? (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w500${backdrop}`}
+                    alt={title}
+                    className="w-full h-full object-cover transition-transform group-hover:scale-110 group-hover:brightness-110"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-700 flex items-center justify-center text-white">
+                    No Image
                   </div>
-                </div>
+                )}
 
-                <Button className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1" size="sm">
-                  <Play className="h-3 w-3" />
-                  Continue
-                </Button>
-              </div>
-            </motion.div>
-          ))}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
+
+                <div className="absolute bottom-4 left-4 right-4 z-10">
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg">
+                      {title}
+                    </h3>
+                    <TooltipProvider delayDuration={300}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 rounded-full bg-black/30 hover:bg-accent/80 transition-colors -mt-1"
+                            onClick={(e) => handleNavigateToDetails(e, item)}
+                          >
+                            <Info className="h-3.5 w-3.5 text-white" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p>View details</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-white/70 mb-2">
+                    <span className="flex items-center">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {formatDistanceToNow(createdAt, { addSuffix: true })}
+                    </span>
+                    {item.media_type === 'tv' && (
+                      <span>
+                        S{item.season} E{item.episode}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mb-3 relative">
+                    <Progress
+                      value={(watchPosition / duration) * 100}
+                      className="h-1"
+                    />
+                    <div className="text-xs text-white/70 mt-1 text-right">
+                      {Math.floor((duration - watchPosition) / 60)} min left
+                    </div>
+                  </div>
+
+                  <Button className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1" size="sm">
+                    <Play className="h-3 w-3" />
+                    Continue
+                  </Button>
+                </div>
+              </motion.div>
+            );
+          })}
         </motion.div>
 
         {showRightArrow && (
