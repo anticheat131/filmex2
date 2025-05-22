@@ -1,16 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '@/hooks';
+import { useAuth } from '@/hooks/useAuth';
+import { useWatchHistory } from '@/hooks/use-watch-history';
 import { WatchHistoryItem } from '@/contexts/types/watch-history';
-import { Play, Clock, ChevronLeft, ChevronRight, Info, X } from 'lucide-react';
+import { Play, Clock, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { formatDistanceToNow } from 'date-fns';
-
-import { doc, deleteDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 interface ContinueWatchingProps {
   maxItems?: number;
@@ -18,6 +21,7 @@ interface ContinueWatchingProps {
 
 const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const { user } = useAuth();
+  const { watchHistory } = useWatchHistory();
   const [continuableItems, setContinuableItems] = useState<WatchHistoryItem[]>([]);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -25,24 +29,36 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const loadContinueWatching = async () => {
-    if (!user) return;
-    try {
-      const q = query(
-        collection(db, 'users', user.uid, 'continue_watching'),
-        orderBy('updatedAt', 'desc')
-      );
-      const snapshot = await getDocs(q);
-      const items = snapshot.docs.map(doc => doc.data() as WatchHistoryItem);
-      setContinuableItems(items.slice(0, maxItems));
-    } catch (error) {
-      console.error('Failed to load Continue Watching:', error);
-    }
-  };
+  const processedHistory = useMemo(() => {
+    if (watchHistory.length === 0) return [];
+
+    const validItems = watchHistory.filter(item => {
+      if (!item.created_at) return false;
+      try {
+        const date = new Date(item.created_at);
+        return !isNaN(date.getTime());
+      } catch {
+        return false;
+      }
+    });
+
+    const uniqueMediaMap = new Map<string, WatchHistoryItem>();
+
+    validItems.forEach(item => {
+      const key = `${item.media_type}-${item.media_id}${item.media_type === 'tv' ? `-s${item.season}-e${item.episode}` : ''}`;
+      if (!uniqueMediaMap.has(key) || new Date(item.created_at) > new Date(uniqueMediaMap.get(key)!.created_at)) {
+        uniqueMediaMap.set(key, item);
+      }
+    });
+
+    return Array.from(uniqueMediaMap.values()).sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [watchHistory]);
 
   useEffect(() => {
-    loadContinueWatching();
-  }, [user, maxItems]);
+    setContinuableItems(processedHistory.slice(0, maxItems));
+  }, [processedHistory, maxItems]);
 
   const handleScroll = () => {
     if (!rowRef.current) return;
@@ -53,65 +69,41 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
 
   const scrollLeft = () => {
     if (!rowRef.current) return;
-    const scrollAmount = rowRef.current.clientWidth * 0.75;
-    rowRef.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    rowRef.current.scrollBy({ left: -rowRef.current.clientWidth * 0.75, behavior: 'smooth' });
   };
 
   const scrollRight = () => {
     if (!rowRef.current) return;
-    const scrollAmount = rowRef.current.clientWidth * 0.75;
-    rowRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    rowRef.current.scrollBy({ left: rowRef.current.clientWidth * 0.75, behavior: 'smooth' });
   };
 
-  const formatLastWatched = (dateString: string) => {
-    if (!dateString) return 'Recently';
-
+  const handleRemoveItem = (id: string) => {
     try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime()) || date > new Date()) {
-        return 'Recently';
-      }
-      return formatDistanceToNow(date, { addSuffix: true });
-    } catch {
-      return 'Recently';
+      const raw = localStorage.getItem('fdf_watch_history') || '[]';
+      const parsed = JSON.parse(raw);
+
+      const filtered = parsed.filter((item: any) => item.id !== id);
+      localStorage.setItem('fdf_watch_history', JSON.stringify(filtered));
+      setContinuableItems(prev => prev.filter(item => item.id !== id));
+    } catch (error) {
+      console.error('Error removing item from localStorage:', error);
     }
   };
-
-  const formatTimeRemaining = (position: number, duration: number) => {
-    if (!duration) return '';
-    const remaining = Math.max(0, duration - position);
-    const minutes = Math.floor(remaining / 60);
-    const seconds = Math.floor(remaining % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')} remaining`;
-  };
-
-  if (!user || continuableItems.length === 0) {
-    return null;
-  }
 
   const handleContinueWatching = (item: WatchHistoryItem) => {
     if (item.media_type === 'movie') {
       navigate(`/watch/${item.media_type}/${item.media_id}`);
-    } else if (item.media_type === 'tv') {
+    } else {
       navigate(`/watch/${item.media_type}/${item.media_id}/${item.season}/${item.episode}`);
     }
   };
 
-  const handleNavigateToDetails = (event: React.MouseEvent, item: WatchHistoryItem) => {
-    event.stopPropagation();
-    navigate(`/${item.media_type === 'movie' ? 'movie' : 'tv'}/${item.media_id}`);
+  const handleNavigateToDetails = (e: React.MouseEvent, item: WatchHistoryItem) => {
+    e.stopPropagation();
+    navigate(`/${item.media_type}/${item.media_id}`);
   };
 
-  const removeFromContinueWatching = async (e: React.MouseEvent, mediaId: string) => {
-    e.stopPropagation();
-    if (!user) return;
-    try {
-      await deleteDoc(doc(db, 'users', user.uid, 'continue_watching', mediaId));
-      loadContinueWatching();
-    } catch (error) {
-      console.error('Failed to remove item:', error);
-    }
-  };
+  if (!user || continuableItems.length === 0) return null;
 
   return (
     <div className="px-4 md:px-8 mt-8 mb-6">
@@ -127,11 +119,8 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
       >
         {showLeftArrow && (
           <button
-            className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-black/70 text-white transition-all ${
-              isHovering ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
-            } hidden md:flex`}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-black/70 text-white transition-all hidden md:flex"
             onClick={scrollLeft}
-            aria-label="Scroll left"
           >
             <ChevronLeft className="h-6 w-6" />
           </button>
@@ -147,14 +136,24 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
         >
           {continuableItems.map(item => (
             <motion.div
-              key={`${item.id}-${item.media_id}-${item.season || 0}-${item.episode || 0}`}
+              key={item.id}
               className="relative flex-none w-[280px] md:w-[300px] aspect-video bg-card rounded-lg overflow-hidden group cursor-pointer hover-card"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ scale: 1.02 }}
               onClick={() => handleContinueWatching(item)}
-              style={{ boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)' }}
             >
+              {/* ✕ Close button */}
+              <button
+                className="absolute top-2 right-2 z-20 bg-black/70 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-600"
+                onClick={e => {
+                  e.stopPropagation();
+                  handleRemoveItem(item.id);
+                }}
+              >
+                ×
+              </button>
+
               <img
                 src={`https://image.tmdb.org/t/p/w500${item.backdrop_path}`}
                 alt={item.title}
@@ -162,14 +161,6 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
               />
 
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
-
-              <button
-                onClick={e => removeFromContinueWatching(e, item.media_id)}
-                aria-label="Remove from Continue Watching"
-                className="absolute top-2 right-2 z-20 p-1 rounded-full bg-black/70 hover:bg-red-600 text-white transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
 
               <div className="absolute bottom-4 left-4 right-4 z-10">
                 <div className="flex justify-between items-start mb-1">
@@ -196,28 +187,19 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
                 <div className="flex items-center justify-between text-xs text-white/70 mb-2">
                   <span className="flex items-center">
                     <Clock className="h-3 w-3 mr-1" />
-                    {formatLastWatched(item.created_at)}
+                    {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
                   </span>
-
-                  {item.media_type === 'tv' && (
-                    <span>S{item.season} E{item.episode}</span>
-                  )}
+                  {item.media_type === 'tv' && <span>S{item.season} E{item.episode}</span>}
                 </div>
 
                 <div className="mb-3 relative">
-                  <Progress
-                    value={(item.watch_position / item.duration) * 100}
-                    className="h-1"
-                  />
+                  <Progress value={(item.watch_position / item.duration) * 100} className="h-1" />
                   <div className="text-xs text-white/70 mt-1 text-right">
-                    {formatTimeRemaining(item.watch_position, item.duration)}
+                    {Math.floor((item.duration - item.watch_position) / 60)} min left
                   </div>
                 </div>
 
-                <Button
-                  className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1"
-                  size="sm"
-                >
+                <Button className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1" size="sm">
                   <Play className="h-3 w-3" />
                   Continue
                 </Button>
@@ -228,11 +210,8 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
 
         {showRightArrow && (
           <button
-            className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-black/70 text-white transition-all ${
-              isHovering ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'
-            } hidden md:flex`}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-black/70 text-white transition-all hidden md:flex"
             onClick={scrollRight}
-            aria-label="Scroll right"
           >
             <ChevronRight className="h-6 w-6" />
           </button>
