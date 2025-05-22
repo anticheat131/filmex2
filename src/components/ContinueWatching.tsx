@@ -30,8 +30,6 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  console.log('User:', user);
-
   useEffect(() => {
     if (!user) return;
 
@@ -49,7 +47,6 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
           }));
 
           setContinuableItems(items.slice(0, maxItems));
-          console.log('Fetched continue watching items:', items);
         } else {
           await setDoc(doc(db, 'continueWatching', user.uid), { items: [] });
           setContinuableItems([]);
@@ -120,9 +117,6 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
         <Clock className="h-5 w-5 mr-2 text-accent" />
         Continue Watching
       </h2>
-
-      {/* Debug output */}
-      <pre className="text-white mb-4">{JSON.stringify(continuableItems, null, 2)}</pre>
 
       {continuableItems.length === 0 ? (
         <p className="text-white/70">No items to continue watching.</p>
