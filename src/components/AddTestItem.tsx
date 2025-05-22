@@ -1,39 +1,44 @@
 import React from 'react';
-import { doc, setDoc, Timestamp } from 'firebase/firestore';
-import { db } from '@/firebase';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
+import { db } from '@/firebase';
+import { Button } from '@/components/ui/button';
 
 const AddTestItem = () => {
   const { user } = useAuth();
 
-  const addItem = async () => {
+  const handleAdd = async () => {
     if (!user) return;
 
-    const ref = doc(db, 'continueWatching', user.uid);
-    await setDoc(ref, {
-      items: [
-        {
-          id: 'test123',
-          media_type: 'movie',
-          media_id: 123,
-          title: 'Test Movie',
-          backdrop_path: '/test.jpg',
-          created_at: Timestamp.now(),
-          watch_position: 1200,
-          duration: 5400,
-          season: null,
-          episode: null
-        },
-      ],
-    });
+    const newItem = {
+      id: 'test123',
+      media_type: 'movie',
+      media_id: 123,
+      title: 'Test Movie',
+      backdrop_path: '/xDMIl84Qo5Tsu62c9DGWhmPI67A.jpg',
+      created_at: serverTimestamp(),
+      watch_position: 1200,
+      duration: 5400,
+    };
 
-    console.log('Test item added');
+    const docRef = doc(db, 'continueWatching', user.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const updatedItems = [newItem, ...(data.items || [])];
+      await updateDoc(docRef, { items: updatedItems });
+    } else {
+      await setDoc(docRef, { items: [newItem] });
+    }
+
+    console.log('Test item added.');
   };
 
   return (
-    <button onClick={addItem} className="p-2 bg-blue-600 text-white rounded">
-      Add Test Item
-    </button>
+    <div className="px-4 py-2">
+      <Button onClick={handleAdd}>Add Test Continue Watching Item</Button>
+    </div>
   );
 };
 
