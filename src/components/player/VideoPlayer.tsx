@@ -1,9 +1,12 @@
-
 import { motion } from 'framer-motion';
 import PlyrPlayer from '@/components/PlyrPlayer';
 import { useEffect, useRef, useState } from 'react';
 import { registerIframeOrigin, setProxyHeaders, resetServiceWorkerData } from '@/utils/iframe-proxy-sw';
 import { createProxyStreamUrl, proxyAndRewriteM3u8 } from '@/utils/cors-proxy-api';
+
+import { useAuth } from '@/hooks/useAuth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '@/firebase';
 
 interface VideoPlayerProps {
   isLoading: boolean;
@@ -15,7 +18,37 @@ interface VideoPlayerProps {
   headers?: Record<string, string>;
   onLoaded: () => void;
   onError: (error: string) => void;
+
+  mediaType: 'movie' | 'tv';
+  mediaId: string | number;
+  duration: number;
+  season?: number;
+  episode?: number;
+  backdropPath?: string;
 }
+
+const saveContinueWatching = async (userId: string, item: any) => {
+  if (!userId) return;
+  const docRef = doc(db, 'continueWatching', userId);
+  const docSnap = await getDoc(docRef);
+
+  let items = [];
+  if (docSnap.exists()) {
+    items = docSnap.data().items || [];
+  }
+
+  const index = items.findIndex((i: any) => i.id === item.id);
+  if (index !== -1) {
+    items[index] = item;
+  } else {
+    items.push(item);
+  }
+
+  // Keep max 50 items
+  if (items.length > 50) items = items.slice(items.length - 50);
+
+  await setDoc(docRef, { items });
+};
 
 const VideoPlayer = ({
   isLoading,
@@ -26,34 +59,39 @@ const VideoPlayer = ({
   poster,
   headers,
   onLoaded,
-  onError
+  onError,
+  mediaType,
+  mediaId,
+  duration,
+  season,
+  episode,
+  backdropPath,
 }: VideoPlayerProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const { user } = useAuth();
+
   const [processedStreamUrl, setProcessedStreamUrl] = useState<string | null>(null);
   const [iframeAttempts, setIframeAttempts] = useState(0);
-  
-  // Reset service worker data when component unmounts
+  const [watchPosition, setWatchPosition] = useState(0);
+
+  const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     return () => {
-      // Clean up when component unmounts to prevent issues with future player instances
       resetServiceWorkerData();
+      if (saveIntervalRef.current) clearInterval(saveIntervalRef.current);
     };
   }, []);
-  
-  // Register iframe origin when URL changes
+
   useEffect(() => {
     if (!isCustomSource && iframeUrl) {
       registerIframeOrigin(iframeUrl);
-      
-      // Reset iframe attempts counter when URL changes
       setIframeAttempts(0);
     }
   }, [isCustomSource, iframeUrl]);
 
-  // Process M3U8 stream URLs to handle CORS issues
   useEffect(() => {
     if (isCustomSource && streamUrl) {
-      // If we have custom headers, register them with the service worker
       if (headers && Object.keys(headers).length > 0) {
         try {
           const domain = new URL(streamUrl).hostname;
@@ -63,29 +101,22 @@ const VideoPlayer = ({
         }
       }
 
-      // Process based on URL type
       if (streamUrl.endsWith('.m3u8')) {
-        // For M3U8 streams, we might need to rewrite URLs inside the playlist
         if (headers && Object.keys(headers).length > 0) {
-          // If we have headers and it's an m3u8, we may need to rewrite the file
           proxyAndRewriteM3u8(streamUrl, headers)
-            .then(processedM3u8 => {
-              // Create a blob URL for the processed M3U8
+            .then((processedM3u8) => {
               const blob = new Blob([processedM3u8], { type: 'application/vnd.apple.mpegurl' });
               const blobUrl = URL.createObjectURL(blob);
               setProcessedStreamUrl(blobUrl);
             })
-            .catch(err => {
+            .catch((err) => {
               console.error('Failed to process M3U8:', err);
-              // Fallback to simple proxy
               setProcessedStreamUrl(createProxyStreamUrl(streamUrl, headers));
             });
         } else {
-          // No headers, just proxy the stream
           setProcessedStreamUrl(createProxyStreamUrl(streamUrl));
         }
       } else {
-        // For other types of streams, just proxy them
         setProcessedStreamUrl(createProxyStreamUrl(streamUrl, headers));
       }
     } else {
@@ -93,25 +124,47 @@ const VideoPlayer = ({
     }
   }, [isCustomSource, streamUrl, headers]);
 
-  // Handle iframe load error
+  // Save progress every 15 seconds for PlyrPlayer
+  useEffect(() => {
+    if (!user || !mediaId || !isCustomSource) return;
+
+    saveIntervalRef.current = setInterval(() => {
+      const item = {
+        id: mediaId.toString(),
+        media_id: mediaId,
+        media_type: mediaType,
+        title,
+        backdrop_path: backdropPath || '',
+        created_at: new Date(),
+        watch_position: watchPosition,
+        duration,
+        season: season || null,
+        episode: episode || null,
+      };
+      saveContinueWatching(user.uid, item).catch(console.error);
+    }, 15000);
+
+    return () => {
+      if (saveIntervalRef.current) clearInterval(saveIntervalRef.current);
+    };
+  }, [user, mediaId, mediaType, title, backdropPath, watchPosition, duration, season, episode, isCustomSource]);
+
+  const handleTimeUpdate = (currentTime: number) => {
+    setWatchPosition(currentTime);
+  };
+
   const handleIframeError = () => {
     console.error('Iframe failed to load:', iframeUrl);
-    
-    // Increment attempts counter
-    setIframeAttempts(prev => prev + 1);
-    
-    // After 3 attempts, report the error
+    setIframeAttempts((prev) => prev + 1);
     if (iframeAttempts >= 2) {
       onError('Failed to load iframe content after multiple attempts');
     }
   };
-  
-  // Handle iframe load success
+
   const handleIframeLoad = () => {
     console.log('Iframe loaded successfully');
     onLoaded();
-    
-    // Apply CSS to the iframe to prevent pointer events on overlays (helps block some popups)
+
     if (iframeRef.current && iframeRef.current.contentWindow) {
       try {
         const style = document.createElement('style');
@@ -124,7 +177,6 @@ const VideoPlayer = ({
         `;
         iframeRef.current.contentDocument?.head.appendChild(style);
       } catch (e) {
-        // This will likely fail due to CORS, but it's worth trying
         console.log('Could not inject CSS into iframe (expected due to CORS)');
       }
     }
@@ -132,8 +184,8 @@ const VideoPlayer = ({
 
   return (
     <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl">
-      {isLoading ? (
-        <motion.div 
+      {isLoading && (
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -141,7 +193,7 @@ const VideoPlayer = ({
         >
           <div className="w-16 h-16 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
         </motion.div>
-      ) : null}
+      )}
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -150,18 +202,21 @@ const VideoPlayer = ({
         className="w-full h-full"
       >
         {isCustomSource && (processedStreamUrl || streamUrl) ? (
-          <PlyrPlayer            src={processedStreamUrl || streamUrl}
+          <PlyrPlayer
+            src={processedStreamUrl || streamUrl}
             title={title}
             poster={poster}
-            mediaType="movie"
-            mediaId="custom"
+            mediaType={mediaType}
+            mediaId={mediaId.toString()}
             onLoaded={onLoaded}
             onError={onError}
+            onTimeUpdate={handleTimeUpdate}
           />
-        ) : (          <iframe
+        ) : (
+          <iframe
             ref={iframeRef}
             src={iframeUrl}
-            className="w-full h-full"            
+            className="w-full h-full"
             allowFullScreen
             allow="autoplay; encrypted-media; picture-in-picture"
             referrerPolicy="no-referrer"
@@ -169,8 +224,6 @@ const VideoPlayer = ({
             onLoad={handleIframeLoad}
             onError={handleIframeError}
             key={`iframe-${iframeUrl}-${iframeAttempts}`}
-            // Don't use sandbox as it's not supported by the video sources
-            // Instead, we're using our service worker to block pop-ups
           />
         )}
       </motion.div>
