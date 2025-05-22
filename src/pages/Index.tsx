@@ -16,7 +16,7 @@ import Footer from '@/components/Footer';
 import Spinner from '@/components/ui/spinner';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 import { Skeleton } from '@/components/ui/skeleton';
-import AddTestItem from '@/components/debug/AddTestItem';
+import AddTestItem from '@/components/AddTestItem';
 
 const SecondaryContent = lazy(() => import('./components/SecondaryContent'));
 
@@ -154,7 +154,7 @@ const Index = () => {
 
             {user && <ContinueWatching />}
             <ContentRow title="Trending Now" media={trendingMedia} featured />
-            <AddTestItem /> {/* Inserted test component here */}
+            <AddTestItem />
             <ContentRow title="Popular Movies" media={popularMovies} />
             <ContentRow title="Popular TV Shows" media={popularTVShows} />
             <ContentRow title="Top Rated Movies" media={topRatedMovies} />
