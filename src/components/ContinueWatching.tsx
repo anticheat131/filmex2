@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
-import { useWatchHistory } from '@/hooks/use-watch-history';
 import { WatchHistoryItem } from '@/contexts/types/watch-history';
 import { Play, Clock, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatDistanceToNow } from 'date-fns';
+import {
+  getContinueWatching,
+  deleteContinueWatching,
+} from '@/lib/firebase/continueWatching';
 
 interface ContinueWatchingProps {
   maxItems?: number;
@@ -21,7 +24,6 @@ interface ContinueWatchingProps {
 
 const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const { user } = useAuth();
-  const { watchHistory } = useWatchHistory();
   const [continuableItems, setContinuableItems] = useState<WatchHistoryItem[]>([]);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -29,36 +31,23 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const processedHistory = useMemo(() => {
-    if (watchHistory.length === 0) return [];
-
-    const validItems = watchHistory.filter(item => {
-      if (!item.created_at) return false;
-      try {
-        const date = new Date(item.created_at);
-        return !isNaN(date.getTime());
-      } catch {
-        return false;
-      }
-    });
-
-    const uniqueMediaMap = new Map<string, WatchHistoryItem>();
-
-    validItems.forEach(item => {
-      const key = `${item.media_type}-${item.media_id}${item.media_type === 'tv' ? `-s${item.season}-e${item.episode}` : ''}`;
-      if (!uniqueMediaMap.has(key) || new Date(item.created_at) > new Date(uniqueMediaMap.get(key)!.created_at)) {
-        uniqueMediaMap.set(key, item);
-      }
-    });
-
-    return Array.from(uniqueMediaMap.values()).sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-  }, [watchHistory]);
-
   useEffect(() => {
-    setContinuableItems(processedHistory.slice(0, maxItems));
-  }, [processedHistory, maxItems]);
+    const fetchData = async () => {
+      if (!user?.uid) return;
+      try {
+        const items = await getContinueWatching(user.uid);
+        const sorted = items
+          .filter(item => !!item.created_at)
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        setContinuableItems(sorted.slice(0, maxItems));
+      } catch (error) {
+        console.error('Error fetching continue watching:', error);
+      }
+    };
+
+    fetchData();
+  }, [user, maxItems]);
 
   const handleScroll = () => {
     if (!rowRef.current) return;
@@ -77,16 +66,13 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
     rowRef.current.scrollBy({ left: rowRef.current.clientWidth * 0.75, behavior: 'smooth' });
   };
 
-  const handleRemoveItem = (id: string) => {
+  const handleRemoveItem = async (id: string) => {
+    if (!user?.uid) return;
     try {
-      const raw = localStorage.getItem('fdf_watch_history') || '[]';
-      const parsed = JSON.parse(raw);
-
-      const filtered = parsed.filter((item: any) => item.id !== id);
-      localStorage.setItem('fdf_watch_history', JSON.stringify(filtered));
+      await deleteContinueWatching(user.uid, id);
       setContinuableItems(prev => prev.filter(item => item.id !== id));
     } catch (error) {
-      console.error('Error removing item from localStorage:', error);
+      console.error('Error removing item from Firestore:', error);
     }
   };
 
@@ -143,7 +129,6 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
               whileHover={{ scale: 1.02 }}
               onClick={() => handleContinueWatching(item)}
             >
-              {/* ✕ Close button */}
               <button
                 className="absolute top-2 right-2 z-20 bg-black/70 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-600"
                 onClick={e => {
