@@ -10,21 +10,23 @@ const AddTestItem = () => {
   const { user } = useAuth();
 
   const handleAdd = async () => {
-    alert('Button clicked'); // Confirm function runs
+    alert('Button clicked');
 
     if (!user) {
-      alert('User not authenticated'); // Mobile-friendly alert
+      alert('User not authenticated');
       return;
     }
 
     try {
+      const timestamp = Date.now(); // Use client timestamp instead
+
       const newItem = {
         id: 'test123',
         media_type: 'movie',
         media_id: 123,
         title: 'Test Movie',
         backdrop_path: '/xDMIl84Qo5Tsu62c9DGWhmPI67A.jpg',
-        created_at: serverTimestamp(),
+        created_at: timestamp,
         watch_position: 1200,
         duration: 5400,
       };
