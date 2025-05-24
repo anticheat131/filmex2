@@ -10,7 +10,11 @@
 .animate-fade-in {
   animation: fade-in 0.5s ease-in-out;
 }
-
+#root {
+    max-width: 1600px;
+    margin: 0 auto;
+    text-align: center;
+}
 @layer base {
   :root {
     --background: 240 10% 3.9%;
