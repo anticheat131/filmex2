@@ -71,34 +71,36 @@ const MediaCard = ({ media, className }: MediaCardProps) => {
     <div
       onClick={handleClick}
       className={cn(
-        'group relative w-[180px] sm:w-[200px] md:w-[220px] xl:w-[240px] cursor-pointer transition-transform duration-300 hover:scale-105',
+        'w-[220px] md:w-[240px] flex flex-col cursor-pointer transition-transform hover:scale-105',
         className
       )}
     >
-      <div className="relative overflow-hidden rounded-lg aspect-[2/3] bg-zinc-900">
+      <div className="relative w-full aspect-[2/3] overflow-hidden rounded-xl bg-zinc-900">
         <img
           src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.large)}
           alt={media.title || media.name || 'Poster'}
           onError={() => setImageError(true)}
-          className="w-full h-full object-cover rounded-lg"
+          className="w-full h-full object-cover rounded-xl"
         />
 
         {quality && (
-          <span className="absolute top-2 left-2 text-xs px-2 py-0.5 bg-black/80 text-white rounded-sm font-semibold">
+          <span className="absolute top-2 left-2 bg-black/80 text-white text-xs font-semibold px-2 py-0.5 rounded">
             {quality}
           </span>
         )}
 
         {media.vote_average > 0 && (
-          <div className="absolute top-2 right-2 bg-black/75 text-yellow-400 text-xs font-semibold px-1.5 py-0.5 rounded-sm flex items-center gap-1">
-            <Star className="w-4 h-4 fill-yellow-400" /> {media.vote_average.toFixed(1)}
+          <div className="absolute top-2 right-2 bg-black/70 text-yellow-400 text-xs font-semibold px-1.5 py-0.5 rounded flex items-center gap-1">
+            <Star className="w-3.5 h-3.5 fill-yellow-400" /> {media.vote_average.toFixed(1)}
           </div>
         )}
       </div>
 
-      <div className="mt-2 px-1 text-white text-sm space-y-1">
-        <h3 className="font-medium line-clamp-1 text-center">{media.title || media.name}</h3>
-        <p className="text-center text-xs text-white/70">{genreNames}</p>
+      <div className="mt-2 text-center">
+        <h3 className="text-sm font-semibold text-white line-clamp-1">
+          {media.title || media.name}
+        </h3>
+        <p className="text-xs text-white/70 mt-0.5 line-clamp-1">{genreNames}</p>
       </div>
     </div>
   );
