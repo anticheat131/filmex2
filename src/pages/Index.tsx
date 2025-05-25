@@ -88,14 +88,9 @@ const Index = () => {
 
         const filteredTrendingData = trendingData
           .filter(item => item.backdrop_path)
-          .sort((a, b) => {
-            const dateA = new Date(a.release_date || a.first_air_date).getTime();
-            const dateB = new Date(b.release_date || b.first_air_date).getTime();
-            return dateB - dateA;
-          });
+          .slice(0, 20); // Keep TMDB native trending order
 
-        // Limit to 15 trending items
-        setTrendingMedia(applyQuality(filteredTrendingData.slice(0, 15)));
+        setTrendingMedia(applyQuality(filteredTrendingData));
         setPopularMovies(applyQuality(popularMoviesData));
         setPopularTVShows(applyQuality(popularTVData));
         setTopRatedMovies(applyQuality(topMoviesData));
