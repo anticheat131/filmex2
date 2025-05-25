@@ -94,6 +94,7 @@ const Index = () => {
             return dateB - dateA;
           });
 
+        // Limit to 15 trending items
         setTrendingMedia(applyQuality(filteredTrendingData.slice(0, 15)));
         setPopularMovies(applyQuality(popularMoviesData));
         setPopularTVShows(applyQuality(popularTVData));
@@ -152,7 +153,7 @@ const Index = () => {
             </div>
 
             {user && <ContinueWatching />}
-            <ContentRow title="Trending Now" media={trendingMedia} featured={false} style="modern" />
+            <ContentRow title="Trending Now" media={trendingMedia} featured />
             <ContentRow title="Popular Movies" media={popularMovies} />
             <ContentRow title="Popular TV Shows" media={popularTVShows} />
             <ContentRow title="Top Rated Movies" media={topRatedMovies} />
