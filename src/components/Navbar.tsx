@@ -44,7 +44,7 @@ const Navbar = () => {
       }`}
       style={{
         backgroundColor: 'rgb(9, 9, 11)',
-        borderBottom: '1px solid rgb(57 55 55)',
+        borderBottom: '1px solid rgb(24 24 24);',
         width: '100vw',
         boxSizing: 'border-box',
       }}
