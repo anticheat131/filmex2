@@ -298,8 +298,10 @@ body {
   margin-right: auto;
   padding-left: 1rem;
   padding-right: 1rem;
- border-left: 1px solid rgb(57 55 55)!important;
-    border-right: 1px solid rgb(57 55 55)!important;
+border-left: 1px solid rgb(22 22 22);
+    border-right: 1px solid rgb(22 22 22);
+ /* border-left: 1px solid rgb(57 55 55)!important;
+    border-right: 1px solid rgb(57 55 55)!important; */
 }
 @media (min-width: 768px) {
   .custom-md-no-padding.md\:px-8 {
