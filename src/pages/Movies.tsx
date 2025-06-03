@@ -1,5 +1,3 @@
-// Modified version of Movies.tsx
-
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { getPopularMovies, getTopRatedMovies } from '@/utils/api';
@@ -14,19 +12,9 @@ import { Button } from '@/components/ui/button';
 import { Film, ChevronDown, Grid3X3, List } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 import { useToast } from '@/hooks/use-toast';
-import { MultiSelect } from '@/components/MultiSelect'; // Create this component or use existing lib
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const ITEMS_PER_PAGE = 20;
-
-const genreOptions = [
-  { label: 'Action', value: '28' },
-  { label: 'Adventure', value: '12' },
-  { label: 'Comedy', value: '35' },
-  { label: 'Drama', value: '18' },
-  { label: 'Horror', value: '27' },
-  { label: 'Romance', value: '10749' },
-  { label: 'Sci-Fi', value: '878' }
-];
 
 const Movies = () => {
   const { toast } = useToast();
@@ -36,11 +24,19 @@ const Movies = () => {
   const [topRatedPage, setTopRatedPage] = useState(1);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [allPopularMovies, setAllPopularMovies] = useState<Media[]>([]);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [allTopRatedMovies, setAllTopRatedMovies] = useState<Media[]>([]);
+  const [sortBy, setSortBy] = useState<'default' | 'title' | 'release_date' | 'rating'>('default');
+  const [genreFilter, setGenreFilter] = useState<string>('all');
 
   const popularMoviesQuery = useQuery({
     queryKey: ['popularMovies', popularPage],
     queryFn: () => getPopularMovies(popularPage),
+    placeholderData: keepPreviousData,
+  });
+  
+  const topRatedMoviesQuery = useQuery({
+    queryKey: ['topRatedMovies', topRatedPage],
+    queryFn: () => getTopRatedMovies(topRatedPage),
     placeholderData: keepPreviousData,
   });
 
@@ -61,6 +57,22 @@ const Movies = () => {
   }, [popularMoviesQuery.data]);
 
   useEffect(() => {
+    if (topRatedMoviesQuery.data) {
+      setAllTopRatedMovies(prev => {
+        const newMovies = topRatedMoviesQuery.data
+          .filter(movie => !prev.some(p => p.id === (movie.id || movie.media_id)))
+          .map(movie => ({
+            ...movie,
+            id: movie.id || movie.media_id || 0,
+            media_id: movie.id || movie.media_id || 0,
+            media_type: 'movie' as const,
+          }));
+        return [...prev, ...newMovies];
+      });
+    }
+  }, [topRatedMoviesQuery.data]);
+
+  useEffect(() => {
     if (popularMoviesQuery.data?.length === ITEMS_PER_PAGE) {
       queryClient.prefetchQuery({
         queryKey: ['popularMovies', popularPage + 1],
@@ -69,37 +81,56 @@ const Movies = () => {
     }
   }, [popularPage, queryClient, popularMoviesQuery.data]);
 
-  const applyFiltersAndSort = (movies: Media[]) => {
-    let filtered = [...movies];
+  useEffect(() => {
+    if (topRatedMoviesQuery.data?.length === ITEMS_PER_PAGE) {
+      queryClient.prefetchQuery({
+        queryKey: ['topRatedMovies', topRatedPage + 1],
+        queryFn: () => getTopRatedMovies(topRatedPage + 1),
+      });
+    }
+  }, [topRatedPage, queryClient, topRatedMoviesQuery.data]);
 
-    if (selectedGenres.length > 0) {
-      const genreIds = selectedGenres.map(Number);
-      filtered = filtered.filter(movie =>
-        movie.genre_ids?.some(id => genreIds.includes(id))
+  const applyFiltersAndSort = (movies: Media[]) => {
+    let filteredMovies = [...movies];
+
+    if (genreFilter !== 'all') {
+      filteredMovies = filteredMovies.filter(movie => 
+        movie.genre_ids?.includes(parseInt(genreFilter))
       );
     }
 
-    filtered.sort((a, b) => b.popularity - a.popularity);
-
-    if (filtered.length < ITEMS_PER_PAGE) {
-      const extra = movies
-        .filter(m => !filtered.includes(m))
-        .sort((a, b) => b.popularity - a.popularity)
-        .slice(0, ITEMS_PER_PAGE - filtered.length);
-      filtered = [...filtered, ...extra];
+    switch (sortBy) {
+      case 'title':
+        filteredMovies.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case 'release_date':
+        filteredMovies.sort((a, b) => 
+          new Date(b.release_date).getTime() - new Date(a.release_date).getTime()
+        );
+        break;
+      case 'rating':
+        filteredMovies.sort((a, b) => b.vote_average - a.vote_average);
+        break;
+      default:
+        break;
     }
 
-    return filtered.slice(0, ITEMS_PER_PAGE);
+    return filteredMovies;
   };
 
   const filteredPopularMovies = applyFiltersAndSort(allPopularMovies);
+  const filteredTopRatedMovies = applyFiltersAndSort(allTopRatedMovies);
 
   const handleShowMorePopular = () => {
     setPopularPage(prev => prev + 1);
   };
+  
+  const handleShowMoreTopRated = () => {
+    setTopRatedPage(prev => prev + 1);
+  };
 
   const toggleViewMode = () => {
-    setViewMode(prev => (prev === 'grid' ? 'list' : 'grid'));
+    setViewMode(prev => prev === 'grid' ? 'list' : 'grid');
   };
 
   const handleTabChange = async (value: 'popular' | 'top_rated') => {
@@ -107,6 +138,10 @@ const Movies = () => {
     await trackMediaPreference('movie', 'select');
   };
 
+  const hasMorePopular = popularMoviesQuery.data?.length === ITEMS_PER_PAGE;
+  const hasMoreTopRated = topRatedMoviesQuery.data?.length === ITEMS_PER_PAGE;
+
+  // Track initial page visit
   useEffect(() => {
     void trackMediaPreference('movie', 'browse');
   }, []);
@@ -121,13 +156,39 @@ const Movies = () => {
               <Film className="h-8 w-8 text-accent animate-pulse-slow" />
               <h1 className="text-3xl font-bold text-white">Movies</h1>
             </div>
+            
             <div className="flex items-center gap-4 pt-6">
-              <MultiSelect
-                options={genreOptions}
-                value={selectedGenres}
-                onChange={setSelectedGenres}
-                placeholder="Filter by Genre"
-              />
+              <Select 
+                value={sortBy} 
+                onValueChange={(value: 'default' | 'title' | 'release_date' | 'rating') => setSortBy(value)}
+              >
+                <SelectTrigger className="w-[180px] border-white/10 text-white bg-transparent">
+                  <SelectValue placeholder="Sort By" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border-white/10 text-white">
+                  <SelectItem value="default">Default</SelectItem>
+                  <SelectItem value="title">Title</SelectItem>
+                  <SelectItem value="release_date">Release Date</SelectItem>
+                  <SelectItem value="rating">Rating</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={genreFilter} onValueChange={setGenreFilter}>
+                <SelectTrigger className="w-[180px] border-white/10 text-white bg-transparent">
+                  <SelectValue placeholder="Filter by Genre" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border-white/10 text-white">
+                  <SelectItem value="all">All Genres</SelectItem>
+                  <SelectItem value="28">Action</SelectItem>
+                  <SelectItem value="12">Adventure</SelectItem>
+                  <SelectItem value="35">Comedy</SelectItem>
+                  <SelectItem value="18">Drama</SelectItem>
+                  <SelectItem value="27">Horror</SelectItem>
+                  <SelectItem value="10749">Romance</SelectItem>
+                  <SelectItem value="878">Sci-Fi</SelectItem>
+                </SelectContent>
+              </Select>
+
               <Button
                 variant="outline"
                 size="sm"
@@ -136,37 +197,76 @@ const Movies = () => {
               >
                 {viewMode === 'grid' ? (
                   <>
-                    <List className="mr-2 h-4 w-4" /> List View
+                    <List className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
+                    List View
                   </>
                 ) : (
                   <>
-                    <Grid3X3 className="mr-2 h-4 w-4" /> Grid View
+                    <Grid3X3 className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
+                    Grid View
                   </>
                 )}
               </Button>
             </div>
           </div>
-
+          
           <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
-            <TabsList className="mb-6">
-              <TabsTrigger value="popular">Popular</TabsTrigger>
-            </TabsList>
-            <TabsContent value="popular" className="animate-fade-in">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+              <TabsList className="mb-4 md:mb-0">
+                <TabsTrigger value="popular" className="data-[state=active]:bg-accent/20">Popular</TabsTrigger>
+                <TabsTrigger value="top_rated" className="data-[state=active]:bg-accent/20">Top Rated</TabsTrigger>
+              </TabsList>
+            </div>
+            
+            <TabsContent value="popular" className="focus-visible:outline-none animate-fade-in">
               {popularMoviesQuery.isLoading ? (
                 <MediaGridSkeleton listView={viewMode === 'list'} />
               ) : popularMoviesQuery.isError ? (
-                <div className="py-12 text-center text-white">Error loading movies.</div>
+                <div className="py-12 text-center text-white">Error loading movies. Please try again.</div>
               ) : (
                 <>
-                  <MediaGrid
-                    media={ensureExtendedMediaArray(filteredPopularMovies)}
-                    title="Popular Movies"
-                    listView={viewMode === 'list'}
-                  />
-                  {popularMoviesQuery.data?.length === ITEMS_PER_PAGE && (
+                  <MediaGrid media={ensureExtendedMediaArray(filteredPopularMovies)} title="Popular Movies" listView={viewMode === 'list'} />
+                  
+                  {hasMorePopular && (
                     <div className="flex justify-center my-8">
-                      <Button onClick={handleShowMorePopular}>
-                        Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" />
+                      <Button 
+                        onClick={handleShowMorePopular}
+                        variant="outline"
+                        className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300"
+                      >
+                        {popularMoviesQuery.isFetching ? (
+                          <>Loading...</>
+                        ) : (
+                          <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="top_rated" className="focus-visible:outline-none animate-fade-in">
+              {topRatedMoviesQuery.isLoading ? (
+                <MediaGridSkeleton listView={viewMode === 'list'} />
+              ) : topRatedMoviesQuery.isError ? (
+                <div className="py-12 text-center text-white">Error loading movies. Please try again.</div>
+              ) : (
+                <>
+                  <MediaGrid media={ensureExtendedMediaArray(filteredTopRatedMovies)} title="Top Rated Movies" listView={viewMode === 'list'} />
+                  
+                  {hasMoreTopRated && (
+                    <div className="flex justify-center my-8">
+                      <Button 
+                        onClick={handleShowMoreTopRated}
+                        variant="outline"
+                        className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300"
+                      >
+                        {topRatedMoviesQuery.isFetching ? (
+                          <>Loading...</>
+                        ) : (
+                          <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>
+                        )}
                       </Button>
                     </div>
                   )}
@@ -175,6 +275,7 @@ const Movies = () => {
             </TabsContent>
           </Tabs>
         </main>
+        
         <Footer />
       </div>
     </PageTransition>
