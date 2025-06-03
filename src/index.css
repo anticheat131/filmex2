@@ -345,3 +345,9 @@ border-left: 1px solid rgb(22 22 22);
     border: 1px solid #1a1a1a;
     background: #101010;
 }
+@media (min-width: 768px) {
+    .md\:text-2xl {
+        font-size: 1.5rem;
+        line-height: 2.7rem;
+    }
+}
