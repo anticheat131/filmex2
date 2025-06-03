@@ -13,7 +13,6 @@ import { Film, ChevronDown, Grid3X3, List } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import MultiSelect from '@/components/MultiSelect';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -27,24 +26,9 @@ const Movies = () => {
   const [allPopularMovies, setAllPopularMovies] = useState<Media[]>([]);
   const [allTopRatedMovies, setAllTopRatedMovies] = useState<Media[]>([]);
   const [sortBy, setSortBy] = useState<'default' | 'title' | 'release_date' | 'rating'>('default');
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [selectedYears, setSelectedYears] = useState<string[]>([]);
-  const [filtersApplied, setFiltersApplied] = useState(false);
-
-  const genreOptions = [
-    { label: 'Action', value: '28' },
-    { label: 'Adventure', value: '12' },
-    { label: 'Comedy', value: '35' },
-    { label: 'Drama', value: '18' },
-    { label: 'Horror', value: '27' },
-    { label: 'Romance', value: '10749' },
-    { label: 'Sci-Fi', value: '878' },
-  ];
-
-  const yearOptions = Array.from({ length: 30 }, (_, i) => {
-    const year = (new Date().getFullYear() - i).toString();
-    return { label: year, value: year };
-  });
+  const [genreFilter, setGenreFilter] = useState<string>('all');
+  const [yearFilter, setYearFilter] = useState<string>('all');
+  const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
 
   const popularMoviesQuery = useQuery({
     queryKey: ['popularMovies', popularPage],
@@ -111,18 +95,12 @@ const Movies = () => {
   const applyFiltersAndSort = (movies: Media[]) => {
     let filteredMovies = [...movies];
 
-    if (filtersApplied) {
-      if (selectedGenres.length > 0) {
-        filteredMovies = filteredMovies.filter(movie =>
-          movie.genre_ids?.some(id => selectedGenres.includes(String(id)))
-        );
-      }
+    if (genreFilter !== 'all') {
+      filteredMovies = filteredMovies.filter(movie => movie.genre_ids?.includes(parseInt(genreFilter)));
+    }
 
-      if (selectedYears.length > 0) {
-        filteredMovies = filteredMovies.filter(movie =>
-          selectedYears.includes(movie.release_date?.split('-')[0] || '')
-        );
-      }
+    if (yearFilter !== 'all') {
+      filteredMovies = filteredMovies.filter(movie => movie.release_date?.startsWith(yearFilter));
     }
 
     switch (sortBy) {
@@ -130,9 +108,7 @@ const Movies = () => {
         filteredMovies.sort((a, b) => a.title.localeCompare(b.title));
         break;
       case 'release_date':
-        filteredMovies.sort((a, b) =>
-          new Date(b.release_date).getTime() - new Date(a.release_date).getTime()
-        );
+        filteredMovies.sort((a, b) => new Date(b.release_date).getTime() - new Date(a.release_date).getTime());
         break;
       case 'rating':
         filteredMovies.sort((a, b) => b.vote_average - a.vote_average);
@@ -147,25 +123,13 @@ const Movies = () => {
   const filteredPopularMovies = applyFiltersAndSort(allPopularMovies);
   const filteredTopRatedMovies = applyFiltersAndSort(allTopRatedMovies);
 
-  const handleShowMorePopular = () => {
-    setPopularPage(prev => prev + 1);
-  };
-
-  const handleShowMoreTopRated = () => {
-    setTopRatedPage(prev => prev + 1);
-  };
-
-  const toggleViewMode = () => {
-    setViewMode(prev => prev === 'grid' ? 'list' : 'grid');
-  };
-
+  const handleShowMorePopular = () => setPopularPage(prev => prev + 1);
+  const handleShowMoreTopRated = () => setTopRatedPage(prev => prev + 1);
+  const toggleViewMode = () => setViewMode(prev => (prev === 'grid' ? 'list' : 'grid'));
   const handleTabChange = async (value: 'popular' | 'top_rated') => {
     setActiveTab(value);
     await trackMediaPreference('movie', 'select');
   };
-
-  const hasMorePopular = popularMoviesQuery.data?.length === ITEMS_PER_PAGE;
-  const hasMoreTopRated = topRatedMoviesQuery.data?.length === ITEMS_PER_PAGE;
 
   useEffect(() => {
     void trackMediaPreference('movie', 'browse');
@@ -182,12 +146,9 @@ const Movies = () => {
               <h1 className="text-3xl font-bold text-white">Movies</h1>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 pt-6">
-              <Select 
-                value={sortBy} 
-                onValueChange={(value: 'default' | 'title' | 'release_date' | 'rating') => setSortBy(value)}
-              >
-                <SelectTrigger className="w-[180px] border-white/10 text-white bg-transparent">
+            <div className="flex items-center gap-4 pt-6">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[160px] text-white bg-transparent border-white/10">
                   <SelectValue placeholder="Sort By" />
                 </SelectTrigger>
                 <SelectContent className="bg-background border-white/10 text-white">
@@ -198,25 +159,38 @@ const Movies = () => {
                 </SelectContent>
               </Select>
 
-              <MultiSelect
-                options={genreOptions}
-                selected={selectedGenres}
-                setSelected={setSelectedGenres}
-                placeholder="Filter by Genre"
-              />
+              <Select value={genreFilter} onValueChange={setGenreFilter}>
+                <SelectTrigger className="w-[160px] text-white bg-transparent border-white/10">
+                  <SelectValue placeholder="Filter by Genre" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border-white/10 text-white">
+                  <SelectItem value="all">All Genres</SelectItem>
+                  <SelectItem value="28">Action</SelectItem>
+                  <SelectItem value="12">Adventure</SelectItem>
+                  <SelectItem value="35">Comedy</SelectItem>
+                  <SelectItem value="18">Drama</SelectItem>
+                  <SelectItem value="27">Horror</SelectItem>
+                  <SelectItem value="10749">Romance</SelectItem>
+                  <SelectItem value="878">Sci-Fi</SelectItem>
+                </SelectContent>
+              </Select>
 
-              <MultiSelect
-                options={yearOptions}
-                selected={selectedYears}
-                setSelected={setSelectedYears}
-                placeholder="Filter by Year"
-              />
+              <Select value={yearFilter} onValueChange={setYearFilter}>
+                <SelectTrigger className="w-[140px] text-white bg-transparent border-white/10">
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border-white/10 text-white max-h-60 overflow-y-auto">
+                  <SelectItem value="all">All Years</SelectItem>
+                  {Array.from({ length: 30 }, (_, i) => 2025 - i).map(year => (
+                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <Button
+                onClick={() => setApplyFilterTrigger(prev => prev + 1)}
                 variant="outline"
-                size="sm"
-                className="border-white/10 text-white hover:bg-white/10"
-                onClick={() => setFiltersApplied(true)}
+                className="border-white/10 text-white hover:bg-accent/20"
               >
                 Apply Filters
               </Button>
@@ -229,21 +203,69 @@ const Movies = () => {
               >
                 {viewMode === 'grid' ? (
                   <>
-                    <List className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
-                    List View
+                    <List className="mr-2 h-4 w-4" /> List View
                   </>
                 ) : (
                   <>
-                    <Grid3X3 className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
-                    Grid View
+                    <Grid3X3 className="mr-2 h-4 w-4" /> Grid View
                   </>
                 )}
               </Button>
             </div>
           </div>
 
-          {/* ... rest of the component remains unchanged ... */}
+          <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="popular" className="data-[state=active]:bg-accent/20">Popular</TabsTrigger>
+              <TabsTrigger value="top_rated" className="data-[state=active]:bg-accent/20">Top Rated</TabsTrigger>
+            </TabsList>
 
+            <TabsContent value="popular">
+              {popularMoviesQuery.isLoading ? (
+                <MediaGridSkeleton listView={viewMode === 'list'} />
+              ) : popularMoviesQuery.isError ? (
+                <div className="text-white">Error loading movies. Please try again.</div>
+              ) : (
+                <>
+                  <MediaGrid
+                    media={ensureExtendedMediaArray(filteredPopularMovies)}
+                    title="Popular Movies"
+                    listView={viewMode === 'list'}
+                  />
+                  {hasMorePopular && (
+                    <div className="flex justify-center mt-8">
+                      <Button onClick={handleShowMorePopular} variant="outline" className="text-white border-white/10">
+                        Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </TabsContent>
+
+            <TabsContent value="top_rated">
+              {topRatedMoviesQuery.isLoading ? (
+                <MediaGridSkeleton listView={viewMode === 'list'} />
+              ) : topRatedMoviesQuery.isError ? (
+                <div className="text-white">Error loading movies. Please try again.</div>
+              ) : (
+                <>
+                  <MediaGrid
+                    media={ensureExtendedMediaArray(filteredTopRatedMovies)}
+                    title="Top Rated Movies"
+                    listView={viewMode === 'list'}
+                  />
+                  {hasMoreTopRated && (
+                    <div className="flex justify-center mt-8">
+                      <Button onClick={handleShowMoreTopRated} variant="outline" className="text-white border-white/10">
+                        Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </TabsContent>
+          </Tabs>
         </main>
         <Footer />
       </div>
