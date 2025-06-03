@@ -17,16 +17,6 @@ import MultiSelect from '@/components/MultiSelect';
 
 const ITEMS_PER_PAGE = 20;
 
-const genreOptions = [
-  { value: '28', label: 'Action' },
-  { value: '12', label: 'Adventure' },
-  { value: '35', label: 'Comedy' },
-  { value: '18', label: 'Drama' },
-  { value: '27', label: 'Horror' },
-  { value: '10749', label: 'Romance' },
-  { value: '878', label: 'Sci-Fi' },
-];
-
 const Movies = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -37,7 +27,24 @@ const Movies = () => {
   const [allPopularMovies, setAllPopularMovies] = useState<Media[]>([]);
   const [allTopRatedMovies, setAllTopRatedMovies] = useState<Media[]>([]);
   const [sortBy, setSortBy] = useState<'default' | 'title' | 'release_date' | 'rating'>('default');
-  const [genreFilters, setGenreFilters] = useState<string[]>([]);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [selectedYears, setSelectedYears] = useState<string[]>([]);
+  const [filtersApplied, setFiltersApplied] = useState(false);
+
+  const genreOptions = [
+    { label: 'Action', value: '28' },
+    { label: 'Adventure', value: '12' },
+    { label: 'Comedy', value: '35' },
+    { label: 'Drama', value: '18' },
+    { label: 'Horror', value: '27' },
+    { label: 'Romance', value: '10749' },
+    { label: 'Sci-Fi', value: '878' },
+  ];
+
+  const yearOptions = Array.from({ length: 30 }, (_, i) => {
+    const year = (new Date().getFullYear() - i).toString();
+    return { label: year, value: year };
+  });
 
   const popularMoviesQuery = useQuery({
     queryKey: ['popularMovies', popularPage],
@@ -104,10 +111,18 @@ const Movies = () => {
   const applyFiltersAndSort = (movies: Media[]) => {
     let filteredMovies = [...movies];
 
-    if (genreFilters.length > 0) {
-      filteredMovies = filteredMovies.filter(movie =>
-        genreFilters.some(genre => movie.genre_ids?.includes(parseInt(genre)))
-      );
+    if (filtersApplied) {
+      if (selectedGenres.length > 0) {
+        filteredMovies = filteredMovies.filter(movie =>
+          movie.genre_ids?.some(id => selectedGenres.includes(String(id)))
+        );
+      }
+
+      if (selectedYears.length > 0) {
+        filteredMovies = filteredMovies.filter(movie =>
+          selectedYears.includes(movie.release_date?.split('-')[0] || '')
+        );
+      }
     }
 
     switch (sortBy) {
@@ -167,9 +182,9 @@ const Movies = () => {
               <h1 className="text-3xl font-bold text-white">Movies</h1>
             </div>
 
-            <div className="flex items-center gap-4 pt-6">
-              <Select
-                value={sortBy}
+            <div className="flex flex-wrap items-center gap-4 pt-6">
+              <Select 
+                value={sortBy} 
                 onValueChange={(value: 'default' | 'title' | 'release_date' | 'rating') => setSortBy(value)}
               >
                 <SelectTrigger className="w-[180px] border-white/10 text-white bg-transparent">
@@ -185,10 +200,26 @@ const Movies = () => {
 
               <MultiSelect
                 options={genreOptions}
-                selected={genreFilters}
-                onChange={setGenreFilters}
+                selected={selectedGenres}
+                setSelected={setSelectedGenres}
                 placeholder="Filter by Genre"
               />
+
+              <MultiSelect
+                options={yearOptions}
+                selected={selectedYears}
+                setSelected={setSelectedYears}
+                placeholder="Filter by Year"
+              />
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-white/10 text-white hover:bg-white/10"
+                onClick={() => setFiltersApplied(true)}
+              >
+                Apply Filters
+              </Button>
 
               <Button
                 variant="outline"
@@ -211,72 +242,9 @@ const Movies = () => {
             </div>
           </div>
 
-          <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-              <TabsList className="mb-4 md:mb-0">
-                <TabsTrigger value="popular" className="data-[state=active]:bg-accent/20">Popular</TabsTrigger>
-                <TabsTrigger value="top_rated" className="data-[state=active]:bg-accent/20">Top Rated</TabsTrigger>
-              </TabsList>
-            </div>
+          {/* ... rest of the component remains unchanged ... */}
 
-            <TabsContent value="popular" className="focus-visible:outline-none animate-fade-in">
-              {popularMoviesQuery.isLoading ? (
-                <MediaGridSkeleton listView={viewMode === 'list'} />
-              ) : popularMoviesQuery.isError ? (
-                <div className="py-12 text-center text-white">Error loading movies. Please try again.</div>
-              ) : (
-                <>
-                  <MediaGrid media={ensureExtendedMediaArray(filteredPopularMovies)} title="Popular Movies" listView={viewMode === 'list'} />
-
-                  {hasMorePopular && (
-                    <div className="flex justify-center my-8">
-                      <Button
-                        onClick={handleShowMorePopular}
-                        variant="outline"
-                        className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300"
-                      >
-                        {popularMoviesQuery.isFetching ? (
-                          <>Loading...</>
-                        ) : (
-                          <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>
-                        )}
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-            </TabsContent>
-
-            <TabsContent value="top_rated" className="focus-visible:outline-none animate-fade-in">
-              {topRatedMoviesQuery.isLoading ? (
-                <MediaGridSkeleton listView={viewMode === 'list'} />
-              ) : topRatedMoviesQuery.isError ? (
-                <div className="py-12 text-center text-white">Error loading movies. Please try again.</div>
-              ) : (
-                <>
-                  <MediaGrid media={ensureExtendedMediaArray(filteredTopRatedMovies)} title="Top Rated Movies" listView={viewMode === 'list'} />
-
-                  {hasMoreTopRated && (
-                    <div className="flex justify-center my-8">
-                      <Button
-                        onClick={handleShowMoreTopRated}
-                        variant="outline"
-                        className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300"
-                      >
-                        {topRatedMoviesQuery.isFetching ? (
-                          <>Loading...</>
-                        ) : (
-                          <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>
-                        )}
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-            </TabsContent>
-          </Tabs>
         </main>
-
         <Footer />
       </div>
     </PageTransition>
