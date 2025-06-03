@@ -1,18 +1,8 @@
-/// <reference lib="webworker" />
-/// <reference path="./workbox.d.ts" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
-import { VitePWA } from 'vite-plugin-pwa';
+import { VitePWA } from "vite-plugin-pwa";
 import pkg from './package.json';
-
-declare const self: ServiceWorkerGlobalScope;
-
-interface TMDBResponse {
-  error?: { message: string };
-  data: unknown;
-}
 
 const CACHE_VERSION = `v${pkg.version}`;
 const CACHE_NAMES = {
@@ -25,72 +15,18 @@ const CACHE_NAMES = {
   googleApis: `google-apis-${CACHE_VERSION}`
 };
 
-import type { RuntimeCaching } from 'workbox-build';
-
 export default defineConfig(({ mode }) => ({
   base: '/',
-  server: {
-    host: "::",
-    port: 8080,
-    mimeTypes: {
-      '.js': 'application/javascript',
-      '.json': 'application/json'
-    },
-  },
-  build: {
-    chunkSizeWarningLimit: 1000,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-components': [
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-aspect-ratio',
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-collapsible',
-            '@radix-ui/react-context-menu',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-hover-card',
-            '@radix-ui/react-label',
-            '@radix-ui/react-menubar',
-            '@radix-ui/react-navigation-menu',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-progress',
-            '@radix-ui/react-radio-group',
-            '@radix-ui/react-scroll-area',
-            '@radix-ui/react-select',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-slider',
-            '@radix-ui/react-slot',
-            '@radix-ui/react-switch',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toast',
-            '@radix-ui/react-toggle',
-            '@radix-ui/react-toggle-group'
-          ],
-          'firebase-auth': ['firebase/auth', '@firebase/auth'],
-          'data-visualization': ['recharts'],
-          'icons': ['lucide-react', 'react-icons', 'react-feather']
-        }
-      }
-    }
-  },
   plugins: [
     react(),
-    mode === 'development' && componentTagger(),
     VitePWA({
-      strategies: 'generateSW',
-      registerType: 'autoUpdate',
-      includeAssets: [
-        'favicon.ico',
-        'apple-icon-180.png',
-        'manifest-icon-192.maskable.png',
-        'manifest-icon-512.maskable.png',
-        'offline.html'
-      ],
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js', // the output service worker filename
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2,ttf}'],
+        maximumFileSizeToCacheInBytes: 5000000,
+      },
       manifest: {
         name: "Let's Stream V2.0",
         short_name: "Let's Stream",
@@ -98,10 +34,7 @@ export default defineConfig(({ mode }) => ({
         theme_color: '#3b82f6',
         background_color: '#0f0f0f',
         display: 'standalone',
-        display_override: ['fullscreen', 'minimal-ui', 'browser', 'standalone'],
-        scope: '/',
         start_url: '/',
-        orientation: 'any',
         icons: [
           {
             src: '/manifest-icon-192.maskable.png',
@@ -130,17 +63,9 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2,ttf}'],
-        maximumFileSizeToCacheInBytes: 5000000,
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
-        navigationPreload: true,
-        offlineGoogleAnalytics: {
-          parameterOverrides: {
-            cd1: 'offline'
-          }
-        },
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === 'navigate',
@@ -150,33 +75,16 @@ export default defineConfig(({ mode }) => ({
               networkTimeoutSeconds: 3,
               plugins: [{
                 requestWillFetch: async ({ event }) => {
-                  try {
-                    if (event.preloadResponse) {
-                      const preloadResponse = await event.preloadResponse;
-                      if (preloadResponse) return preloadResponse;
-                    }
-                    return event.request;
-                  } catch (error) {
-                    console.error('Error handling preload response:', error);
-                    return event.request;
+                  if (event.preloadResponse) {
+                    const preloadResponse = await event.preloadResponse;
+                    if (preloadResponse) return preloadResponse;
                   }
+                  return event.request;
                 },
-                handlerDidError: async ({ request }) => {
-                  try {
-                    const cache = await self.caches.open(CACHE_NAMES.pages);
-                    const response = await cache.match('/offline.html');
-                    if (response) return response;
-
-                    const offlineResponse = await fetch('/offline.html');
-                    if (offlineResponse.ok) {
-                      await cache.put('/offline.html', offlineResponse.clone());
-                      return offlineResponse;
-                    }
-                    return undefined;
-                  } catch (error) {
-                    console.error('Error serving offline page:', error);
-                    return undefined;
-                  }
+                handlerDidError: async () => {
+                  const cache = await caches.open(CACHE_NAMES.pages);
+                  const cached = await cache.match('/offline.html');
+                  return cached || Response.error();
                 }
               }]
             }
@@ -190,9 +98,7 @@ export default defineConfig(({ mode }) => ({
                 maxEntries: 200,
                 maxAgeSeconds: 30 * 24 * 60 * 60
               },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
+              cacheableResponse: { statuses: [0, 200] }
             }
           },
           {
@@ -204,12 +110,10 @@ export default defineConfig(({ mode }) => ({
                 maxEntries: 500,
                 maxAgeSeconds: 30 * 24 * 60 * 60
               },
-              cacheableResponse: {
-                statuses: [0, 200]
-              },
+              cacheableResponse: { statuses: [0, 200] },
               plugins: [{
                 handlerDidError: async () => {
-                  const cache = await self.caches.open(CACHE_NAMES.static);
+                  const cache = await caches.open(CACHE_NAMES.static);
                   return cache.match('/placeholder.svg');
                 }
               }]
@@ -225,12 +129,10 @@ export default defineConfig(({ mode }) => ({
                 cacheWillUpdate: async ({ response }) => {
                   if (response && response.status === 200) {
                     try {
-                      const clonedResponse = response.clone();
-                      const data = await clonedResponse.json() as TMDBResponse;
+                      const cloned = response.clone();
+                      const data = await cloned.json();
                       if (data && !data.error) return response;
-                    } catch (error) {
-                      console.error('Error parsing TMDB response:', error);
-                    }
+                    } catch { }
                   }
                   return null;
                 }
@@ -250,15 +152,11 @@ export default defineConfig(({ mode }) => ({
                 maxEntries: 500,
                 maxAgeSeconds: 30 * 24 * 60 * 60
               },
-              cacheableResponse: {
-                statuses: [0, 200]
-              },
-              matchOptions: {
-                ignoreVary: true
-              },
+              cacheableResponse: { statuses: [0, 200] },
+              matchOptions: { ignoreVary: true },
               plugins: [{
                 handlerDidError: async () => {
-                  const cache = await self.caches.open(CACHE_NAMES.static);
+                  const cache = await caches.open(CACHE_NAMES.static);
                   return cache.match('/placeholder.svg');
                 }
               }]
@@ -296,15 +194,10 @@ export default defineConfig(({ mode }) => ({
               }]
             }
           }
-        ] as RuntimeCaching[]
-      },
-      devOptions: {
-        enabled: false,
-        type: 'module',
-        navigateFallback: '/index.html'
+        ]
       }
     })
-  ].filter(Boolean),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
