@@ -21,8 +21,8 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       strategies: 'injectManifest',
-      srcDir: 'src',
-      filename: 'sw.js', // the output service worker filename
+      srcDir: 'src',       // your sw.js must be in src/
+      filename: 'sw.js',   // output file name in dist root
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2,ttf}'],
         maximumFileSizeToCacheInBytes: 5000000,
