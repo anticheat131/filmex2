@@ -9,7 +9,6 @@ import pkg from './package.json';
 
 declare const self: ServiceWorkerGlobalScope;
 
-// Define types for response data
 interface TMDBResponse {
   error?: {
     message: string;
@@ -17,10 +16,8 @@ interface TMDBResponse {
   data: unknown;
 }
 
-// Cache version based on package version
 const CACHE_VERSION = `v${pkg.version}`;
 
-// Cache names with versioning
 const CACHE_NAMES = {
   pages: `pages-cache-${CACHE_VERSION}`,
   static: `static-assets-${CACHE_VERSION}`,
@@ -31,7 +28,6 @@ const CACHE_NAMES = {
   googleApis: `google-apis-${CACHE_VERSION}`
 };
 
-// Import RuntimeCaching type from the workbox-build module
 import type { RuntimeCaching } from 'workbox-build';
 
 export default defineConfig(({ mode }) => ({
@@ -45,11 +41,9 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // Increase the warning limit to reduce unnecessary warnings
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        // Implement manual chunks to better organize and optimize bundle size
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'ui-components': [
@@ -80,18 +74,9 @@ export default defineConfig(({ mode }) => ({
             '@radix-ui/react-toggle',
             '@radix-ui/react-toggle-group'
           ],
-          'firebase-auth': [
-            'firebase/auth',
-            '@firebase/auth'
-          ],
-          'data-visualization': [
-            'recharts'
-          ],
-          'icons': [
-            'lucide-react',
-            'react-icons',
-            'react-feather'
-          ]
+          'firebase-auth': ['firebase/auth', '@firebase/auth'],
+          'data-visualization': ['recharts'],
+          'icons': ['lucide-react', 'react-icons', 'react-feather']
         }
       }
     }
@@ -148,26 +133,21 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
-        globPatterns: [
-          '**/*.{js,css,html,ico,png,svg,json,woff2,ttf}'
-        ],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2,ttf}'],
         maximumFileSizeToCacheInBytes: 5000000,
         runtimeCaching: [
-          // SPA Navigation Routes
           {
-            urlPattern: ({ request }: { request: Request }) => request.mode === 'navigate',
+            urlPattern: ({ request }) => request.mode === 'navigate',
             handler: 'NetworkFirst',
             options: {
               cacheName: CACHE_NAMES.pages,
               networkTimeoutSeconds: 3,
               plugins: [{
-                requestWillFetch: async ({ event }: { event: FetchEvent & { preloadResponse?: Promise<Response> } }) => {
+                requestWillFetch: async ({ event }) => {
                   try {
                     if (event.preloadResponse) {
                       const preloadResponse = await event.preloadResponse;
-                      if (preloadResponse) {
-                        return preloadResponse;
-                      }
+                      if (preloadResponse) return preloadResponse;
                     }
                     return event.request;
                   } catch (error) {
@@ -175,13 +155,11 @@ export default defineConfig(({ mode }) => ({
                     return event.request;
                   }
                 },
-                handlerDidError: async ({ request }: { request: Request }) => {
+                handlerDidError: async ({ request }) => {
                   try {
                     const cache = await self.caches.open(CACHE_NAMES.pages);
                     const response = await cache.match('/offline.html');
                     if (response) return response;
-                    
-                    // If offline.html is not in cache, try to fetch it
                     const offlineResponse = await fetch('/offline.html');
                     if (offlineResponse.ok) {
                       await cache.put('/offline.html', offlineResponse.clone());
@@ -196,15 +174,14 @@ export default defineConfig(({ mode }) => ({
               }]
             }
           },
-          // Static Assets
           {
             urlPattern: /\.(css|js|woff2|ttf)$/i,
-            handler: 'CacheFirst',
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: CACHE_NAMES.static,
               expiration: {
                 maxEntries: 200,
-                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+                maxAgeSeconds: 30 * 24 * 60 * 60
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -218,14 +195,13 @@ export default defineConfig(({ mode }) => ({
               cacheName: CACHE_NAMES.images,
               expiration: {
                 maxEntries: 500,
-                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+                maxAgeSeconds: 30 * 24 * 60 * 60
               },
               cacheableResponse: {
                 statuses: [0, 200]
               },
               plugins: [{
-                handlerDidError: async ({ request }: { request: Request }) => {
-                  // Return placeholder image on error
+                handlerDidError: async () => {
                   const cache = await self.caches.open(CACHE_NAMES.static);
                   return cache.match('/placeholder.svg');
                 }
@@ -239,15 +215,12 @@ export default defineConfig(({ mode }) => ({
               cacheName: CACHE_NAMES.tmdbApi,
               networkTimeoutSeconds: 3,
               plugins: [{
-                cacheWillUpdate: async ({ response }: { response: Response }) => {
+                cacheWillUpdate: async ({ response }) => {
                   if (response && response.status === 200) {
                     try {
                       const clonedResponse = response.clone();
                       const data = await clonedResponse.json() as TMDBResponse;
-                      // Only cache successful responses without errors
-                      if (data && !data.error) {
-                        return response;
-                      }
+                      if (data && !data.error) return response;
                     } catch (error) {
                       console.error('Error parsing TMDB response:', error);
                     }
@@ -257,7 +230,7 @@ export default defineConfig(({ mode }) => ({
               }],
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 // 1 hour
+                maxAgeSeconds: 60 * 60
               }
             }
           },
@@ -268,7 +241,7 @@ export default defineConfig(({ mode }) => ({
               cacheName: CACHE_NAMES.tmdbImages,
               expiration: {
                 maxEntries: 500,
-                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+                maxAgeSeconds: 30 * 24 * 60 * 60
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -278,7 +251,6 @@ export default defineConfig(({ mode }) => ({
               },
               plugins: [{
                 handlerDidError: async () => {
-                  // Return placeholder image on error
                   const cache = await self.caches.open(CACHE_NAMES.static);
                   return cache.match('/placeholder.svg');
                 }
@@ -286,11 +258,9 @@ export default defineConfig(({ mode }) => ({
             }
           },
           {
-            urlPattern: ({ url }: { url: URL }) => {
-              return url.hostname.includes('firestore.googleapis.com') ||
-                     url.hostname.includes('firebase.googleapis.com') ||
-                     url.hostname.includes('firebaseio.com');
-            },
+            urlPattern: ({ url }) => url.hostname.includes('firestore.googleapis.com') ||
+                                     url.hostname.includes('firebase.googleapis.com') ||
+                                     url.hostname.includes('firebaseio.com'),
             handler: 'NetworkOnly',
             options: {
               plugins: [{
@@ -308,10 +278,10 @@ export default defineConfig(({ mode }) => ({
               networkTimeoutSeconds: 3,
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 // 1 hour
+                maxAgeSeconds: 60 * 60
               },
               plugins: [{
-                handlerDidError: async ({ request }: { request: Request }) => {
+                handlerDidError: async ({ request }) => {
                   console.error('Google API request failed:', request.url);
                   return undefined;
                 }
