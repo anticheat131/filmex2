@@ -13,18 +13,8 @@ import { Film, ChevronDown, Grid3X3, List } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import MultiSelect from '@/components/MultiSelect';
 
 const ITEMS_PER_PAGE = 20;
-
-const platformOptions = [
-  { value: 'netflix', label: 'Netflix', icon: '/icons/netflix.png' },
-  { value: 'hulu', label: 'Hulu', icon: '/icons/hulu.png' },
-  { value: 'disney', label: 'Disney+', icon: '/icons/disney.png' },
-  { value: 'hbo', label: 'HBO', icon: '/icons/hbo.png' },
-  { value: 'prime', label: 'Amazon Prime', icon: '/icons/prime.png' },
-  { value: 'apple', label: 'Apple TV+', icon: '/icons/apple.png' },
-];
 
 const Movies = () => {
   const { toast } = useToast();
@@ -37,7 +27,6 @@ const Movies = () => {
   const [allTopRatedMovies, setAllTopRatedMovies] = useState<Media[]>([]);
   const [sortBy, setSortBy] = useState<'default' | 'title' | 'release_date' | 'rating'>('default');
   const [genreFilter, setGenreFilter] = useState<string>('all');
-  const [platformFilter, setPlatformFilter] = useState<string[]>([]);
 
   const popularMoviesQuery = useQuery({
     queryKey: ['popularMovies', popularPage],
@@ -61,7 +50,6 @@ const Movies = () => {
             id: movie.id || movie.media_id || 0,
             media_id: movie.id || movie.media_id || 0,
             media_type: 'movie' as const,
-            platforms: ['netflix', 'prime'],
           }));
         return [...prev, ...newMovies];
       });
@@ -78,7 +66,6 @@ const Movies = () => {
             id: movie.id || movie.media_id || 0,
             media_id: movie.id || movie.media_id || 0,
             media_type: 'movie' as const,
-            platforms: ['hbo', 'disney'],
           }));
         return [...prev, ...newMovies];
       });
@@ -86,7 +73,7 @@ const Movies = () => {
   }, [topRatedMoviesQuery.data]);
 
   useEffect(() => {
-    if (Array.isArray(popularMoviesQuery.data) && popularMoviesQuery.data.length === ITEMS_PER_PAGE) {
+    if (popularMoviesQuery.data?.length === ITEMS_PER_PAGE) {
       queryClient.prefetchQuery({
         queryKey: ['popularMovies', popularPage + 1],
         queryFn: () => getPopularMovies(popularPage + 1),
@@ -95,7 +82,7 @@ const Movies = () => {
   }, [popularPage, queryClient, popularMoviesQuery.data]);
 
   useEffect(() => {
-    if (Array.isArray(topRatedMoviesQuery.data) && topRatedMoviesQuery.data.length === ITEMS_PER_PAGE) {
+    if (topRatedMoviesQuery.data?.length === ITEMS_PER_PAGE) {
       queryClient.prefetchQuery({
         queryKey: ['topRatedMovies', topRatedPage + 1],
         queryFn: () => getTopRatedMovies(topRatedPage + 1),
@@ -109,12 +96,6 @@ const Movies = () => {
     if (genreFilter !== 'all') {
       filteredMovies = filteredMovies.filter(movie =>
         movie.genre_ids?.includes(parseInt(genreFilter))
-      );
-    }
-
-    if (platformFilter.length > 0) {
-      filteredMovies = filteredMovies.filter(movie =>
-        movie.platforms?.some(p => platformFilter.includes(p))
       );
     }
 
@@ -148,8 +129,8 @@ const Movies = () => {
     await trackMediaPreference('movie', 'select');
   };
 
-  const hasMorePopular = Array.isArray(popularMoviesQuery.data) && popularMoviesQuery.data.length === ITEMS_PER_PAGE;
-  const hasMoreTopRated = Array.isArray(topRatedMoviesQuery.data) && topRatedMoviesQuery.data.length === ITEMS_PER_PAGE;
+  const hasMorePopular = popularMoviesQuery.data?.length === ITEMS_PER_PAGE;
+  const hasMoreTopRated = topRatedMoviesQuery.data?.length === ITEMS_PER_PAGE;
 
   useEffect(() => {
     void trackMediaPreference('movie', 'browse');
@@ -160,21 +141,24 @@ const Movies = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="container mx-auto px-4 py-8">
-          <div className="flex items-center gap-3 pt-10 mb-6 justify-center">
+          <div className="flex items-center gap-3 pt-10 mb-6">
             <Film className="h-8 w-8 text-accent animate-pulse-slow" />
             <h1 className="text-3xl font-bold text-white">Movies</h1>
           </div>
 
           <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
-            <div className="flex justify-center mb-6">
-              <TabsList>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+              <TabsList className="mb-4 md:mb-0">
                 <TabsTrigger value="popular" className="data-[state=active]:bg-accent/20">Popular</TabsTrigger>
                 <TabsTrigger value="top_rated" className="data-[state=active]:bg-accent/20">Top Rated</TabsTrigger>
               </TabsList>
             </div>
 
-            <div className="flex flex-wrap justify-center items-center gap-4 mb-6">
-              <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+            <div className="flex flex-wrap items-center gap-4 mb-6">
+              <Select 
+                value={sortBy} 
+                onValueChange={(value: 'default' | 'title' | 'release_date' | 'rating') => setSortBy(value)}
+              >
                 <SelectTrigger className="w-[180px] border-white/10 text-white bg-transparent">
                   <SelectValue placeholder="Sort By" />
                 </SelectTrigger>
@@ -202,14 +186,6 @@ const Movies = () => {
                 </SelectContent>
               </Select>
 
-              <MultiSelect
-                value={platformFilter}
-                options={platformOptions}
-                onChange={setPlatformFilter}
-                placeholder="Filter by Platforms"
-                withIcons
-              />
-
               <Button
                 variant="outline"
                 size="sm"
@@ -229,7 +205,7 @@ const Movies = () => {
                 )}
               </Button>
             </div>
-
+            
             <TabsContent value="popular" className="focus-visible:outline-none animate-fade-in">
               {popularMoviesQuery.isLoading ? (
                 <MediaGridSkeleton listView={viewMode === 'list'} />
@@ -238,17 +214,26 @@ const Movies = () => {
               ) : (
                 <>
                   <MediaGrid media={ensureExtendedMediaArray(filteredPopularMovies)} title="Popular Movies" listView={viewMode === 'list'} />
+                  
                   {hasMorePopular && (
                     <div className="flex justify-center my-8">
-                      <Button onClick={handleShowMorePopular} variant="outline" className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300">
-                        {popularMoviesQuery.isFetching ? 'Loading...' : <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>}
+                      <Button 
+                        onClick={handleShowMorePopular}
+                        variant="outline"
+                        className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300"
+                      >
+                        {popularMoviesQuery.isFetching ? (
+                          <>Loading...</>
+                        ) : (
+                          <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>
+                        )}
                       </Button>
                     </div>
                   )}
                 </>
               )}
             </TabsContent>
-
+            
             <TabsContent value="top_rated" className="focus-visible:outline-none animate-fade-in">
               {topRatedMoviesQuery.isLoading ? (
                 <MediaGridSkeleton listView={viewMode === 'list'} />
@@ -257,10 +242,19 @@ const Movies = () => {
               ) : (
                 <>
                   <MediaGrid media={ensureExtendedMediaArray(filteredTopRatedMovies)} title="Top Rated Movies" listView={viewMode === 'list'} />
+                  
                   {hasMoreTopRated && (
                     <div className="flex justify-center my-8">
-                      <Button onClick={handleShowMoreTopRated} variant="outline" className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300">
-                        {topRatedMoviesQuery.isFetching ? 'Loading...' : <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>}
+                      <Button 
+                        onClick={handleShowMoreTopRated}
+                        variant="outline"
+                        className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300"
+                      >
+                        {topRatedMoviesQuery.isFetching ? (
+                          <>Loading...</>
+                        ) : (
+                          <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>
+                        )}
                       </Button>
                     </div>
                   )}
@@ -269,6 +263,7 @@ const Movies = () => {
             </TabsContent>
           </Tabs>
         </main>
+        
         <Footer />
       </div>
     </PageTransition>
