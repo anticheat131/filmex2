@@ -141,20 +141,20 @@ const Movies = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <main className="container mx-auto px-4 py-8">
-          <div className="flex items-center gap-3 pt-10 mb-6">
+          <div className="flex items-center gap-3 pt-10 mb-6 justify-center">
             <Film className="h-8 w-8 text-accent animate-pulse-slow" />
             <h1 className="text-3xl font-bold text-white">Movies</h1>
           </div>
 
           <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-              <TabsList className="mb-4 md:mb-0">
+            <div className="flex justify-center mb-6">
+              <TabsList>
                 <TabsTrigger value="popular" className="data-[state=active]:bg-accent/20">Popular</TabsTrigger>
                 <TabsTrigger value="top_rated" className="data-[state=active]:bg-accent/20">Top Rated</TabsTrigger>
               </TabsList>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 mb-6">
+            <div className="flex flex-wrap justify-center items-center gap-4 mb-6">
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
                 <SelectTrigger className="w-[180px] border-white/10 text-white bg-transparent">
                   <SelectValue placeholder="Sort By" />
