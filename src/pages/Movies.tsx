@@ -1,251 +1,133 @@
-import { useState, useEffect } from 'react';
-import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { getPopularMovies, getTopRatedMovies } from '@/utils/api';
-import { Media, ensureExtendedMediaArray } from '@/utils/types';
-import { trackMediaPreference } from '@/lib/analytics';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import MediaGrid from '@/components/MediaGrid';
-import { MediaGridSkeleton } from '@/components/MediaSkeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Film, ChevronDown, Grid3X3, List } from 'lucide-react';
-import PageTransition from '@/components/PageTransition';
-import { useToast } from '@/hooks/use-toast';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+'use client'
 
-const ITEMS_PER_PAGE = 20;
+import React, { useEffect, useState } from 'react'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Grid3X3, List } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import MediaCard from '@/components/MediaCard'
+import { getDiscover } from '@/lib/tmdb'
+import { useInView } from 'react-intersection-observer'
 
 const Movies = () => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'popular' | 'top_rated'>('popular');
-  const [popularPage, setPopularPage] = useState(1);
-  const [topRatedPage, setTopRatedPage] = useState(1);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [allPopularMovies, setAllPopularMovies] = useState<Media[]>([]);
-  const [allTopRatedMovies, setAllTopRatedMovies] = useState<Media[]>([]);
-  const [sortBy, setSortBy] = useState<'default' | 'title' | 'release_date' | 'rating'>('default');
-  const [genreFilter, setGenreFilter] = useState<string>('all');
+  const [media, setMedia] = useState<any[]>([])
+  const [page, setPage] = useState(1)
+  const [selectedTab, setSelectedTab] = useState('popular')
+  const [sortBy, setSortBy] = useState('default')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [genreFilter, setGenreFilter] = useState('all')
+  const { ref, inView } = useInView()
 
-  const popularMoviesQuery = useQuery({
-    queryKey: ['popularMovies', popularPage],
-    queryFn: () => getPopularMovies(popularPage),
-    placeholderData: keepPreviousData,
-  });
-
-  const topRatedMoviesQuery = useQuery({
-    queryKey: ['topRatedMovies', topRatedPage],
-    queryFn: () => getTopRatedMovies(topRatedPage),
-    placeholderData: keepPreviousData,
-  });
+  const fetchData = async () => {
+    const fetchedData = await getDiscover('movie', selectedTab, page)
+    setMedia(prev => [...prev, ...fetchedData])
+  }
 
   useEffect(() => {
-    if (popularMoviesQuery.data) {
-      setAllPopularMovies(prev => {
-        const newMovies = popularMoviesQuery.data
-          .filter(movie => !prev.some(p => p.id === (movie.id || movie.media_id)))
-          .map(movie => ({
-            ...movie,
-            id: movie.id || movie.media_id || 0,
-            media_id: movie.id || movie.media_id || 0,
-            media_type: 'movie' as const,
-          }));
-        return [...prev, ...newMovies];
-      });
-    }
-  }, [popularMoviesQuery.data]);
+    fetchData()
+  }, [selectedTab, page])
 
   useEffect(() => {
-    if (topRatedMoviesQuery.data) {
-      setAllTopRatedMovies(prev => {
-        const newMovies = topRatedMoviesQuery.data
-          .filter(movie => !prev.some(p => p.id === (movie.id || movie.media_id)))
-          .map(movie => ({
-            ...movie,
-            id: movie.id || movie.media_id || 0,
-            media_id: movie.id || movie.media_id || 0,
-            media_type: 'movie' as const,
-          }));
-        return [...prev, ...newMovies];
-      });
+    if (inView) {
+      setPage(prev => prev + 1)
     }
-  }, [topRatedMoviesQuery.data]);
+  }, [inView])
 
-  useEffect(() => {
-    if (popularMoviesQuery.data?.length === ITEMS_PER_PAGE) {
-      queryClient.prefetchQuery({
-        queryKey: ['popularMovies', popularPage + 1],
-        queryFn: () => getPopularMovies(popularPage + 1),
-      });
-    }
-  }, [popularPage, queryClient, popularMoviesQuery.data]);
+  const toggleViewMode = () => {
+    setViewMode(prev => (prev === 'grid' ? 'list' : 'grid'))
+  }
 
-  useEffect(() => {
-    if (topRatedMoviesQuery.data?.length === ITEMS_PER_PAGE) {
-      queryClient.prefetchQuery({
-        queryKey: ['topRatedMovies', topRatedPage + 1],
-        queryFn: () => getTopRatedMovies(topRatedPage + 1),
-      });
-    }
-  }, [topRatedPage, queryClient, topRatedMoviesQuery.data]);
-
-  const applyFiltersAndSort = (movies: Media[]) => {
-    let filteredMovies = [...movies];
-
-    if (genreFilter !== 'all') {
-      filteredMovies = filteredMovies.filter(movie =>
-        movie.genre_ids?.includes(parseInt(genreFilter))
-      );
-    }
-
+  const sortMedia = (media: any[]) => {
     switch (sortBy) {
       case 'title':
-        filteredMovies.sort((a, b) => a.title.localeCompare(b.title));
-        break;
+        return [...media].sort((a, b) => a.title.localeCompare(b.title))
       case 'release_date':
-        filteredMovies.sort((a, b) =>
-          new Date(b.release_date).getTime() - new Date(a.release_date).getTime()
-        );
-        break;
+        return [...media].sort((a, b) => (b.release_date || '').localeCompare(a.release_date || ''))
       case 'rating':
-        filteredMovies.sort((a, b) => b.vote_average - a.vote_average);
-        break;
+        return [...media].sort((a, b) => b.vote_average - a.vote_average)
       default:
-        break;
+        return media
     }
+  }
 
-    return filteredMovies;
-  };
+  const filteredMedia = media.filter(item => {
+    if (genreFilter === 'all') return true
+    return item.genre_ids.includes(Number(genreFilter))
+  })
 
-  const filteredPopularMovies = applyFiltersAndSort(allPopularMovies);
-  const filteredTopRatedMovies = applyFiltersAndSort(allTopRatedMovies);
-
-  const handleShowMorePopular = () => setPopularPage(prev => prev + 1);
-  const handleShowMoreTopRated = () => setTopRatedPage(prev => prev + 1);
-  const toggleViewMode = () => setViewMode(prev => (prev === 'grid' ? 'list' : 'grid'));
-  const handleTabChange = async (value: 'popular' | 'top_rated') => {
-    setActiveTab(value);
-    await trackMediaPreference('movie', 'select');
-  };
-
-  const hasMorePopular = popularMoviesQuery.data?.length === ITEMS_PER_PAGE;
-  const hasMoreTopRated = topRatedMoviesQuery.data?.length === ITEMS_PER_PAGE;
-
-  useEffect(() => {
-    void trackMediaPreference('movie', 'browse');
-  }, []);
+  const sortedAndFilteredMedia = sortMedia(filteredMedia)
 
   return (
-    <PageTransition>
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="container mx-auto px-4 py-8">
-          <div className="flex items-center gap-3 pt-10 mb-6">
-            <Film className="h-8 w-8 text-accent animate-pulse-slow" />
-            <h1 className="text-3xl font-bold text-white">Movies</h1>
-          </div>
+    <div className="px-4 md:px-12 py-6">
+      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+        <div className="flex justify-center mb-4">
+          <TabsList>
+            <TabsTrigger value="popular" className="data-[state=active]:bg-accent/20">Popular</TabsTrigger>
+            <TabsTrigger value="top_rated" className="data-[state=active]:bg-accent/20">Top Rated</TabsTrigger>
+          </TabsList>
+        </div>
+      </Tabs>
 
-          <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-              <TabsList className="mb-4 md:mb-0">
-                <TabsTrigger value="popular" className="data-[state=active]:bg-accent/20">Popular</TabsTrigger>
-                <TabsTrigger value="top_rated" className="data-[state=active]:bg-accent/20">Top Rated</TabsTrigger>
-              </TabsList>
-            </div>
+      <div className="flex justify-center mb-6">
+        <div className="flex flex-wrap justify-center gap-4">
+          <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+            <SelectTrigger className="w-[180px] border-white/10 text-white bg-transparent">
+              <SelectValue placeholder="Sort By" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border-white/10 text-white">
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="title">Title</SelectItem>
+              <SelectItem value="release_date">Release Date</SelectItem>
+              <SelectItem value="rating">Rating</SelectItem>
+            </SelectContent>
+          </Select>
 
-            <div className="flex flex-wrap items-center gap-4 mb-6">
-              <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
-                <SelectTrigger className="w-[180px] border-white/10 text-white bg-transparent">
-                  <SelectValue placeholder="Sort By" />
-                </SelectTrigger>
-                <SelectContent className="bg-background border-white/10 text-white">
-                  <SelectItem value="default">Default</SelectItem>
-                  <SelectItem value="title">Title</SelectItem>
-                  <SelectItem value="release_date">Release Date</SelectItem>
-                  <SelectItem value="rating">Rating</SelectItem>
-                </SelectContent>
-              </Select>
+          <Select value={genreFilter} onValueChange={setGenreFilter}>
+            <SelectTrigger className="w-[180px] border-white/10 text-white bg-transparent">
+              <SelectValue placeholder="Filter by Genre" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border-white/10 text-white">
+              <SelectItem value="all">All Genres</SelectItem>
+              <SelectItem value="28">Action</SelectItem>
+              <SelectItem value="12">Adventure</SelectItem>
+              <SelectItem value="35">Comedy</SelectItem>
+              <SelectItem value="18">Drama</SelectItem>
+              <SelectItem value="27">Horror</SelectItem>
+              <SelectItem value="10749">Romance</SelectItem>
+              <SelectItem value="878">Sci-Fi</SelectItem>
+            </SelectContent>
+          </Select>
 
-              <Select value={genreFilter} onValueChange={setGenreFilter}>
-                <SelectTrigger className="w-[180px] border-white/10 text-white bg-transparent">
-                  <SelectValue placeholder="Filter by Genre" />
-                </SelectTrigger>
-                <SelectContent className="bg-background border-white/10 text-white">
-                  <SelectItem value="all">All Genres</SelectItem>
-                  <SelectItem value="28">Action</SelectItem>
-                  <SelectItem value="12">Adventure</SelectItem>
-                  <SelectItem value="35">Comedy</SelectItem>
-                  <SelectItem value="18">Drama</SelectItem>
-                  <SelectItem value="27">Horror</SelectItem>
-                  <SelectItem value="10749">Romance</SelectItem>
-                  <SelectItem value="878">Sci-Fi</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-white/10 text-white hover:bg-white/10 group"
-                onClick={toggleViewMode}
-              >
-                {viewMode === 'grid' ? (
-                  <>
-                    <List className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
-                    List View
-                  </>
-                ) : (
-                  <>
-                    <Grid3X3 className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
-                    Grid View
-                  </>
-                )}
-              </Button>
-            </div>
-
-            <TabsContent value="popular" className="focus-visible:outline-none animate-fade-in">
-              {popularMoviesQuery.isLoading ? (
-                <MediaGridSkeleton listView={viewMode === 'list'} />
-              ) : popularMoviesQuery.isError ? (
-                <div className="py-12 text-center text-white">Error loading movies. Please try again.</div>
-              ) : (
-                <>
-                  <MediaGrid media={ensureExtendedMediaArray(filteredPopularMovies)} title="Popular Movies" listView={viewMode === 'list'} />
-                  {hasMorePopular && (
-                    <div className="flex justify-center my-8">
-                      <Button onClick={handleShowMorePopular} variant="outline" className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300">
-                        {popularMoviesQuery.isFetching ? 'Loading...' : <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>}
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-            </TabsContent>
-
-            <TabsContent value="top_rated" className="focus-visible:outline-none animate-fade-in">
-              {topRatedMoviesQuery.isLoading ? (
-                <MediaGridSkeleton listView={viewMode === 'list'} />
-              ) : topRatedMoviesQuery.isError ? (
-                <div className="py-12 text-center text-white">Error loading movies. Please try again.</div>
-              ) : (
-                <>
-                  <MediaGrid media={ensureExtendedMediaArray(filteredTopRatedMovies)} title="Top Rated Movies" listView={viewMode === 'list'} />
-                  {hasMoreTopRated && (
-                    <div className="flex justify-center my-8">
-                      <Button onClick={handleShowMoreTopRated} variant="outline" className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300">
-                        {topRatedMoviesQuery.isFetching ? 'Loading...' : <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>}
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-            </TabsContent>
-          </Tabs>
-        </main>
-        <Footer />
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-white/10 text-white hover:bg-white/10 group"
+            onClick={toggleViewMode}
+          >
+            {viewMode === 'grid' ? (
+              <>
+                <List className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
+                List View
+              </>
+            ) : (
+              <>
+                <Grid3X3 className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
+                Grid View
+              </>
+            )}
+          </Button>
+        </div>
       </div>
-    </PageTransition>
-  );
-};
 
-export default Movies;
+      <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' : 'grid-cols-1'}`}>
+        {sortedAndFilteredMedia.map((item, index) => (
+          <MediaCard key={`${item.id}-${index}`} media={item} type="movie" viewMode={viewMode} />
+        ))}
+      </div>
+
+      <div ref={ref} className="h-10" />
+    </div>
+  )
+}
+
+export default Movies
