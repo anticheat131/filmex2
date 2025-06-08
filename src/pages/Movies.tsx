@@ -61,7 +61,7 @@ const Movies = () => {
             id: movie.id || movie.media_id || 0,
             media_id: movie.id || movie.media_id || 0,
             media_type: 'movie' as const,
-            platforms: ['netflix', 'prime'], // Mock platforms
+            platforms: ['netflix', 'prime'],
           }));
         return [...prev, ...newMovies];
       });
@@ -78,7 +78,7 @@ const Movies = () => {
             id: movie.id || movie.media_id || 0,
             media_id: movie.id || movie.media_id || 0,
             media_type: 'movie' as const,
-            platforms: ['hbo', 'disney'], // Mock platforms
+            platforms: ['hbo', 'disney'],
           }));
         return [...prev, ...newMovies];
       });
@@ -86,7 +86,7 @@ const Movies = () => {
   }, [topRatedMoviesQuery.data]);
 
   useEffect(() => {
-    if (popularMoviesQuery.data?.length === ITEMS_PER_PAGE) {
+    if (Array.isArray(popularMoviesQuery.data) && popularMoviesQuery.data.length === ITEMS_PER_PAGE) {
       queryClient.prefetchQuery({
         queryKey: ['popularMovies', popularPage + 1],
         queryFn: () => getPopularMovies(popularPage + 1),
@@ -95,7 +95,7 @@ const Movies = () => {
   }, [popularPage, queryClient, popularMoviesQuery.data]);
 
   useEffect(() => {
-    if (topRatedMoviesQuery.data?.length === ITEMS_PER_PAGE) {
+    if (Array.isArray(topRatedMoviesQuery.data) && topRatedMoviesQuery.data.length === ITEMS_PER_PAGE) {
       queryClient.prefetchQuery({
         queryKey: ['topRatedMovies', topRatedPage + 1],
         queryFn: () => getTopRatedMovies(topRatedPage + 1),
@@ -148,8 +148,8 @@ const Movies = () => {
     await trackMediaPreference('movie', 'select');
   };
 
-  const hasMorePopular = popularMoviesQuery.data?.length === ITEMS_PER_PAGE;
-  const hasMoreTopRated = topRatedMoviesQuery.data?.length === ITEMS_PER_PAGE;
+  const hasMorePopular = Array.isArray(popularMoviesQuery.data) && popularMoviesQuery.data.length === ITEMS_PER_PAGE;
+  const hasMoreTopRated = Array.isArray(topRatedMoviesQuery.data) && topRatedMoviesQuery.data.length === ITEMS_PER_PAGE;
 
   useEffect(() => {
     void trackMediaPreference('movie', 'browse');
