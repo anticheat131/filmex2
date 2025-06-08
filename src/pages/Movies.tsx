@@ -27,6 +27,7 @@ const Movies = () => {
   const [allTopRatedMovies, setAllTopRatedMovies] = useState<Media[]>([]);
   const [sortBy, setSortBy] = useState<'default' | 'title' | 'release_date' | 'rating'>('default');
   const [genreFilter, setGenreFilter] = useState<string>('all');
+  const [platformFilter, setPlatformFilter] = useState<string>('all'); // NEW
 
   const popularMoviesQuery = useQuery({
     queryKey: ['popularMovies', popularPage],
@@ -96,6 +97,12 @@ const Movies = () => {
     if (genreFilter !== 'all') {
       filteredMovies = filteredMovies.filter(movie =>
         movie.genre_ids?.includes(parseInt(genreFilter))
+      );
+    }
+
+    if (platformFilter !== 'all') {
+      filteredMovies = filteredMovies.filter(movie =>
+        movie.platforms?.includes(platformFilter)
       );
     }
 
@@ -180,6 +187,20 @@ const Movies = () => {
                   <SelectItem value="27">Horror</SelectItem>
                   <SelectItem value="10749">Romance</SelectItem>
                   <SelectItem value="878">Sci-Fi</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={platformFilter} onValueChange={setPlatformFilter}>
+                <SelectTrigger className="w-[180px] border-white/10 text-white bg-transparent">
+                  <SelectValue placeholder="Filter by Platform" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border-white/10 text-white">
+                  <SelectItem value="all">All Platforms</SelectItem>
+                  <SelectItem value="netflix">Netflix</SelectItem>
+                  <SelectItem value="disney">Disney+</SelectItem>
+                  <SelectItem value="hulu">Hulu</SelectItem>
+                  <SelectItem value="amazon">Amazon Prime</SelectItem>
+                  <SelectItem value="hbo">HBO Max</SelectItem>
                 </SelectContent>
               </Select>
 
