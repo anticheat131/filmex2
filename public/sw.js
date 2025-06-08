@@ -29,8 +29,6 @@ define(["./workbox-4cded710"], (function (workbox) {
   self.skipWaiting();
   workbox.clientsClaim();
 
-  // ✅ Skip precacheAndRoute to avoid broken hashed files
-  // ✅ Ensure offline fallback works
   workbox.precacheAndRoute([
     { url: "offline.html", revision: "77345e15c929c1097b9ecec4d0c590d5" },
     { url: "favicon.ico", revision: "1c29dd2a7ba58b92cd9a31771741db02" },
@@ -39,7 +37,6 @@ define(["./workbox-4cded710"], (function (workbox) {
 
   workbox.cleanupOutdatedCaches();
 
-  // Offline fallback for navigation
   workbox.registerRoute(
     ({ request }) => request.mode === "navigate",
     new workbox.NetworkFirst({
@@ -57,7 +54,6 @@ define(["./workbox-4cded710"], (function (workbox) {
     "GET"
   );
 
-  // Cache CSS, JS, fonts
   workbox.registerRoute(
     /\.(?:css|js|woff2|ttf)$/i,
     new workbox.CacheFirst({
@@ -70,7 +66,6 @@ define(["./workbox-4cded710"], (function (workbox) {
     "GET"
   );
 
-  // Cache images
   workbox.registerRoute(
     /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
     new workbox.CacheFirst({
@@ -89,7 +84,6 @@ define(["./workbox-4cded710"], (function (workbox) {
     "GET"
   );
 
-  // TMDB API requests
   workbox.registerRoute(
     /^https:\/\/api\.themoviedb\.org\/3\//i,
     new workbox.NetworkFirst({
@@ -101,7 +95,11 @@ define(["./workbox-4cded710"], (function (workbox) {
             if (response && response.status === 200) {
               try {
                 const data = await response.clone().json();
-                if (data && !data.error) return response;
+                if (data && Array.isArray(data.results)) {
+                  return response;
+                } else {
+                  console.warn("TMDB response missing valid 'results' array.");
+                }
               } catch (e) {
                 console.error("Error parsing TMDB response:", e);
               }
@@ -115,7 +113,6 @@ define(["./workbox-4cded710"], (function (workbox) {
     "GET"
   );
 
-  // TMDB images
   workbox.registerRoute(
     /^https:\/\/image\.tmdb\.org\/t\/p\//i,
     new workbox.CacheFirst({
