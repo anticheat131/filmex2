@@ -1,19 +1,19 @@
 /// <reference lib="webworker" />
 /// <reference path="./workbox.d.ts" />
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import path from "path";
-import { VitePWA } from "vite-plugin-pwa";
-import pkg from "./package.json";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react-swc';
+import path from 'path';
+import { VitePWA } from 'vite-plugin-pwa';
+import pkg from './package.json';
 
 declare const self: ServiceWorkerGlobalScope;
 
 const CACHE_VERSION = `v${pkg.version}`;
 
 export default defineConfig(({ mode }) => ({
-  base: "/",
+  base: '/',
   server: {
-    host: "::",
+    host: '::',
     port: 8080,
     mimeTypes: {
       '.js': 'application/javascript',
@@ -122,7 +122,26 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: `tmdb-api-${CACHE_VERSION}`,
               networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 100, maxAgeSeconds: 3600 }
+              expiration: { maxEntries: 100, maxAgeSeconds: 3600 },
+              plugins: [
+                {
+                  cacheWillUpdate: async ({ response }) => {
+                    if (response && response.status === 200) {
+                      try {
+                        const cloned = response.clone();
+                        const data = await cloned.json();
+                        if (data && Array.isArray(data.results)) {
+                          return response;
+                        }
+                        console.warn('TMDB response missing valid results array');
+                      } catch (e) {
+                        console.error('Error parsing TMDB response:', e);
+                      }
+                    }
+                    return null;
+                  }
+                }
+              ]
             }
           },
           {
@@ -140,6 +159,6 @@ export default defineConfig(({ mode }) => ({
     })
   ],
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") }
+    alias: { '@': path.resolve(__dirname, './src') }
   }
 }));
