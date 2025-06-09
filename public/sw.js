@@ -95,10 +95,18 @@ define(["./workbox-4cded710"], (function (workbox) {
             if (response && response.status === 200) {
               try {
                 const data = await response.clone().json();
-                if (data && Array.isArray(data.results)) {
+
+                // Skip caching if TMDB returned an error object
+                if (data && data.status_code) {
+                  console.warn("TMDB API error:", data.status_message || data.status_code);
+                  return null;
+                }
+
+                // Allow caching if no 'results' OR it's a valid array
+                if (data && (data.results === undefined || Array.isArray(data.results))) {
                   return response;
                 } else {
-                  console.warn("TMDB response missing valid 'results' array.");
+                  console.warn("Unexpected TMDB response format:", data);
                 }
               } catch (e) {
                 console.error("Error parsing TMDB response:", e);
