@@ -91,7 +91,7 @@ export default defineConfig(({ mode }) => ({
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
-        navigateFallback: '/index.html',
+        navigateFallback: '/offline.html',  // <-- Updated here
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2,ttf}'],
         runtimeCaching: [
           {
