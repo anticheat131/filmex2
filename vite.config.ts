@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     mimeTypes: {
       '.js': 'application/javascript',
-      '.json': 'application/json'
+      '.json': 'application/json',
     },
   },
   build: {
@@ -52,14 +52,14 @@ export default defineConfig(({ mode }) => ({
             '@radix-ui/react-tabs',
             '@radix-ui/react-toast',
             '@radix-ui/react-toggle',
-            '@radix-ui/react-toggle-group'
+            '@radix-ui/react-toggle-group',
           ],
           'firebase-auth': ['firebase/auth', '@firebase/auth'],
           'data-visualization': ['recharts'],
-          'icons': ['lucide-react', 'react-icons', 'react-feather']
-        }
-      }
-    }
+          'icons': ['lucide-react', 'react-icons', 'react-feather'],
+        },
+      },
+    },
   },
   plugins: [
     react(),
@@ -71,28 +71,38 @@ export default defineConfig(({ mode }) => ({
         'apple-icon-180.png',
         'manifest-icon-192.maskable.png',
         'manifest-icon-512.maskable.png',
-        'offline.html'
+        'offline.html',
       ],
       manifest: {
         name: "Let's Stream V2.0",
         short_name: "Let's Stream",
-        description: "Watch movies and TV shows online",
+        description: 'Watch movies and TV shows online',
         theme_color: '#3b82f6',
         background_color: '#0f0f0f',
         display: 'standalone',
         start_url: '/',
         scope: '/',
         icons: [
-          { src: '/manifest-icon-192.maskable.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-          { src: '/manifest-icon-512.maskable.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-        ]
+          {
+            src: '/manifest-icon-192.maskable.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any maskable',
+          },
+          {
+            src: '/manifest-icon-512.maskable.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable',
+          },
+        ],
       },
       workbox: {
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
-        navigateFallback: '/offline.html',  // <-- Updated here
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2,ttf}'],
+        navigateFallback: '/index.html',
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2,ttf,webmanifest}'],
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === 'navigate',
@@ -100,21 +110,40 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: `pages-cache-${CACHE_VERSION}`,
               networkTimeoutSeconds: 3,
-              plugins: [{
-                handlerDidError: async () => {
-                  const cache = await self.caches.open(`pages-cache-${CACHE_VERSION}`);
-                  return cache.match('/offline.html');
-                }
-              }]
-            }
+              plugins: [
+                {
+                  handlerDidError: async () => {
+                    const cache = await self.caches.open(`pages-cache-${CACHE_VERSION}`);
+                    return cache.match('/offline.html');
+                  },
+                },
+              ],
+            },
           },
           {
-            urlPattern: /\.(?:js|css|woff2|ttf)$/i,
+            urlPattern: /\/assets\/.*\.(js|css)$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: `vite-assets-${CACHE_VERSION}`,
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
+            urlPattern: /\.(?:woff2|ttf)$/i,
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: `static-cache-${CACHE_VERSION}`,
-              expiration: { maxEntries: 200, maxAgeSeconds: 30 * 24 * 60 * 60 }
-            }
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 30 * 24 * 60 * 60,
+              },
+            },
           },
           {
             urlPattern: /^https:\/\/api\.themoviedb\.org\/3\//,
@@ -122,7 +151,10 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: `tmdb-api-${CACHE_VERSION}`,
               networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 100, maxAgeSeconds: 3600 },
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 3600,
+              },
               plugins: [
                 {
                   cacheWillUpdate: async ({ response }) => {
@@ -139,26 +171,36 @@ export default defineConfig(({ mode }) => ({
                       }
                     }
                     return null;
-                  }
-                }
-              ]
-            }
+                  },
+                },
+              ],
+            },
           },
           {
             urlPattern: /^https:\/\/image\.tmdb\.org\/t\/p\//,
             handler: 'CacheFirst',
             options: {
               cacheName: `tmdb-images-${CACHE_VERSION}`,
-              expiration: { maxEntries: 300, maxAgeSeconds: 30 * 24 * 60 * 60 },
-              cacheableResponse: { statuses: [0, 200] }
-            }
-          }
-        ]
+              expiration: {
+                maxEntries: 300,
+                maxAgeSeconds: 30 * 24 * 60 * 60,
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+        ],
       },
-      devOptions: { enabled: false, type: 'module' }
-    })
+      devOptions: {
+        enabled: false,
+        type: 'module',
+      },
+    }),
   ],
   resolve: {
-    alias: { '@': path.resolve(__dirname, './src') }
-  }
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
 }));
