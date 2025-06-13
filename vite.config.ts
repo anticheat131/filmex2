@@ -1,16 +1,13 @@
 /// <reference lib="webworker" />
-/// <reference path="./workbox.d.ts" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 import pkg from './package.json';
 
-declare const self: ServiceWorkerGlobalScope;
+const CACHE_VERSION = `v${pkg.version}`;
 
-const CACHE_VERSION = `v${pkg.version}-${Date.now()}`; // force cache busting
-
-export default defineConfig(() => ({
+export default defineConfig(({ mode }) => ({
   base: '/',
   server: {
     host: '::',
@@ -18,7 +15,7 @@ export default defineConfig(() => ({
     mimeTypes: {
       '.js': 'application/javascript',
       '.json': 'application/json'
-    },
+    }
   },
   build: {
     chunkSizeWarningLimit: 1000,
@@ -64,8 +61,10 @@ export default defineConfig(() => ({
   plugins: [
     react(),
     VitePWA({
-      strategies: 'generateSW',
       registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       includeAssets: [
         'favicon.ico',
         'apple-icon-180.png',
@@ -83,80 +82,28 @@ export default defineConfig(() => ({
         start_url: '/',
         scope: '/',
         icons: [
-          { src: '/manifest-icon-192.maskable.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-          { src: '/manifest-icon-512.maskable.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-        ]
-      },
-      workbox: {
-        cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
-        navigateFallback: '/index.html',
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2,ttf}'],
-        runtimeCaching: [
           {
-            urlPattern: ({ request }) => request.mode === 'navigate',
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: `html-cache-${CACHE_VERSION}`,
-              networkTimeoutSeconds: 3,
-              plugins: [{
-                handlerDidError: async () => {
-                  const cache = await self.caches.open(`html-cache-${CACHE_VERSION}`);
-                  return cache.match('/offline.html');
-                }
-              }]
-            }
+            src: '/manifest-icon-192.maskable.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
-            urlPattern: /\/assets\/.*\.(js|css)$/i,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: `vite-assets-${CACHE_VERSION}`,
-              expiration: {
-                maxEntries: 150,
-                maxAgeSeconds: 7 * 24 * 60 * 60,
-              }
-            }
-          },
-          {
-            urlPattern: /\.(?:woff2|ttf)$/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: `fonts-${CACHE_VERSION}`,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 30 * 24 * 60 * 60,
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/api\.themoviedb\.org\/3\//,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: `tmdb-api-${CACHE_VERSION}`,
-              networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 100, maxAgeSeconds: 3600 }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/image\.tmdb\.org\/t\/p\//,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: `tmdb-images-${CACHE_VERSION}`,
-              expiration: { maxEntries: 300, maxAgeSeconds: 30 * 24 * 60 * 60 },
-              cacheableResponse: { statuses: [0, 200] }
-            }
+            src: '/manifest-icon-512.maskable.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       },
       devOptions: {
-        enabled: false,
-        type: 'module'
+        enabled: false
       }
     })
   ],
   resolve: {
-    alias: { '@': path.resolve(__dirname, './src') }
+    alias: {
+      '@': path.resolve(__dirname, './src')
+    }
   }
 }));
