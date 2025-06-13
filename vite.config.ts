@@ -8,16 +8,16 @@ import pkg from './package.json';
 
 declare const self: ServiceWorkerGlobalScope;
 
-const CACHE_VERSION = `v${pkg.version}`;
+const CACHE_VERSION = `v${pkg.version}-${Date.now()}`; // force cache busting
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   base: '/',
   server: {
     host: '::',
     port: 8080,
     mimeTypes: {
       '.js': 'application/javascript',
-      '.json': 'application/json',
+      '.json': 'application/json'
     },
   },
   build: {
@@ -52,14 +52,14 @@ export default defineConfig(({ mode }) => ({
             '@radix-ui/react-tabs',
             '@radix-ui/react-toast',
             '@radix-ui/react-toggle',
-            '@radix-ui/react-toggle-group',
+            '@radix-ui/react-toggle-group'
           ],
           'firebase-auth': ['firebase/auth', '@firebase/auth'],
           'data-visualization': ['recharts'],
-          'icons': ['lucide-react', 'react-icons', 'react-feather'],
-        },
-      },
-    },
+          'icons': ['lucide-react', 'react-icons', 'react-feather']
+        }
+      }
+    }
   },
   plugins: [
     react(),
@@ -71,54 +71,42 @@ export default defineConfig(({ mode }) => ({
         'apple-icon-180.png',
         'manifest-icon-192.maskable.png',
         'manifest-icon-512.maskable.png',
-        'offline.html',
+        'offline.html'
       ],
       manifest: {
         name: "Let's Stream V2.0",
         short_name: "Let's Stream",
-        description: 'Watch movies and TV shows online',
+        description: "Watch movies and TV shows online",
         theme_color: '#3b82f6',
         background_color: '#0f0f0f',
         display: 'standalone',
         start_url: '/',
         scope: '/',
         icons: [
-          {
-            src: '/manifest-icon-192.maskable.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any maskable',
-          },
-          {
-            src: '/manifest-icon-512.maskable.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable',
-          },
-        ],
+          { src: '/manifest-icon-192.maskable.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+          { src: '/manifest-icon-512.maskable.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+        ]
       },
       workbox: {
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
         navigateFallback: '/index.html',
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2,ttf,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2,ttf}'],
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === 'navigate',
             handler: 'NetworkFirst',
             options: {
-              cacheName: `pages-cache-${CACHE_VERSION}`,
+              cacheName: `html-cache-${CACHE_VERSION}`,
               networkTimeoutSeconds: 3,
-              plugins: [
-                {
-                  handlerDidError: async () => {
-                    const cache = await self.caches.open(`pages-cache-${CACHE_VERSION}`);
-                    return cache.match('/offline.html');
-                  },
-                },
-              ],
-            },
+              plugins: [{
+                handlerDidError: async () => {
+                  const cache = await self.caches.open(`html-cache-${CACHE_VERSION}`);
+                  return cache.match('/offline.html');
+                }
+              }]
+            }
           },
           {
             urlPattern: /\/assets\/.*\.(js|css)$/i,
@@ -126,24 +114,21 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: `vite-assets-${CACHE_VERSION}`,
               expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
+                maxEntries: 150,
+                maxAgeSeconds: 7 * 24 * 60 * 60,
+              }
+            }
           },
           {
             urlPattern: /\.(?:woff2|ttf)$/i,
-            handler: 'StaleWhileRevalidate',
+            handler: 'CacheFirst',
             options: {
-              cacheName: `static-cache-${CACHE_VERSION}`,
+              cacheName: `fonts-${CACHE_VERSION}`,
               expiration: {
-                maxEntries: 200,
+                maxEntries: 50,
                 maxAgeSeconds: 30 * 24 * 60 * 60,
-              },
-            },
+              }
+            }
           },
           {
             urlPattern: /^https:\/\/api\.themoviedb\.org\/3\//,
@@ -151,56 +136,27 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: `tmdb-api-${CACHE_VERSION}`,
               networkTimeoutSeconds: 5,
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 3600,
-              },
-              plugins: [
-                {
-                  cacheWillUpdate: async ({ response }) => {
-                    if (response && response.status === 200) {
-                      try {
-                        const cloned = response.clone();
-                        const data = await cloned.json();
-                        if (data && Array.isArray(data.results)) {
-                          return response;
-                        }
-                        console.warn('TMDB response missing valid results array');
-                      } catch (e) {
-                        console.error('Error parsing TMDB response:', e);
-                      }
-                    }
-                    return null;
-                  },
-                },
-              ],
-            },
+              expiration: { maxEntries: 100, maxAgeSeconds: 3600 }
+            }
           },
           {
             urlPattern: /^https:\/\/image\.tmdb\.org\/t\/p\//,
             handler: 'CacheFirst',
             options: {
               cacheName: `tmdb-images-${CACHE_VERSION}`,
-              expiration: {
-                maxEntries: 300,
-                maxAgeSeconds: 30 * 24 * 60 * 60,
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-        ],
+              expiration: { maxEntries: 300, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          }
+        ]
       },
       devOptions: {
         enabled: false,
-        type: 'module',
-      },
-    }),
+        type: 'module'
+      }
+    })
   ],
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
+    alias: { '@': path.resolve(__dirname, './src') }
+  }
 }));
