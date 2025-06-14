@@ -1,36 +1,48 @@
 /// <reference lib="webworker" />
 
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
+import { clientsClaim, skipWaiting } from 'workbox-core';           // ← import these
 import { registerRoute, setCatchHandler } from 'workbox-routing';
 import { NetworkFirst, StaleWhileRevalidate, CacheFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 
 declare let self: ServiceWorkerGlobalScope;
 
-// Clean old caches
+// Clean up old caches
 cleanupOutdatedCaches();
-self.skipWaiting();
-self.clientsClaim();
 
-// Precache all build assets
+// Properly tell the SW to take control immediately
+skipWaiting();
+clientsClaim();
+
+// Precache Vite build assets
 precacheAndRoute(self.__WB_MANIFEST);
 
-// HTML pages
+// HTML navigations
 registerRoute(
   ({ request }) => request.mode === 'navigate',
   new NetworkFirst({
     cacheName: 'pages-cache',
     networkTimeoutSeconds: 5,
-    plugins: [new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 604800 })] // 7 days
+    plugins: [ new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 7 * 24 * 60 * 60 }) ]
   })
 );
 
-// JS, CSS, fonts
+// Static assets (JS/CSS/fonts)
 registerRoute(
   ({ request }) => ['script', 'style', 'font'].includes(request.destination),
   new StaleWhileRevalidate({
     cacheName: 'static-assets',
-    plugins: [new ExpirationPlugin({ maxEntries: 200, maxAgeSeconds: 2592000 })] // 30 days
+    plugins: [ new ExpirationPlugin({ maxEntries: 200, maxAgeSeconds: 30 * 24 * 60 * 60 }) ]
+  })
+);
+
+// Dynamic chunks (hashed JS/CSS in /assets/)
+registerRoute(
+  ({ url }) => url.pathname.startsWith('/assets/') && /\.(?:js|css)$/.test(url.pathname),
+  new StaleWhileRevalidate({
+    cacheName: 'dynamic-chunks',
+    plugins: [ new ExpirationPlugin({ maxEntries: 200, maxAgeSeconds: 30 * 24 * 60 * 60 }) ]
   })
 );
 
@@ -39,7 +51,7 @@ registerRoute(
   ({ url }) => url.origin === 'https://image.tmdb.org',
   new CacheFirst({
     cacheName: 'tmdb-images',
-    plugins: [new ExpirationPlugin({ maxEntries: 300, maxAgeSeconds: 2592000 })]
+    plugins: [ new ExpirationPlugin({ maxEntries: 300, maxAgeSeconds: 30 * 24 * 60 * 60 }) ]
   })
 );
 
@@ -49,14 +61,15 @@ registerRoute(
   new NetworkFirst({
     cacheName: 'tmdb-api',
     networkTimeoutSeconds: 5,
-    plugins: [new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 3600 })]
+    plugins: [ new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 3600 }) ]
   })
 );
 
-// Catch-all fallback (HTML only)
+// Fallback handler
 setCatchHandler(async ({ event }) => {
   if (event.request.destination === 'document') {
     return caches.match('/offline.html');
   }
-  return Response.error(); // fail silently for other types
+  // silently swallow other errors (e.g. failed chunk loads)
+  return new Response('', { status: 200, statusText: 'OK' });
 });
