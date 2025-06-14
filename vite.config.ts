@@ -6,36 +6,13 @@ import pkg from './package.json';
 
 export default defineConfig({
   base: '/',
-  server: {
-    host: '::',
-    port: 8080
-  },
-  build: {
-    outDir: 'dev-dist',
-    chunkSizeWarningLimit: 1000,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-components': [
-            '@radix-ui/react-*'
-          ],
-          'firebase-auth': ['firebase/auth', '@firebase/auth'],
-          'data-visualization': ['recharts'],
-          'icons': ['lucide-react', 'react-icons', 'react-feather']
-        }
-      }
-    }
-  },
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       strategies: 'injectManifest',
-      injectManifest: {
-        swSrc: 'src/sw.ts',
-        swDest: 'sw.js'
-      },
+      srcDir: 'src', // <-- IMPORTANT
+      filename: 'sw.ts', // <-- Your actual service worker file
       includeAssets: [
         'favicon.ico',
         'apple-icon-180.png',
@@ -46,12 +23,11 @@ export default defineConfig({
       manifest: {
         name: "Let's Stream V2.0",
         short_name: "Let's Stream",
-        description: "Watch movies and TV shows online",
-        theme_color: '#3b82f6',
-        background_color: '#0f0f0f',
-        display: 'standalone',
         start_url: '/',
         scope: '/',
+        display: 'standalone',
+        background_color: '#0f0f0f',
+        theme_color: '#3b82f6',
         icons: [
           {
             src: '/manifest-icon-192.maskable.png',
@@ -68,7 +44,7 @@ export default defineConfig({
         ]
       },
       devOptions: {
-        enabled: false
+        enabled: false // important for production
       }
     })
   ],
@@ -76,5 +52,13 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src')
     }
+  },
+  build: {
+    outDir: 'dev-dist', // <-- make sure Cloudflare uses this
+    chunkSizeWarningLimit: 1000
+  },
+  server: {
+    port: 8080,
+    host: '::'
   }
 });
