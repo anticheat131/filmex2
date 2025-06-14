@@ -4,51 +4,21 @@ import path from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 import pkg from './package.json';
 
-const CACHE_VERSION = `v${pkg.version}`;
-
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
   base: '/',
   server: {
     host: '::',
-    port: 8080,
-    mimeTypes: {
-      '.js': 'application/javascript',
-      '.json': 'application/json'
-    }
+    port: 8080
   },
   build: {
+    outDir: 'dev-dist',
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'ui-components': [
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-aspect-ratio',
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-collapsible',
-            '@radix-ui/react-context-menu',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-hover-card',
-            '@radix-ui/react-label',
-            '@radix-ui/react-menubar',
-            '@radix-ui/react-navigation-menu',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-progress',
-            '@radix-ui/react-radio-group',
-            '@radix-ui/react-scroll-area',
-            '@radix-ui/react-select',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-slider',
-            '@radix-ui/react-slot',
-            '@radix-ui/react-switch',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toast',
-            '@radix-ui/react-toggle',
-            '@radix-ui/react-toggle-group'
+            '@radix-ui/react-*'
           ],
           'firebase-auth': ['firebase/auth', '@firebase/auth'],
           'data-visualization': ['recharts'],
@@ -62,8 +32,10 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       strategies: 'injectManifest',
-      srcDir: 'src',
-      filename: 'sw.ts',
+      injectManifest: {
+        swSrc: 'src/sw.ts',
+        swDest: 'sw.js'
+      },
       includeAssets: [
         'favicon.ico',
         'apple-icon-180.png',
@@ -105,4 +77,4 @@ export default defineConfig(({ mode }) => ({
       '@': path.resolve(__dirname, './src')
     }
   }
-}));
+});
