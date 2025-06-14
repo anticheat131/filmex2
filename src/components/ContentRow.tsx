@@ -79,28 +79,23 @@ const ContentRow = ({ title, media, featured = false }: ContentRowProps) => {
   // Arrow click: scroll by one full row (show next N cards based on visible count)
   const scrollLeft = () => {
     if (!rowRef.current) return;
-    let cardWidth = 0;
-    let visibleCards = 5;
-    if (rowRef.current.children.length > 0) {
-      cardWidth = rowRef.current.children[0].getBoundingClientRect().width;
-      visibleCards = Math.floor(rowRef.current.clientWidth / cardWidth);
-    } else {
-      cardWidth = rowRef.current.offsetWidth / 5;
-    }
-    rowRef.current.scrollBy({ left: -cardWidth * visibleCards, behavior: 'smooth' });
+    const { scrollLeft, clientWidth } = rowRef.current;
+    let newScrollLeft = scrollLeft - clientWidth;
+    if (newScrollLeft < 0) newScrollLeft = 0;
+    console.log('scrollLeft', { scrollLeft, clientWidth, newScrollLeft });
+    rowRef.current.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
   };
 
   const scrollRight = () => {
     if (!rowRef.current) return;
-    let cardWidth = 0;
-    let visibleCards = 5;
-    if (rowRef.current.children.length > 0) {
-      cardWidth = rowRef.current.children[0].getBoundingClientRect().width;
-      visibleCards = Math.floor(rowRef.current.clientWidth / cardWidth);
-    } else {
-      cardWidth = rowRef.current.offsetWidth / 5;
-    }
-    rowRef.current.scrollBy({ left: cardWidth * visibleCards, behavior: 'smooth' });
+    const { scrollLeft, clientWidth, scrollWidth, children } = rowRef.current;
+    console.log('scrollRight', { scrollLeft, clientWidth, scrollWidth, childrenLength: children.length });
+    let newScrollLeft = scrollLeft + clientWidth;
+    if (newScrollLeft > scrollWidth - clientWidth) newScrollLeft = scrollWidth - clientWidth;
+    rowRef.current.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
+    setTimeout(() => {
+      console.log('after scroll', { scrollLeft: rowRef.current?.scrollLeft, clientWidth: rowRef.current?.clientWidth, scrollWidth: rowRef.current?.scrollWidth });
+    }, 400);
   };
 
   if (!media || media.length === 0) return null;
@@ -144,8 +139,8 @@ const ContentRow = ({ title, media, featured = false }: ContentRowProps) => {
       <div className="overflow-hidden">
         <div
           ref={rowRef}
-          className="flex -ml-4 scrollbar-hide"
-          style={{ transform: 'translate3d(0px, 0px, 0px)' }}
+          className="flex -ml-4 scrollbar-hide min-w-[1200px] overflow-x-auto"
+          style={{ transform: 'translate3d(0px, 0px, 0px)', flexWrap: 'nowrap' }}
           onScroll={handleScroll}
         >
           {enrichedMedia

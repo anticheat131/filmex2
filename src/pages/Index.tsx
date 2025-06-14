@@ -301,6 +301,56 @@ const Index = () => {
                 <PlatformBar platformFilters={platformFilters} setPlatformFilters={setPlatformFilters} />
               </div>
             </div>
+            {/* Platform content rows directly below PlatformBar */}
+            {platformFilters.length > 0 && (
+              <>
+                {platformFilters.includes('netflix') && netflixContent.length > 0 && (
+                  <ContentRow title="Netflix" media={netflixContent} />
+                )}
+                {platformFilters.includes('hulu') && huluContent.length > 0 && (
+                  <ContentRow title="Hulu" media={huluContent} />
+                )}
+                {platformFilters.includes('prime') && primeContent.length > 0 && (
+                  <ContentRow title="Prime Video" media={primeContent} />
+                )}
+                {platformFilters.includes('paramount') && paramountContent.length > 0 && (
+                  <ContentRow title="Paramount+" media={paramountContent} />
+                )}
+                {platformFilters.includes('disney') && disneyContent.length > 0 && (
+                  <ContentRow title="Disney+" media={disneyContent} />
+                )}
+                {platformFilters.includes('hotstar') && hotstarContent.length > 0 && (
+                  <ContentRow title="Hotstar" media={hotstarContent} />
+                )}
+                {platformFilters.includes('apple') && appleTVContent.length > 0 && (
+                  <ContentRow title="Apple TV+" media={appleTVContent} />
+                )}
+                {platformFilters.includes('jio') && jioCinemaContent.length > 0 && (
+                  <ContentRow title="JioCinema" media={jioCinemaContent} />
+                )}
+                {platformFilters.includes('sonyliv') && sonyLivContent.length > 0 && (
+                  <ContentRow title="SonyLiv" media={sonyLivContent} />
+                )}
+                {platformFilters.includes('hbo') && hboMaxContent.length > 0 && (
+                  <ContentRow title="HBO Max" media={hboMaxContent} />
+                )}
+                {platformFilters.includes('peacock') && peacockContent.length > 0 && (
+                  <ContentRow title="Peacock" media={peacockContent} />
+                )}
+                {/* Show a message if a selected platform has no content */}
+                {platformFilters.some(
+                  pf =>
+                    (pf === 'hbo' && hboMaxContent.length === 0) ||
+                    (pf === 'prime' && primeContent.length === 0) ||
+                    (pf === 'peacock' && peacockContent.length === 0)
+                ) && (
+                  <div className="text-center text-gray-400 py-8">
+                    No content available for the selected platform(s) at this time.<br />
+                    This is a limitation of the data source (TMDB), not a bug.
+                  </div>
+                )}
+              </>
+            )}
             {/* Trending Now section below Platform Bar and selected platform rows */}
             {/* Trending Now Movies and TV Shows */}
             <ContentRow title="Trending Now Movies" media={trendingMovies} featured />
