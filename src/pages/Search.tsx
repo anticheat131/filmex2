@@ -281,7 +281,7 @@ const Search = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
       
       <div className="flex-grow pt-24 px-4 md:px-8 max-w-6xl mx-auto w-full">
@@ -362,7 +362,7 @@ const Search = () => {
                       <SelectTrigger className="bg-white/10 border-white/10 text-white">
                         <SelectValue placeholder="Select media type" />
                       </SelectTrigger>
-                      <SelectContent className="bg-background border-white/10">
+                      <SelectContent className="border-white/10">
                         <SelectItem value="all" className="text-white">All</SelectItem>
                         <SelectItem value="movie" className="text-white">Movies</SelectItem>
                         <SelectItem value="tv" className="text-white">TV Shows</SelectItem>
@@ -379,7 +379,7 @@ const Search = () => {
                       <SelectTrigger className="bg-white/10 border-white/10 text-white">
                         <SelectValue placeholder="Sort by" />
                       </SelectTrigger>
-                      <SelectContent className="bg-background border-white/10">
+                      <SelectContent className="border-white/10">
                         <SelectItem value="popularity" className="text-white">Popularity</SelectItem>
                         <SelectItem value="rating" className="text-white">Rating</SelectItem>
                         <SelectItem value="newest" className="text-white">Newest</SelectItem>

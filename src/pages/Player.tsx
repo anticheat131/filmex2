@@ -1,4 +1,3 @@
-
 import { useParams } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -55,7 +54,7 @@ const Player = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-background relative"
+      className="min-h-screen relative"
     >
       <div className="fixed inset-0 bg-gradient-to-b from-background/95 to-background pointer-events-none" />
       

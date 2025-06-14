@@ -177,7 +177,7 @@ const WatchHistory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-16">
+    <div className="min-h-screen pb-16">
       <Navbar />
       
       <motion.div 

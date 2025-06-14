@@ -3,6 +3,7 @@ import { Media } from '@/utils/types';
 import MediaCard from './MediaCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useMediaQuery } from 'react-responsive';
 
 interface ContentRowProps {
   title: string;
@@ -18,104 +19,160 @@ const ContentRow = ({ title, media, featured = false }: ContentRowProps) => {
   const [enrichedMedia, setEnrichedMedia] = useState<Media[]>([]);
   const navigate = useNavigate();
 
-  // Track scroll position for index display
-  const [currentIndex, setCurrentIndex] = useState(1);
-  const totalCount = enrichedMedia.length;
-
   useEffect(() => {
     setEnrichedMedia(media);
-  }, [media]);
+  }, [media, title]);
 
-  // Update currentIndex on scroll
+  // Force horizontal scroll if more than 5 items
+  useEffect(() => {
+    if ((title === 'Trending Now Movies' || title === 'Trending Now TV Shows') && rowRef.current && enrichedMedia.length > 5) {
+      rowRef.current.style.overflowX = 'auto';
+      rowRef.current.style.justifyContent = 'flex-start';
+    }
+  }, [title, enrichedMedia.length]);
+
+  // Arrows: show/hide based on scroll position
   const handleScroll = () => {
     if (!rowRef.current) return;
-    const { scrollLeft, clientWidth } = rowRef.current;
-    const cardWidth = 240 + 4; // card width + gap (px)
-    const index = Math.floor(scrollLeft / cardWidth) + 1;
-    setCurrentIndex(Math.min(index, totalCount));
-
-    const { scrollWidth } = rowRef.current;
+    const { scrollLeft, clientWidth, scrollWidth } = rowRef.current;
     setShowLeftArrow(scrollLeft > 0);
-    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+    setShowRightArrow(scrollLeft + clientWidth < scrollWidth);
   };
 
+  // Calculate current index based on scroll position
+  const [currentIndex, setCurrentIndex] = useState(1);
+  const totalCount = enrichedMedia.length;
+  const [cardsPerView, setCardsPerView] = useState(1);
+  const [scrollPage, setScrollPage] = useState(0);
+
+  useEffect(() => {
+    // Update cardsPerView on resize
+    const updateCardsPerView = () => {
+      if (!rowRef.current) return;
+      const { clientWidth } = rowRef.current;
+      // Estimate card width (matches .basis-1/3, .basis-1/4, etc.)
+      let cardWidth = 0;
+      if (window.innerWidth >= 1280) cardWidth = rowRef.current.offsetWidth / 5;
+      else if (window.innerWidth >= 1024) cardWidth = rowRef.current.offsetWidth / 4;
+      else if (window.innerWidth >= 768) cardWidth = rowRef.current.offsetWidth / 3;
+      else cardWidth = rowRef.current.offsetWidth / 2;
+      setCardsPerView(Math.max(1, Math.round(clientWidth / cardWidth)));
+    };
+    updateCardsPerView();
+    window.addEventListener('resize', updateCardsPerView);
+    return () => window.removeEventListener('resize', updateCardsPerView);
+  }, []);
+
+  // Scroll logic: update scrollPage and currentIndex on scroll
+  useEffect(() => {
+    const updateIndex = () => {
+      if (!rowRef.current) return;
+      const { scrollLeft, clientWidth } = rowRef.current;
+      // Calculate the index of the last visible card
+      let cardWidth = 0;
+      if (window.innerWidth >= 1280) cardWidth = rowRef.current.offsetWidth / 5;
+      else if (window.innerWidth >= 1024) cardWidth = rowRef.current.offsetWidth / 4;
+      else if (window.innerWidth >= 768) cardWidth = rowRef.current.offsetWidth / 3;
+      else cardWidth = rowRef.current.offsetWidth / 2;
+      const page = Math.round(scrollLeft / clientWidth);
+      setScrollPage(page);
+      setCurrentIndex(page * cardsPerView + 1);
+    };
+
+    const node = rowRef.current;
+    node?.addEventListener('scroll', updateIndex);
+    return () => {
+      node?.removeEventListener('scroll', updateIndex);
+    };
+  }, [rowRef, enrichedMedia.length, cardsPerView, totalCount]);
+
+  // Arrow click: scroll by one full row (show next N cards based on visible count)
   const scrollLeft = () => {
     if (!rowRef.current) return;
-    const scrollAmount = rowRef.current.clientWidth * 0.75;
-    rowRef.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    let cardWidth = 0;
+    let visibleCards = 5;
+    if (rowRef.current.children.length > 0) {
+      cardWidth = rowRef.current.children[0].getBoundingClientRect().width;
+      visibleCards = Math.floor(rowRef.current.clientWidth / cardWidth);
+    } else {
+      cardWidth = rowRef.current.offsetWidth / 5;
+    }
+    rowRef.current.scrollBy({ left: -cardWidth * visibleCards, behavior: 'smooth' });
   };
 
   const scrollRight = () => {
     if (!rowRef.current) return;
-    const scrollAmount = rowRef.current.clientWidth * 0.75;
-    rowRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    let cardWidth = 0;
+    let visibleCards = 5;
+    if (rowRef.current.children.length > 0) {
+      cardWidth = rowRef.current.children[0].getBoundingClientRect().width;
+      visibleCards = Math.floor(rowRef.current.clientWidth / cardWidth);
+    } else {
+      cardWidth = rowRef.current.offsetWidth / 5;
+    }
+    rowRef.current.scrollBy({ left: cardWidth * visibleCards, behavior: 'smooth' });
   };
 
   if (!media || media.length === 0) return null;
 
   return (
-    <div 
-      className="mb-4 animate-fade-in"
-      style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}
-    >
-      <div className="flex items-center justify-between mb-1 pl-1 pr-2 gap-2 relative min-h-[48px]">
-        <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-bold text-white text-left leading-tight pt-[2px] pb-[2px]">{title}</h2>
-          {title === 'Trending Now' && (
-            <button
-              className="px-4 py-1 rounded-[7px] bg-black/60 hover:bg-black/80 text-white text-sm font-semibold transition-colors border border-white/20 min-w-[90px] h-9 flex items-center justify-center shadow-md"
-              onClick={() => navigate('/trending')}
-              style={{ marginTop: '1px' }}
-            >
-              Explore More
-            </button>
-          )}
+    <div className="relative" role="region" aria-roledescription="carousel">
+      <div className="mb-4 flex items-center justify-between gap-4 md:justify-start">
+        <h2 className="font-medium md:text-lg">{title}</h2>
+        <a
+          className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3"
+          href={title === 'Trending Now Movies' ? '/trending/movie' : title === 'Trending Now TV Shows' ? '/trending/tv' : `/trending/${title.toLowerCase().replace(/ /g, '-')}`}
+        >
+          Explore more
+        </a>
+        <div className="ml-auto hidden items-center gap-2 md:flex">
+          <p className="mr-4 text-xs text-muted-foreground">
+            <span className="font-bold text-foreground">{Math.min(currentIndex + cardsPerView - 1, totalCount)}</span>
+            <span> / </span>
+            <span>{totalCount}</span>
+          </p>
+          <button
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3"
+            onClick={scrollLeft}
+            aria-label="Previous"
+            disabled={!showLeftArrow}
+          >
+            <ChevronLeft className="size-3" />
+            <span className="sr-only">Previous</span>
+          </button>
+          <button
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3"
+            onClick={scrollRight}
+            aria-label="Next"
+            disabled={!showRightArrow}
+          >
+            <ChevronRight className="size-3" />
+            <span className="sr-only">Next</span>
+          </button>
         </div>
-        {/* Arrows and index: left side of arrows shows 1 / 16, then left/right arrows as separate buttons */}
-        {(showLeftArrow || showRightArrow) && (
-          <div className="flex items-center gap-2 absolute right-0 top-1/2 -translate-y-1/2">
-            <span className="text-white/70 text-xs font-semibold min-w-[48px] text-right select-none">{currentIndex} / {totalCount}</span>
-            <button
-              className={`w-9 h-9 flex items-center justify-center rounded-[7px] bg-black/70 border border-white/15 text-white hover:bg-black/90 transition-all ${!showLeftArrow ? 'opacity-40 pointer-events-none' : ''}`}
-              onClick={scrollLeft}
-              aria-label="Scroll left"
-              tabIndex={showLeftArrow ? 0 : -1}
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </button>
-            <button
-              className={`w-9 h-9 flex items-center justify-center rounded-[7px] bg-black/70 border border-white/15 text-white hover:bg-black/90 transition-all ${!showRightArrow ? 'opacity-40 pointer-events-none' : ''}`}
-              onClick={scrollRight}
-              aria-label="Scroll right"
-              tabIndex={showRightArrow ? 0 : -1}
-            >
-              <ChevronRight className="h-6 w-6" />
-            </button>
-          </div>
-        )}
       </div>
-      <div 
-        className="relative group"
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
-      >
-        <div 
+      <div className="overflow-hidden">
+        <div
           ref={rowRef}
-          className="flex overflow-x-auto hide-scrollbar gap-1 pb-3 px-1"
+          className="flex -ml-4 scrollbar-hide"
+          style={{ transform: 'translate3d(0px, 0px, 0px)' }}
           onScroll={handleScroll}
         >
-          {enrichedMedia.map((item, index) => (
-            <div 
-              key={`${item.media_type}-${item.id}`} 
-              className="flex-none w-[240px] md:w-[270px]"
-              style={{ 
-                opacity: 0,
-                animation: 'fade-in 0.5s ease-out forwards',
-                animationDelay: `${index * 0.05}s` 
-              }}
-            >
-              <MediaCard media={item} large />
-            </div>
+          {enrichedMedia
+            .filter(item =>
+              (title === 'Trending Now Movies' && item.media_type === 'movie') ||
+              (title === 'Trending Now TV Shows' && item.media_type === 'tv') ||
+              (title !== 'Trending Now Movies' && title !== 'Trending Now TV Shows')
+            )
+            .map((item, index) => (
+              <div
+                role="group"
+                aria-roledescription="slide"
+                key={`${item.media_type}-${item.id}`}
+                className="min-w-0 shrink-0 grow-0 pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
+              >
+                <MediaCard media={item} />
+              </div>
           ))}
         </div>
       </div>

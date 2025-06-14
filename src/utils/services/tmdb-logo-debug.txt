@@ -1,0 +1,10 @@
+If you see this file, TMDB logo debug is active. If you are not seeing any logos in the UI, it is likely that TMDB is not returning any logo_path for your trending movies/TV shows. 
+
+Check the browser console for messages from trending.ts. If you see only 'No logo for ...' messages, then TMDB does not provide logos for those items. If you see 'Logo for ...' messages, but still nothing in the UI, there may be a rendering or URL bug.
+
+To further debug, you can:
+- Open the network tab and inspect the /images API call for a trending movie/TV show.
+- Check the value of logo_path in the returned data.
+- Try hardcoding a known working logo_path (from your example) in the UI to see if it renders.
+
+If you want, I can hardcode a working logo_path for a test movie to confirm the UI logic is correct.

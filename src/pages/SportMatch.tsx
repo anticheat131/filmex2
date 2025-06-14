@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -82,7 +81,7 @@ const SportMatch = () => {
   
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <Navbar />
         
         <div className="pt-16 px-4 md:px-6 pb-12">
@@ -143,7 +142,7 @@ const SportMatch = () => {
                         <SelectTrigger className="bg-white/10 border-white/20 text-white">
                           <SelectValue placeholder="Select a stream" />
                         </SelectTrigger>
-                        <SelectContent className="bg-background border-white/10">
+                        <SelectContent className="border-white/10">
                           {streams.map((stream) => (
                             <SelectItem 
                               key={stream.id} 

@@ -90,7 +90,7 @@ const Sports = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <Navbar />
 
         <div className="pt-20 pb-12">

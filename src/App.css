@@ -691,3 +691,12 @@
   pointer-events: none;
   z-index: 1;
 }
+
+/* Hide scrollbars for elements with .scrollbar-hide */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
