@@ -139,7 +139,7 @@ const ContentRow = ({ title, media, featured = false }: ContentRowProps) => {
       <div className="overflow-hidden">
         <div
           ref={rowRef}
-          className="flex -ml-4 scrollbar-hide min-w-[1200px] overflow-x-auto"
+          className="flex -ml-4 scrollbar-hide overflow-x-auto min-w-0 md:min-w-[1200px]"
           style={{ transform: 'translate3d(0px, 0px, 0px)', flexWrap: 'nowrap' }}
           onScroll={handleScroll}
         >
@@ -154,7 +154,7 @@ const ContentRow = ({ title, media, featured = false }: ContentRowProps) => {
                 role="group"
                 aria-roledescription="slide"
                 key={`${item.media_type}-${item.id}`}
-                className="min-w-0 shrink-0 grow-0 pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
+                className="min-w-0 shrink-0 grow-0 pl-4 basis-[80vw] sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
               >
                 <MediaCard media={item} />
               </div>
