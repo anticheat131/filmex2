@@ -3,7 +3,6 @@ import { Media } from '@/utils/types';
 import MediaCard from './MediaCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useMediaQuery } from 'react-responsive';
 
 interface ContentRowProps {
   title: string;
@@ -22,14 +21,6 @@ const ContentRow = ({ title, media, featured = false }: ContentRowProps) => {
   useEffect(() => {
     setEnrichedMedia(media);
   }, [media, title]);
-
-  // Force horizontal scroll if more than 5 items
-  useEffect(() => {
-    if ((title === 'Trending Now Movies' || title === 'Trending Now TV Shows') && rowRef.current && enrichedMedia.length > 5) {
-      rowRef.current.style.overflowX = 'auto';
-      rowRef.current.style.justifyContent = 'flex-start';
-    }
-  }, [title, enrichedMedia.length]);
 
   // Arrows: show/hide based on scroll position
   const handleScroll = () => {
@@ -78,7 +69,6 @@ const ContentRow = ({ title, media, featured = false }: ContentRowProps) => {
       setScrollPage(page);
       setCurrentIndex(page * cardsPerView + 1);
     };
-
     const node = rowRef.current;
     node?.addEventListener('scroll', updateIndex);
     return () => {
@@ -116,7 +106,7 @@ const ContentRow = ({ title, media, featured = false }: ContentRowProps) => {
   if (!media || media.length === 0) return null;
 
   return (
-    <div className="relative" role="region" aria-roledescription="carousel">
+    <div className="relative px-2 md:px-8 xl:px-16" role="region" aria-roledescription="carousel">
       <div className="mb-4 flex items-center justify-between gap-4 md:justify-start">
         <h2 className="font-medium md:text-lg">{title}</h2>
         <a
@@ -173,7 +163,7 @@ const ContentRow = ({ title, media, featured = false }: ContentRowProps) => {
               >
                 <MediaCard media={item} />
               </div>
-          ))}
+            ))}
         </div>
       </div>
     </div>

@@ -184,56 +184,67 @@ const Index = () => {
         const [netflixMovies, netflixTV] = await Promise.all([
           getNetflixContent(), getNetflixTVContent()
         ]);
+        console.log('Netflix:', netflixMovies.length, 'movies,', netflixTV.length, 'tv');
         setNetflixContent(applyQuality([...netflixMovies, ...netflixTV]));
 
         const [huluMovies, huluTV] = await Promise.all([
           getHuluContent(), getHuluTVContent()
         ]);
+        console.log('Hulu:', huluMovies.length, 'movies,', huluTV.length, 'tv');
         setHuluContent(applyQuality([...huluMovies, ...huluTV]));
 
         const [primeMovies, primeTV] = await Promise.all([
           getPrimeContent(), getPrimeTVContent()
         ]);
+        console.log('Prime:', primeMovies.length, 'movies,', primeTV.length, 'tv');
         setPrimeContent(applyQuality([...primeMovies, ...primeTV]));
 
         const [paramountMovies, paramountTV] = await Promise.all([
           getParamountContent(), getParamountTVContent()
         ]);
+        console.log('Paramount:', paramountMovies.length, 'movies,', paramountTV.length, 'tv');
         setParamountContent(applyQuality([...paramountMovies, ...paramountTV]));
 
         const [disneyMovies, disneyTV] = await Promise.all([
           getDisneyContent(), getDisneyTVContent()
         ]);
+        console.log('Disney:', disneyMovies.length, 'movies,', disneyTV.length, 'tv');
         setDisneyContent(applyQuality([...disneyMovies, ...disneyTV]));
 
         const [hotstarMovies, hotstarTV] = await Promise.all([
           getHotstarContent(), getHotstarTVContent()
         ]);
+        console.log('Hotstar:', hotstarMovies.length, 'movies,', hotstarTV.length, 'tv');
         setHotstarContent(applyQuality([...hotstarMovies, ...hotstarTV]));
 
         const [appleMovies, appleTVShows] = await Promise.all([
           getAppleTVContent(), getAppleTVTVContent()
         ]);
+        console.log('Apple TV:', appleMovies.length, 'movies,', appleTVShows.length, 'tv');
         setAppleTVContent(applyQuality([...appleMovies, ...appleTVShows]));
 
         const [jioMovies, jioTV] = await Promise.all([
           getJioCinemaContent(), getJioCinemaTVContent()
         ]);
+        console.log('JioCinema:', jioMovies.length, 'movies,', jioTV.length, 'tv');
         setJioCinemaContent(applyQuality([...jioMovies, ...jioTV]));
 
         const [sonyMovies, sonyTV] = await Promise.all([
           getSonyLivContent(), getSonyLivTVContent()
         ]);
+        console.log('SonyLiv:', sonyMovies.length, 'movies,', sonyTV.length, 'tv');
         setSonyLivContent(applyQuality([...sonyMovies, ...sonyTV]));
 
         const [hboMovies, hboTV] = await Promise.all([
           getHBOMaxContent(), getHBOMaxTVContent()
         ]);
+        console.log('HBO Max:', hboMovies.length, 'movies,', hboTV.length, 'tv');
         setHBOMaxContent(applyQuality([...hboMovies, ...hboTV]));
 
         const [peacockMovies, peacockTV] = await Promise.all([
           getPeacockContent(), getPeacockTVContent()
         ]);
+        console.log('Peacock:', peacockMovies.length, 'movies,', peacockTV.length, 'tv');
         setPeacockContent(applyQuality([...peacockMovies, ...peacockTV]));
       } catch (error) {
         console.error('Error fetching platform content:', error);
@@ -290,56 +301,6 @@ const Index = () => {
                 <PlatformBar platformFilters={platformFilters} setPlatformFilters={setPlatformFilters} />
               </div>
             </div>
-            {/* Show selected platform content row(s) above Trending Now */}
-            {platformFilters.length > 0 && (
-              <>
-                {platformFilters.includes('netflix') && netflixContent.length > 0 && (
-                  <ContentRow title="Netflix" media={netflixContent} />
-                )}
-                {platformFilters.includes('hulu') && huluContent.length > 0 && (
-                  <ContentRow title="Hulu" media={huluContent} />
-                )}
-                {platformFilters.includes('prime') && primeContent.length > 0 && (
-                  <ContentRow title="Prime Video" media={primeContent} />
-                )}
-                {platformFilters.includes('paramount') && paramountContent.length > 0 && (
-                  <ContentRow title="Paramount+" media={paramountContent} />
-                )}
-                {platformFilters.includes('disney') && disneyContent.length > 0 && (
-                  <ContentRow title="Disney+" media={disneyContent} />
-                )}
-                {platformFilters.includes('hotstar') && hotstarContent.length > 0 && (
-                  <ContentRow title="Hotstar" media={hotstarContent} />
-                )}
-                {platformFilters.includes('apple') && appleTVContent.length > 0 && (
-                  <ContentRow title="Apple TV+" media={appleTVContent} />
-                )}
-                {platformFilters.includes('jio') && jioCinemaContent.length > 0 && (
-                  <ContentRow title="JioCinema" media={jioCinemaContent} />
-                )}
-                {platformFilters.includes('sonyliv') && sonyLivContent.length > 0 && (
-                  <ContentRow title="SonyLiv" media={sonyLivContent} />
-                )}
-                {platformFilters.includes('hbo') && hboMaxContent.length > 0 && (
-                  <ContentRow title="HBO Max" media={hboMaxContent} />
-                )}
-                {platformFilters.includes('peacock') && peacockContent.length > 0 && (
-                  <ContentRow title="Peacock" media={peacockContent} />
-                )}
-                {/* Show a message if a selected platform has no content */}
-                {platformFilters.some(
-                  pf =>
-                    (pf === 'hbo' && hboMaxContent.length === 0) ||
-                    (pf === 'prime' && primeContent.length === 0) ||
-                    (pf === 'peacock' && peacockContent.length === 0)
-                ) && (
-                  <div className="text-center text-gray-400 py-8">
-                    No content available for the selected platform(s) at this time.<br />
-                    This is a limitation of the data source (TMDB), not a bug.
-                  </div>
-                )}
-              </>
-            )}
             {/* Trending Now section below Platform Bar and selected platform rows */}
             {/* Trending Now Movies and TV Shows */}
             <ContentRow title="Trending Now Movies" media={trendingMovies} featured />
@@ -348,7 +309,6 @@ const Index = () => {
             {/* Trending Now TV Shows below TrendingToday Movies */}
             <ContentRow title="Trending Now TV Shows" media={trendingTV} featured />
             <TrendingTodayTV />
-            {/* Remove big hero-style grid */}
             {/* Show a row for each selected platform that has content. If none selected, show nothing extra. */}
             {platformFilters.length > 0 && (
               <>
