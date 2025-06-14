@@ -1,16 +1,46 @@
-
 import { Filter, Grid3X3, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import MultiSelect from '@/components/MultiSelect';
 import { STREAMING_PLATFORMS } from '../constants/streamingPlatforms';
 import PlatformFilter from './PlatformFilter';
 import PlatformBar from './PlatformBar';
+import { useMemo } from 'react';
+
+// TV genre options (should match TMDB genre IDs)
+const genreOptions = [
+  { value: '10759', label: 'Action & Adventure' },
+  { value: '16', label: 'Animation' },
+  { value: '35', label: 'Comedy' },
+  { value: '80', label: 'Crime' },
+  { value: '99', label: 'Documentary' },
+  { value: '18', label: 'Drama' },
+  { value: '10751', label: 'Family' },
+  { value: '10762', label: 'Kids' },
+  { value: '9648', label: 'Mystery' },
+  { value: '10763', label: 'News' },
+  { value: '10764', label: 'Reality' },
+  { value: '10765', label: 'Sci-Fi & Fantasy' },
+  { value: '10766', label: 'Soap' },
+  { value: '10767', label: 'Talk' },
+  { value: '10768', label: 'War & Politics' },
+  { value: '37', label: 'Western' },
+];
+
+// Generate year options (e.g. 2025-1950)
+const currentYear = new Date().getFullYear();
+const yearOptions = Array.from({ length: 76 }, (_, i) => {
+  const year = currentYear - i;
+  return { value: year.toString(), label: year.toString() };
+});
 
 interface TVShowsFiltersProps {
   sortBy: 'default' | 'name' | 'first_air_date' | 'rating';
   onSortChange: (value: 'default' | 'name' | 'first_air_date' | 'rating') => void;
-  genreFilter: string;
-  onGenreChange: (value: string) => void;
+  genreFilters: string[];
+  onGenreFiltersChange: (genres: string[]) => void;
+  yearFilter: string;
+  onYearChange: (year: string) => void;
   platformFilters: string[];
   setPlatformFilters: (platforms: string[]) => void;
   viewMode: 'grid' | 'list';
@@ -22,14 +52,16 @@ interface TVShowsFiltersProps {
 const TVShowsFilters = ({
   sortBy,
   onSortChange,
-  genreFilter,
-  onGenreChange,
+  genreFilters,
+  onGenreFiltersChange,
   platformFilters,
   setPlatformFilters,
   viewMode,
   toggleViewMode,
   showPlatformBar,
-  togglePlatformBar
+  togglePlatformBar,
+  yearFilter,
+  onYearChange,
 }: TVShowsFiltersProps) => {
   const clearPlatformFilters = () => {
     setPlatformFilters([]);
@@ -65,19 +97,25 @@ const TVShowsFilters = ({
             </SelectContent>
           </Select>
 
-          <Select value={genreFilter} onValueChange={onGenreChange}>
-            <SelectTrigger className="w-[180px] border-white/10 text-white bg-transparent">
-              <SelectValue placeholder="Filter by Genre" />
+          {/* Multi-genre filter */}
+          <MultiSelect
+            options={genreOptions}
+            selected={genreFilters}
+            onChange={onGenreFiltersChange}
+            placeholder="Filter by Genre(s)"
+            className="min-w-[180px]"
+          />
+
+          {/* Year filter */}
+          <Select value={yearFilter} onValueChange={onYearChange}>
+            <SelectTrigger className="w-[120px] border-white/10 text-white bg-transparent">
+              <SelectValue placeholder="Year" />
             </SelectTrigger>
-            <SelectContent className="bg-background border-white/10 text-white">
-              <SelectItem value="all">All Genres</SelectItem>
-              <SelectItem value="10759">Action & Adventure</SelectItem>
-              <SelectItem value="35">Comedy</SelectItem>
-              <SelectItem value="18">Drama</SelectItem>
-              <SelectItem value="10765">Sci-Fi & Fantasy</SelectItem>
-              <SelectItem value="80">Crime</SelectItem>
-              <SelectItem value="9648">Mystery</SelectItem>
-              <SelectItem value="10762">Kids</SelectItem>
+            <SelectContent className="bg-background border-white/10 text-white max-h-60 overflow-y-auto">
+              <SelectItem value="all">All Years</SelectItem>
+              {yearOptions.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
 

@@ -20,6 +20,7 @@ interface MediaCardProps {
   className?: string;
   minimal?: boolean;
   smaller?: boolean;
+  large?: boolean; // NEW: for homepage big cards
 }
 
 const slugifyTitle = (title: string) =>
@@ -30,6 +31,7 @@ const MediaCard = ({
   className,
   minimal = false,
   smaller = false,
+  large = false,
 }: MediaCardProps) => {
   const [imageError, setImageError] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -48,12 +50,13 @@ const MediaCard = ({
     .filter(Boolean)
     .slice(0, 2);
 
-  const runtimeMinutes =
+  const runtimeMinutes = !large && (
     media.media_type === 'movie'
-      ? media.runtime
-      : Array.isArray(media.episode_run_time) && media.episode_run_time.length > 0
-      ? media.episode_run_time[0]
-      : undefined;
+      ? (media as any).runtime
+      : Array.isArray((media as any).episode_run_time) && (media as any).episode_run_time.length > 0
+      ? (media as any).episode_run_time[0]
+      : undefined
+  );
 
   const fullReleaseDate =
     media.media_type === 'movie' ? media.release_date : media.first_air_date;
@@ -133,106 +136,45 @@ const MediaCard = ({
     fetchQuality();
   }, [mediaId, media.media_type, media.release_date]);
 
+  // Get year from release_date or first_air_date
+  const year = (media.release_date || media.first_air_date || '').slice(0, 4);
+
   return (
     <article
       className={cn(
-        'relative inline-block rounded-md border border-[#131313] bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
-        'hover:border-[#181818] hover:shadow-white/10 hover:scale-[1.02]',
-        smaller ? 'scale-90 origin-top-left' : '',
+        'relative inline-block rounded-lg border border-[#131313] bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
+        'hover:border-[#181818] hover:shadow-white/10 hover:scale-[1.04]',
+        large ? 'w-[240px] md:w-[270px] aspect-[2/3] p-0 m-0' : 'hover:scale-[1.02]',
         className
       )}
       onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseMove={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
-      <div className="relative aspect-[2/3.5] w-full overflow-hidden rounded-md">
+      <div className={cn('relative w-full overflow-hidden rounded-lg', large ? 'aspect-[2/3]' : 'aspect-[2/3.5')}> 
         <img
-          src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, posterSizes.medium)}
+          src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, large ? posterSizes.large : posterSizes.medium)}
           alt={media.title || media.name || 'Media Poster'}
           onError={() => setImageError(true)}
-          className="w-full h-full object-cover"
+          className={cn('w-full h-full object-cover', large ? 'rounded-lg' : '')}
         />
-
-        {media.vote_average > 0 && (
-          <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-black/75 text-amber-400 rounded-sm text-xs font-semibold shadow-sm">
-            <Star className="w-4 h-4 fill-amber-400" />
-            {media.vote_average.toFixed(1)}
-          </div>
-        )}
-
-        {quality && (
-          <div
-            className={cn(
-              'absolute top-2 left-2 px-3 py-1 text-[11px] font-semibold rounded-sm shadow-md text-white',
-              quality === 'HD'
-                ? 'bg-gradient-to-r from-green-600 to-green-500'
-                : 'bg-gradient-to-r from-red-600 to-red-500'
-            )}
-            style={{ letterSpacing: '0.05em', textShadow: '0 0 3px rgba(0,0,0,0.6)' }}
-          >
-            {quality}
-          </div>
-        )}
-
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10">
-          <button
-            className="flex items-center gap-2 px-3 py-1 bg-white text-black text-xs font-semibold rounded-md shadow hover:bg-gray-200 transition"
-            onClick={e => {
-              e.stopPropagation();
-              navigate(detailPath);
-            }}
-          >
-            Details <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-      </div>
-
-      <div className="px-3 pb-3 pt-2 text-white text-sm space-y-1">
-        <h3 className="text-center text-sm font-medium line-clamp-1">
-          {media.title || media.name}
-        </h3>
-
-        <div className="flex justify-between items-end text-xs">
-          <p className="text-white/70 line-clamp-1">
-            {genreNames.length > 0 ? genreNames.join(', ') : '—'}
-          </p>
-          {runtimeMinutes && <p className="text-white/60">{runtimeMinutes} min</p>}
-        </div>
-
-        <p className="text-center text-white/50 text-[11px] pt-1">{formattedMonthYear}</p>
-      </div>
-
-      <AnimatePresence>
-        {showPopup && (
-          <motion.div
-            key="popup"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.15 }}
-            className="fixed z-50 w-[320px] max-w-full rounded-md bg-black/90 p-4 shadow-lg text-white pointer-events-auto"
-            style={{
-              top: popupPos.y + 10,
-              left: popupPos.x - 160,
-            }}
-          >
-            <h4 className="font-bold text-lg mb-1">{media.title || media.name}</h4>
-            <p className="text-xs mb-2 text-white/70">Release: {fullReleaseDate || 'Unknown'}</p>
-            <p className="text-xs mb-2 text-white/70">Genres: {genreNames?.join(', ') || 'Unknown'}</p>
+        {/* Bottom overlay bar for IMDB, title, year */}
+        <div style={{position:'absolute',left:0,right:0,bottom:0,padding:0}}>
+          <div className="media-card-info-gradient" />
+          <div className="media-card-info-bar">
+            {/* IMDB badge bottom left */}
             {media.vote_average > 0 && (
-              <p className="flex items-center text-amber-400 mb-2">
-                <Star className="h-4 w-4 mr-1 fill-amber-400" /> {media.vote_average.toFixed(1)}
-              </p>
+              <div className="media-card-imdb-badge">
+                <span className="imdb-label">IMDB</span>
+                <span className="imdb-score">{media.vote_average.toFixed(1)}</span>
+              </div>
             )}
-            <p className="text-xs max-h-28 overflow-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-              {media.overview || 'No description available.'}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            {/* Title and year to the right of badge, left-aligned, stacked */}
+            <div className="media-card-title-year">
+              <h3 className="media-card-title">{media.title || media.name}</h3>
+              <span className="media-card-year">{year || '—'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </article>
   );
 };

@@ -14,11 +14,12 @@ import { Media } from '@/utils/types';
 const TVShowsPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'popular' | 'top_rated' | 'trending'>('popular');
-  const [genreFilter, setGenreFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'default' | 'name' | 'first_air_date' | 'rating'>('default');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [platformFilters, setPlatformFilters] = useState<string[]>([]);
   const [showPlatformBar, setShowPlatformBar] = useState(false);
+  const [genreFilters, setGenreFilters] = useState<string[]>([]); // multi-genre
+  const [yearFilter, setYearFilter] = useState<string>('all');
 
   // Track initial page visit
   useEffect(() => {
@@ -52,8 +53,10 @@ const TVShowsPage = () => {
           <TVShowsFilters
             sortBy={sortBy}
             onSortChange={setSortBy}
-            genreFilter={genreFilter}
-            onGenreChange={setGenreFilter}
+            genreFilters={genreFilters}
+            onGenreFiltersChange={setGenreFilters}
+            yearFilter={yearFilter}
+            onYearChange={setYearFilter}
             viewMode={viewMode}
             toggleViewMode={toggleViewMode}
             platformFilters={platformFilters}
@@ -66,7 +69,8 @@ const TVShowsPage = () => {
             onTabChange={handleTabChange}
             viewMode={viewMode}
             sortBy={sortBy}
-            genreFilter={genreFilter}
+            genreFilters={genreFilters}
+            yearFilter={yearFilter}
             platformFilters={platformFilters}
           />
         </main>

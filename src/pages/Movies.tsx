@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { getPopularMovies, getTopRatedMovies } from '@/utils/api';
 import { Media, ensureExtendedMediaArray } from '@/utils/types';
@@ -13,8 +13,24 @@ import { Film, ChevronDown, Grid3X3, List } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import MultiSelect from '@/components/MultiSelect';
+import PlatformFilter from './movies/components/PlatformFilter';
+import PlatformBar from './movies/components/PlatformBar';
 
 const ITEMS_PER_PAGE = 20;
+
+const genreMap: Record<number, string> = {
+  28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+  99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
+  27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance',
+  878: 'Sci-Fi', 10770: 'TV Movie', 53: 'Thriller', 10752: 'War', 37: 'Western',
+};
+const genreOptions = Object.entries(genreMap).map(([id, label]) => ({ value: id, label }));
+const currentYear = new Date().getFullYear();
+const yearOptions = Array.from({ length: 50 }, (_, i) => {
+  const year = currentYear - i;
+  return { value: String(year), label: String(year) };
+});
 
 const Movies = () => {
   const { toast } = useToast();
@@ -26,7 +42,11 @@ const Movies = () => {
   const [allPopularMovies, setAllPopularMovies] = useState<Media[]>([]);
   const [allTopRatedMovies, setAllTopRatedMovies] = useState<Media[]>([]);
   const [sortBy, setSortBy] = useState<'default' | 'title' | 'release_date' | 'rating'>('default');
-  const [genreFilter, setGenreFilter] = useState<string>('all');
+  const [genreFilters, setGenreFilters] = useState<string[]>([]);
+  const [yearFilter, setYearFilter] = useState<string>('');
+  const [platformFilters, setPlatformFilters] = useState<string[]>([]);
+  const [showPlatformBar, setShowPlatformBar] = useState(false);
+  const fetchingMoreRef = useRef(false);
 
   const popularMoviesQuery = useQuery({
     queryKey: ['popularMovies', popularPage],
@@ -90,12 +110,41 @@ const Movies = () => {
     }
   }, [topRatedPage, queryClient, topRatedMoviesQuery.data]);
 
+  const clearPlatformFilters = () => setPlatformFilters([]);
+  const togglePlatformFilter = (platformId: string) => {
+    setPlatformFilters((prev) =>
+      prev.includes(platformId)
+        ? prev.filter((id) => id !== platformId)
+        : [...prev, platformId]
+    );
+  };
+  const togglePlatformBar = () => setShowPlatformBar((prev) => !prev);
+
   const applyFiltersAndSort = (movies: Media[]) => {
     let filteredMovies = [...movies];
 
-    if (genreFilter !== 'all') {
+    // Multi-genre filter
+    if (genreFilters.length > 0) {
       filteredMovies = filteredMovies.filter(movie =>
-        movie.genre_ids?.includes(parseInt(genreFilter))
+        genreFilters.every(g => movie.genre_ids?.includes(Number(g)))
+      );
+    }
+
+    // Year filter
+    if (yearFilter && yearFilter !== 'all') {
+      filteredMovies = filteredMovies.filter(movie =>
+        movie.release_date && movie.release_date.startsWith(yearFilter)
+      );
+    }
+
+    // Platform filter (demo logic, adapt to real provider data if available)
+    if (platformFilters.length > 0) {
+      filteredMovies = filteredMovies.filter(movie =>
+        platformFilters.some(platformId => {
+          // Demo: assign movies to platforms by id hash
+          const platformIndex = platformId.length > 0 ? platformId.charCodeAt(0) % 8 : 0;
+          return (movie.id % 8) === platformIndex;
+        })
       );
     }
 
@@ -118,8 +167,57 @@ const Movies = () => {
     return filteredMovies;
   };
 
-  const filteredPopularMovies = applyFiltersAndSort(allPopularMovies);
-  const filteredTopRatedMovies = applyFiltersAndSort(allTopRatedMovies);
+  // Helper to ensure at least 20 filtered movies
+  const getAtLeastNFilteredMovies = async (
+    allMovies: Media[],
+    queryFn: (page: number) => Promise<Media[]>,
+    page: number,
+    filterFn: (movies: Media[]) => Media[],
+    n: number
+  ) => {
+    let filtered = filterFn(allMovies);
+    let currentPage = page;
+    let movies = [...allMovies];
+    let pagesWithoutNewMovies = 0;
+    const MAX_PAGES = 20; // Prevent infinite loop
+    while (filtered.length < n && pagesWithoutNewMovies < MAX_PAGES) {
+      currentPage += 1;
+      const nextPageMovies = await queryFn(currentPage);
+      if (!nextPageMovies.length) break;
+      // Only add movies that are not already present
+      const newMovies = nextPageMovies.filter(movie => !movies.some(m => m.id === (movie.id || movie.media_id)));
+      if (newMovies.length === 0) {
+        pagesWithoutNewMovies++;
+        continue;
+      }
+      movies = [...movies, ...newMovies];
+      filtered = filterFn(movies);
+    }
+    return filtered.slice(0, n);
+  };
+
+  const [filteredPopularMovies, setFilteredPopularMovies] = useState<Media[]>([]);
+  const [filteredTopRatedMovies, setFilteredTopRatedMovies] = useState<Media[]>([]);
+
+  useEffect(() => {
+    const filterFn = (movies: Media[]) => applyFiltersAndSort(movies);
+    // Always use getAtLeastNFilteredMovies to ensure at least 20 movies for any filter combination (including genre/category)
+    getAtLeastNFilteredMovies(
+      allPopularMovies,
+      getPopularMovies,
+      popularPage,
+      filterFn,
+      20
+    ).then(setFilteredPopularMovies);
+    getAtLeastNFilteredMovies(
+      allTopRatedMovies,
+      getTopRatedMovies,
+      topRatedPage,
+      filterFn,
+      20
+    ).then(setFilteredTopRatedMovies);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allPopularMovies, allTopRatedMovies, platformFilters, genreFilters, yearFilter, sortBy]);
 
   const handleShowMorePopular = () => setPopularPage(prev => prev + 1);
   const handleShowMoreTopRated = () => setTopRatedPage(prev => prev + 1);
@@ -155,6 +253,7 @@ const Movies = () => {
             </div>
 
             <div className="flex flex-wrap items-center gap-4 mb-6">
+              {/* Sort By Filter */}
               <Select 
                 value={sortBy} 
                 onValueChange={(value: 'default' | 'title' | 'release_date' | 'rating') => setSortBy(value)}
@@ -170,21 +269,38 @@ const Movies = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={genreFilter} onValueChange={setGenreFilter}>
-                <SelectTrigger className="w-[180px] border-white/10 text-white bg-transparent">
-                  <SelectValue placeholder="Filter by Genre" />
-                </SelectTrigger>
-                <SelectContent className="bg-background border-white/10 text-white">
-                  <SelectItem value="all">All Genres</SelectItem>
-                  <SelectItem value="28">Action</SelectItem>
-                  <SelectItem value="12">Adventure</SelectItem>
-                  <SelectItem value="35">Comedy</SelectItem>
-                  <SelectItem value="18">Drama</SelectItem>
-                  <SelectItem value="27">Horror</SelectItem>
-                  <SelectItem value="10749">Romance</SelectItem>
-                  <SelectItem value="878">Sci-Fi</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Genre Filter */}
+              <MultiSelect
+                options={genreOptions}
+                selected={genreFilters}
+                onChange={setGenreFilters}
+                placeholder="Filter by Genre(s)"
+                className="min-w-[180px]"
+              />
+
+              {/* Year Filter */}
+              <div className="flex flex-col">
+                <Select value={yearFilter} onValueChange={setYearFilter}>
+                  <SelectTrigger className="w-[120px] border-white/10 text-white bg-transparent">
+                    <SelectValue placeholder="Year" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border-white/10 text-white max-h-60 overflow-y-auto">
+                    <SelectItem value="all">All Years</SelectItem>
+                    {yearOptions.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Platform filter button for switching streaming platforms */}
+              <PlatformFilter
+                platformFilters={platformFilters}
+                togglePlatformFilter={togglePlatformFilter}
+                clearPlatformFilters={clearPlatformFilters}
+                togglePlatformBar={togglePlatformBar}
+                showPlatformBar={showPlatformBar}
+              />
 
               <Button
                 variant="outline"
@@ -206,6 +322,10 @@ const Movies = () => {
               </Button>
             </div>
             
+            {showPlatformBar && (
+              <PlatformBar platformFilters={platformFilters} setPlatformFilters={setPlatformFilters} />
+            )}
+
             <TabsContent value="popular" className="focus-visible:outline-none animate-fade-in">
               {popularMoviesQuery.isLoading ? (
                 <MediaGridSkeleton listView={viewMode === 'list'} />

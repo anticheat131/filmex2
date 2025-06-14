@@ -1,4 +1,3 @@
-
 import { TabsContent, TabsList, TabsTrigger, Tabs } from '@/components/ui/tabs';
 import TabContent from './TabContent';
 
@@ -7,7 +6,8 @@ interface TVShowsTabsProps {
   onTabChange: (value: string) => void;
   viewMode: 'grid' | 'list';
   sortBy: 'default' | 'name' | 'first_air_date' | 'rating';
-  genreFilter: string;
+  genreFilters: string[];
+  yearFilter: string;
   platformFilters: string[];
 }
 
@@ -16,7 +16,8 @@ const TVShowsTabs = ({
   onTabChange, 
   viewMode, 
   sortBy, 
-  genreFilter, 
+  genreFilters, 
+  yearFilter, 
   platformFilters 
 }: TVShowsTabsProps) => {
   return (
@@ -32,7 +33,8 @@ const TVShowsTabs = ({
           type="popular" 
           viewMode={viewMode} 
           sortBy={sortBy}
-          genreFilter={genreFilter}
+          genreFilters={genreFilters}
+          yearFilter={yearFilter}
           platformFilters={platformFilters}
         />
       </TabsContent>
@@ -42,7 +44,8 @@ const TVShowsTabs = ({
           type="top_rated" 
           viewMode={viewMode}
           sortBy={sortBy}
-          genreFilter={genreFilter}
+          genreFilters={genreFilters}
+          yearFilter={yearFilter}
           platformFilters={platformFilters}
         />
       </TabsContent>
@@ -52,7 +55,8 @@ const TVShowsTabs = ({
           type="trending" 
           viewMode={viewMode}
           sortBy={sortBy}
-          genreFilter={genreFilter}
+          genreFilters={genreFilters}
+          yearFilter={yearFilter}
           platformFilters={platformFilters}
         />
       </TabsContent>

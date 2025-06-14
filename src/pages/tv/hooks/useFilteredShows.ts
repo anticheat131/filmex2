@@ -1,44 +1,53 @@
-
 import { useCallback } from 'react';
 import { Media } from '@/utils/types';
 import { STREAMING_PLATFORMS } from '../constants/streamingPlatforms';
 
+// NOTE: This hook is now deprecated for the main TV page filtering.
+// Filtering is now handled inline in TabContent to support multi-genre and year.
+
 const useFilteredShows = (
-  shows: Media[], 
+  shows: Media[],
   sortBy: 'default' | 'name' | 'first_air_date' | 'rating',
   genreFilter: string,
   platformFilters: string[]
 ) => {
   const filterShows = useCallback(() => {
     let filteredShows = [...shows];
-    
+
     // Apply genre filter
     if (genreFilter !== 'all') {
-      filteredShows = filteredShows.filter(show => 
+      filteredShows = filteredShows.filter((show) =>
         show.genre_ids?.includes(parseInt(genreFilter))
       );
     }
 
     // Apply platform filters
     if (platformFilters.length > 0) {
-      filteredShows = filteredShows.filter(show =>
+      filteredShows = filteredShows.filter(
         // This is a simplified version for demo purposes
         // In a real app, we would use actual streaming data
-        platformFilters.some(platformId => {
-          const platformIndex = STREAMING_PLATFORMS.findIndex(p => p.id === platformId);
-          return (show.id % (STREAMING_PLATFORMS.length + platformIndex)) === platformIndex;
-        })
+        (show) =>
+          platformFilters.some((platformId) => {
+            const platformIndex = STREAMING_PLATFORMS.findIndex(
+              (p) => p.id === platformId
+            );
+            return (
+              (show.id % (STREAMING_PLATFORMS.length + platformIndex)) ===
+              platformIndex
+            );
+          })
       );
     }
-    
+
     // Apply sorting
     switch (sortBy) {
       case 'name':
         filteredShows.sort((a, b) => a.name.localeCompare(b.name));
         break;
       case 'first_air_date':
-        filteredShows.sort((a, b) => 
-          new Date(b.first_air_date).getTime() - new Date(a.first_air_date).getTime()
+        filteredShows.sort((a, b) =>
+          new Date(b.first_air_date).getTime() -
+          new Date(a.first_air_date).getTime()
         );
         break;
       case 'rating':
@@ -47,7 +56,7 @@ const useFilteredShows = (
       default:
         break;
     }
-    
+
     return filteredShows;
   }, [shows, sortBy, genreFilter, platformFilters]);
 

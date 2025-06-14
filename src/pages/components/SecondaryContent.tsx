@@ -20,11 +20,7 @@ import {
 const applyQuality = (items: Media[]) =>
   items.map(item => {
     let quality = 'HD';
-    if (typeof item.hd === 'boolean') {
-      quality = item.hd ? 'HD' : 'CAM';
-    } else if (item.video_source && typeof item.video_source === 'string') {
-      quality = item.video_source.toLowerCase().includes('cam') ? 'CAM' : 'HD';
-    } else if (!item.backdrop_path) {
+    if (!item.backdrop_path) {
       quality = 'CAM';
     }
     return {

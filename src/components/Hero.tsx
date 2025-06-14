@@ -59,8 +59,9 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
 
       const sorted = Array.from(unique.values())
         .sort((a, b) => {
-          const popDiff = b.popularity - a.popularity;
-          if (popDiff !== 0) return popDiff;
+          // Sort by vote_average (descending), then by date (descending)
+          const voteDiff = (b.vote_average || 0) - (a.vote_average || 0);
+          if (voteDiff !== 0) return voteDiff;
           const bDate = new Date(b.release_date || b.first_air_date || '1970-01-01').getTime();
           const aDate = new Date(a.release_date || a.first_air_date || '1970-01-01').getTime();
           return bDate - aDate;
@@ -149,24 +150,25 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
         onMouseLeave={() => setPaused(false)}
       >
         <AnimatePresence mode="wait">
-          <motion.img
-            key={currentIndex}
-            src={getImageUrl(featured.backdrop_path, backdropSizes.original)}
-            alt={title}
-            className="absolute inset-0 w-full h-full object-cover"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0 }}
-          />
-          <motion.div
-            key={`overlay-${currentIndex}`}
-            className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/90"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0 }}
-          />
+          {/* Wrap both elements in a single keyed parent to fix AnimatePresence warning */}
+          <React.Fragment key={currentIndex}>
+            <motion.img
+              src={getImageUrl(featured.backdrop_path, backdropSizes.original)}
+              alt={title}
+              className="absolute inset-0 w-full h-full object-cover"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0 }}
+            />
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/90"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0 }}
+            />
+          </React.Fragment>
         </AnimatePresence>
 
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-6 md:px-16 text-center text-white max-w-5xl mx-auto space-y-4">
