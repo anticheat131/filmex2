@@ -1,4 +1,3 @@
-/// <reference lib="webworker" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
@@ -18,6 +17,7 @@ export default defineConfig(({ mode }) => ({
     }
   },
   build: {
+    outDir: 'dev-dist',
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
@@ -63,8 +63,13 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       strategies: 'injectManifest',
+      outDir: 'dev-dist',
       srcDir: 'src',
       filename: 'sw.ts',
+      injectManifest: {
+        swSrc: 'src/sw.ts',
+        swDest: 'sw.js'
+      },
       includeAssets: [
         'favicon.ico',
         'apple-icon-180.png',
