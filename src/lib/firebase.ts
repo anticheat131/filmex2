@@ -11,7 +11,8 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "lets-stream-c09e3.firebasestorage.app",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "1080273996839",
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:1080273996839:web:2b42f26b59f4e22ff91202",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-691PPKTFXS"
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-691PPKTFXS",
+  databaseURL: "https://filmexapp-64740-default-rtdb.europe-west1.firebasedatabase.app",
 };
 
 // Initialize Firebase with specified config or get existing instance

@@ -13,5 +13,7 @@ const firebaseConfig = {
   databaseURL: "https://filmexapp-64740-default-rtdb.europe-west1.firebasedatabase.app",
 };
 
+console.log("FIREBASE CONFIG:", firebaseConfig);
+
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const rtdb = getDatabase(app);
