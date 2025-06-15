@@ -20,6 +20,8 @@ const SportMatchPlayer = lazy(() => import('./pages/SportMatchPlayer'));
 const Player = lazy(() => import('./pages/Player'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Trending = lazy(() => import('./pages/Trending'));
+const TrendingMovies = lazy(() => import('./pages/TrendingMovies'));
+const TrendingTVShows = lazy(() => import('./pages/TrendingTVShows'));
 
 // Legal pages
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
@@ -55,6 +57,8 @@ export default function AppRoutes() {
           <Route path="/watch/:type/:id/:season/:episode" element={<Player />} />
           <Route path="/search" element={<Search />} />
           <Route path="/trending" element={<Trending />} />
+          <Route path="/trending/movie" element={<TrendingMovies />} />
+          <Route path="/trending/tv" element={<TrendingTVShows />} />
 
           {/* Legal routes */}
           <Route path="/privacy" element={<PrivacyPolicy />} />
