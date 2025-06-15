@@ -159,7 +159,7 @@ const Hero = ({ media: initialMedia, className = '' }: HeroProps) => {
   return (
     <>
       <section
-        className={`h-hero relative w-full aspect-[1.88/1] min-h-[340px] max-h-[700px] md:aspect-[2/1] md:min-h-[420px] md:max-h-[700px] bg-black rounded-md shadow-2xl border border-white/10 flex items-center justify-center overflow-hidden ${className}`}
+        className={`h-hero relative w-full aspect-[1.88/1] min-h-[386px] max-h-[795px] md:aspect-[2/1] md:min-h-[420px] md:max-h-[700px] bg-black rounded-md shadow-2xl border border-white/10 flex items-center justify-center overflow-hidden -mt-[4vh] md:mt-0 ${className}`}
         style={{boxShadow: '0 8px 40px 0 rgba(0,0,0,0.65), 0 1.5px 8px 0 rgba(0,0,0,0.25)'}}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
