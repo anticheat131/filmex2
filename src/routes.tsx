@@ -22,6 +22,7 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const Trending = lazy(() => import('./pages/Trending'));
 const TrendingMovies = lazy(() => import('./pages/TrendingMovies'));
 const TrendingTVShows = lazy(() => import('./pages/TrendingTVShows'));
+const WatchTogether = lazy(() => import('./pages/WatchTogether'));
 
 // Legal pages
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
@@ -59,6 +60,7 @@ export default function AppRoutes() {
           <Route path="/trending" element={<Trending />} />
           <Route path="/trending/movie" element={<TrendingMovies />} />
           <Route path="/trending/tv" element={<TrendingTVShows />} />
+          <Route path="/watch-together" element={<WatchTogether />} />
 
           {/* Legal routes */}
           <Route path="/privacy" element={<PrivacyPolicy />} />

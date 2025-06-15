@@ -88,14 +88,6 @@ const TrendingToday = () => {
           ))}
         </div>
       </section>
-      <div className="w-full flex justify-center mt-2 mb-8">
-        <button
-          className="bg-primary text-primary-foreground hover:bg-primary/80 font-semibold rounded-lg px-6 py-2 shadow-lg text-base transition-all"
-          onClick={() => navigate('/trending/movie')}
-        >
-          Explore More Movies
-        </button>
-      </div>
     </>
   );
 };
