@@ -344,46 +344,44 @@ const WatchTogether = () => {
                   </ul>
                   <div className="text-yellow-300 font-medium text-sm bg-yellow-900/30 rounded-xl px-4 py-3 shadow-inner">If you experience issues, refresh the page or rejoin the room.</div>
                   {roomCode && (
-                    <div className="mt-6 flex flex-col items-center w-full">
-                      <div className="text-primary font-semibold mb-1">Invite friends with this link:</div>
-                      <div className="flex w-full max-w-xs">
-                        <input
-                          className="flex-1 rounded-l px-2 py-1 bg-gray-800 text-white border border-gray-600 text-xs select-all"
-                          value={`${window.location.origin}/watch-together?room=${roomCode}`}
-                          readOnly
-                        />
-                        <button
-                          className="bg-primary hover:bg-primary/80 text-white rounded-r px-3 py-1 text-xs font-bold transition-colors"
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(`${window.location.origin}/watch-together?room=${roomCode}`);
-                          }}
-                        >
-                          Copy
-                        </button>
+                    <>
+                      <div className="mt-6 flex flex-col items-center w-full">
+                        <div className="text-primary font-semibold mb-1">Invite friends with this link:</div>
+                        <div className="flex w-full max-w-xs">
+                          <input
+                            className="flex-1 rounded-l px-2 py-1 bg-gray-800 text-white border border-gray-600 text-xs select-all"
+                            value={`${window.location.origin}/watch-together?room=${roomCode}`}
+                            readOnly
+                          />
+                          <button
+                            className="bg-primary hover:bg-primary/80 text-white rounded-r px-3 py-1 text-xs font-bold transition-colors"
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(`${window.location.origin}/watch-together?room=${roomCode}`);
+                            }}
+                          >
+                            Copy
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                      {/* Voice Chat directly below invite link */}
+                      <div className="w-full mt-6">
+                        <div className="bg-gray-900 rounded-2xl shadow-xl p-6 flex flex-col items-center border border-gray-800">
+                          <div className="mb-2 text-xl font-extrabold text-primary flex items-center gap-2">
+                            <svg xmlns='http://www.w3.org/2000/svg' className='h-6 w-6 text-primary' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 19V6a2 2 0 012-2h2a2 2 0 012 2v13m-6 0h6' /></svg>
+                            Voice Chat
+                          </div>
+                          <VoiceChat roomCode={roomCode} userId={user?.uid || sessionUser} displayName={user?.displayName || sessionUser} />
+                        </div>
+                      </div>
+                    </>
                   )}
                 </aside>
-                {/* Voice Chat below How to guide, inside sidebar column but outside the guide card */}
-                {roomState?.videoId && (
-                  <div className="w-full md:w-96 mt-6">
-                    <VoiceChat roomCode={roomCode} userId={user?.uid || sessionUser} displayName={user?.displayName || sessionUser} />
-                  </div>
-                )}
               </div>
             </div>
           )}
         </div>
       </div>
-      {/* Voice Chat below How to guide, outside sidebar and chat */}
-      {roomState?.videoId && (
-        <div className="flex w-full justify-center mt-8">
-          <div className="w-full md:w-2/3 lg:w-1/2">
-            <VoiceChat roomCode={roomCode} userId={user?.uid || sessionUser} displayName={user?.displayName || sessionUser} />
-          </div>
-        </div>
-      )}
     </>
   );
 };
