@@ -41,7 +41,7 @@ const TrendingToday = () => {
 
   return (
     <section className="w-full mt-8 p-0 m-0">
-      <div className="grid grid-cols-2 grid-rows-2 gap-[2vw] w-full h-[120vw] md:h-[72vw] max-h-[140vh]">
+      <div className="grid grid-cols-1 grid-rows-4 md:grid-cols-2 md:grid-rows-2 gap-[2vw] w-full h-[240vw] md:h-[72vw] max-h-[140vh]">
         {movies.map((movie, idx) => (
           <div key={movie.id} className="relative bg-black/80 overflow-hidden shadow-2xl flex flex-col justify-center items-center w-full h-full min-h-0 min-w-0 group flex-1 rounded-xl pb-10">
             <img
