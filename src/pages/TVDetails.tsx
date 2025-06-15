@@ -113,11 +113,15 @@ const TVDetailsPage = () => {
         backgroundSize: '1rem',
       }}
     >
-      {tvShow.seasons?.map((season) => (
-        <option key={season.id} value={season.season_number}>
-          {season.name || `Season ${season.season_number}`}
-        </option>
-      ))}
+      {Array.isArray(tvShow.seasons) && tvShow.seasons.length > 0 ? (
+        tvShow.seasons.map((season) => (
+          <option key={season.id} value={season.season_number}>
+            {season.name || `Season ${season.season_number}`}
+          </option>
+        ))
+      ) : (
+        <option>No seasons available</option>
+      )}
     </select>
   );
 
@@ -285,10 +289,8 @@ const TVDetailsPage = () => {
   </div>
 
   <ContentRow
-    title="Recommended Shows"
-    items={recommendations}
-    mediaType="tv"
-    showSeeAll={false}
+    title="Recommended TV Shows"
+    media={recommendations}
   />
 </div>
 );
