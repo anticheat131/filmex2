@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
-import { useWatchHistory } from '@/hooks/use-watch-history';
 import { WatchHistoryItem } from '@/contexts/types/watch-history';
-import { Play, Clock, ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { Play, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -14,6 +13,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatDistanceToNow } from 'date-fns';
+import { getContinueWatching, setContinueWatching, removeContinueWatching } from '@/api/continue-watching';
 
 interface ContinueWatchingProps {
   maxItems?: number;
@@ -21,7 +21,6 @@ interface ContinueWatchingProps {
 
 const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const { user } = useAuth();
-  const { watchHistory } = useWatchHistory();
   const [continuableItems, setContinuableItems] = useState<WatchHistoryItem[]>([]);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -29,36 +28,15 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const processedHistory = useMemo(() => {
-    if (watchHistory.length === 0) return [];
-
-    const validItems = watchHistory.filter(item => {
-      if (!item.created_at) return false;
-      try {
-        const date = new Date(item.created_at);
-        return !isNaN(date.getTime());
-      } catch {
-        return false;
-      }
-    });
-
-    const uniqueMediaMap = new Map<string, WatchHistoryItem>();
-
-    validItems.forEach(item => {
-      const key = `${item.media_type}-${item.media_id}${item.media_type === 'tv' ? `-s${item.season}-e${item.episode}` : ''}`;
-      if (!uniqueMediaMap.has(key) || new Date(item.created_at) > new Date(uniqueMediaMap.get(key)!.created_at)) {
-        uniqueMediaMap.set(key, item);
-      }
-    });
-
-    return Array.from(uniqueMediaMap.values()).sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-  }, [watchHistory]);
-
   useEffect(() => {
-    setContinuableItems(processedHistory.slice(0, maxItems));
-  }, [processedHistory, maxItems]);
+    if (!user) return;
+    getContinueWatching(user.uid, maxItems).then(items => {
+      console.log('[ContinueWatching][READ]', items);
+      setContinuableItems(items);
+    }).catch(err => {
+      console.error('[ContinueWatching][READ] error', err);
+    });
+  }, [user, maxItems]);
 
   const handleScroll = () => {
     if (!rowRef.current) return;
@@ -77,20 +55,21 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
     rowRef.current.scrollBy({ left: rowRef.current.clientWidth * 0.75, behavior: 'smooth' });
   };
 
-  const handleRemoveItem = (id: string) => {
+  const handleRemoveItem = async (id: string) => {
+    if (!user) return;
+    setContinuableItems(prev => prev.filter(item => item.id !== id)); // Remove from UI immediately
     try {
-      const raw = localStorage.getItem('fdf_watch_history') || '[]';
-      const parsed = JSON.parse(raw);
-
-      const filtered = parsed.filter((item: any) => item.id !== id);
-      localStorage.setItem('fdf_watch_history', JSON.stringify(filtered));
-      setContinuableItems(prev => prev.filter(item => item.id !== id));
-    } catch (error) {
-      console.error('Error removing item from localStorage:', error);
+      await removeContinueWatching(user.uid, id);
+    } catch (err) {
+      // Optionally, show error or revert UI
+      console.error('Failed to remove continue watching item', err);
     }
   };
 
-  const handleContinueWatching = (item: WatchHistoryItem) => {
+  const handleContinueWatching = async (item: WatchHistoryItem) => {
+    if (user) {
+      await setContinueWatching(user.uid, item);
+    }
     if (item.media_type === 'movie') {
       navigate(`/watch/${item.media_type}/${item.media_id}`);
     } else {
@@ -103,7 +82,29 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
     navigate(`/${item.media_type}/${item.media_id}`);
   };
 
-  if (!user || continuableItems.length === 0) return null;
+  // Deduplicate, filter out finished and invalid items
+  const processedItems = useMemo(() => {
+    const map = new Map<string, WatchHistoryItem>();
+    continuableItems.forEach(item => {
+      // Consider finished if less than 2 minutes left
+      const isFinished = item.duration > 0 && (item.duration - item.watch_position) < 120;
+      // Filter out items with missing title or backdrop_path
+      const isInvalid = !item.title || !item.backdrop_path;
+      if (isFinished || isInvalid) return;
+      // Unique key: movie = media_type-media_id, tv = media_type-media_id-s{season}-e{episode}
+      const key = item.media_type === 'tv'
+        ? `${item.media_type}-${item.media_id}-s${item.season}-e${item.episode}`
+        : `${item.media_type}-${item.media_id}`;
+      // Only keep the most recent
+      if (!map.has(key) || new Date(item.created_at) > new Date(map.get(key)!.created_at)) {
+        map.set(key, item);
+      }
+    });
+    // Sort by most recent
+    return Array.from(map.values()).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [continuableItems]);
+
+  if (!user || processedItems.length === 0) return null;
 
   return (
     <div className="px-4 md:px-8 mt-8 mb-6">
@@ -134,7 +135,7 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
           animate={{ opacity: 1 }}
           transition={{ staggerChildren: 0.1 }}
         >
-          {continuableItems.map(item => (
+          {processedItems.map(item => (
             <motion.div
               key={item.id}
               className="relative flex-none w-[280px] md:w-[300px] aspect-video bg-card rounded-lg overflow-hidden group cursor-pointer hover-card"
@@ -162,28 +163,9 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
 
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
 
+              {/* Remove details/info button and move title back to bottom overlay */}
               <div className="absolute bottom-4 left-4 right-4 z-10">
-                <div className="flex justify-between items-start mb-1">
-                  <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg">{item.title}</h3>
-                  <TooltipProvider delayDuration={300}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 rounded-full bg-black/30 hover:bg-accent/80 transition-colors -mt-1"
-                          onClick={e => handleNavigateToDetails(e, item)}
-                        >
-                          <Info className="h-3.5 w-3.5 text-white" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top">
-                        <p>View details</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-
+                <h3 className="text-white font-medium line-clamp-1 text-base md:text-lg mb-1">{item.title}</h3>
                 <div className="flex items-center justify-between text-xs text-white/70 mb-2">
                   <span className="flex items-center">
                     <Clock className="h-3 w-3 mr-1" />
@@ -191,14 +173,12 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
                   </span>
                   {item.media_type === 'tv' && <span>S{item.season} E{item.episode}</span>}
                 </div>
-
                 <div className="mb-3 relative">
                   <Progress value={(item.watch_position / item.duration) * 100} className="h-1" />
                   <div className="text-xs text-white/70 mt-1 text-right">
                     {Math.floor((item.duration - item.watch_position) / 60)} min left
                   </div>
                 </div>
-
                 <Button className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1" size="sm">
                   <Play className="h-3 w-3" />
                   Continue

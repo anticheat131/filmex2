@@ -141,18 +141,18 @@ const MediaCard = ({
   return (
     <article
       className={cn(
-        'group', // <-- Add group for hover overlays
-        'relative inline-block rounded-lg border border-[#131313] bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
+        'group',
+        'relative inline-block rounded-sm border border-[#131313] bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
         'hover:border-[#181818] hover:shadow-white/10 hover:scale-[1.04]',
         large ? 'w-[240px] md:w-[270px] aspect-[2/3] p-0 m-0' : 'hover:scale-[1.02]',
         className
       )}
-      style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.10)', outline: 'none', borderWidth: '1px', borderRadius: '4px' }}
+      style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.10)', outline: 'none', borderWidth: '1px', borderRadius: '3px' }}
       tabIndex={-1}
       onMouseDown={e => e.preventDefault()}
       onClick={handleClick}
     >
-      <div className={cn('relative w-full overflow-hidden rounded-lg', large ? 'aspect-[2/3]' : 'aspect-[2/3.5')}> 
+      <div className={cn('relative w-full overflow-hidden rounded-sm', large ? 'aspect-[2/3]' : 'aspect-[2/3.5')}> 
         {/* Quality badge at top left */}
         {quality && (
           <div className="absolute top-2 left-2 z-20 px-3 py-1 rounded-full bg-black/70 border border-white/20 shadow-md backdrop-blur-md text-white text-xs font-semibold select-none pointer-events-none tracking-wider uppercase" style={{letterSpacing:'0.06em', fontSize:'0.78rem'}}>
@@ -163,12 +163,12 @@ const MediaCard = ({
           src={imageError ? '/placeholder.svg' : getImageUrl(media.poster_path, large ? posterSizes.large : posterSizes.medium)}
           alt={media.title || media.name || 'Media Poster'}
           onError={() => setImageError(true)}
-          className={cn('w-full h-full object-cover', large ? 'rounded-lg' : '')}
+          className={cn('w-full h-full object-cover')}
         />
         {/* Buttons overlay, visible on hover, centered in card */}
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center space-y-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 pointer-events-none md:pointer-events-auto md:group-hover:pointer-events-auto">
           <a
-            className="flex min-w-24 items-center justify-between rounded-lg bg-white/95 px-4 py-2 text-black transition-all hover:bg-red-200 hover:text-black md:bg-white/80 text-sm font-semibold shadow gap-2"
+            className="flex min-w-24 items-center justify-between rounded-sm bg-white/95 px-4 py-2 text-black transition-all hover:bg-red-200 hover:text-black md:bg-white/80 text-sm font-semibold shadow gap-2"
             href={media.media_type === 'movie' ? `/movie/${mediaId}-${slug}` : `/tv/${mediaId}-${slug}`}
             tabIndex={-1}
             style={{ pointerEvents: 'auto' }}
@@ -177,7 +177,7 @@ const MediaCard = ({
             <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className="ml-2 size-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M13 5h8"></path><path d="M13 9h5"></path><path d="M13 15h8"></path><path d="M13 19h5"></path><path d="M3 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path><path d="M3 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path></svg>
           </a>
           <a
-            className="flex min-w-24 items-center justify-between rounded-lg bg-black/90 px-4 py-2 text-white transition-all hover:bg-red-200 hover:text-black md:bg-black/80 text-sm font-semibold shadow gap-2"
+            className="flex min-w-24 items-center justify-between rounded-sm bg-black/90 px-4 py-2 text-white transition-all hover:bg-red-200 hover:text-black md:bg-black/80 text-sm font-semibold shadow gap-2"
             href={media.media_type === 'movie' ? `/watch/movie/${mediaId}-${slug}` : `/watch/tv/${mediaId}-${slug}`}
             tabIndex={-1}
             style={{ pointerEvents: 'auto' }}
@@ -188,7 +188,7 @@ const MediaCard = ({
         </div>
         {/* Bottom overlay bar for IMDB, title, year */}
         <div style={{position:'absolute',left:0,right:0,bottom:0,padding:0}}>
-          <div className="media-card-info-bar flex flex-col items-start gap-0 absolute left-1.5 bottom-3 z-10 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-sm" style={{maxWidth:'85%'}}>
+          <div className="media-card-info-bar flex flex-col items-start gap-0 absolute left-1.5 bottom-3 z-10 px-2 py-1 rounded-sm" style={{maxWidth:'85%'}}>
             {/* IMDB badge */}
             {media.vote_average > 0 && (
               <div className="flex items-center bg-white text-black rounded-full h-[22px] min-w-[32px] px-[10px] font-bold text-[13px] shadow mb-1 justify-center">

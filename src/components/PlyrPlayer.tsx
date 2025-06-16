@@ -11,6 +11,7 @@ interface PlyrPlayerProps {
   mediaId: string;
   onLoaded?: () => void;
   onError?: (error: string) => void;
+  onTimeUpdate?: (currentTime: number) => void;
 }
 
 const PlyrPlayer: React.FC<PlyrPlayerProps> = ({
@@ -20,7 +21,8 @@ const PlyrPlayer: React.FC<PlyrPlayerProps> = ({
   mediaType,
   mediaId,
   onLoaded,
-  onError
+  onError,
+  onTimeUpdate
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<Plyr | null>(null);
@@ -89,6 +91,13 @@ const PlyrPlayer: React.FC<PlyrPlayerProps> = ({
         const errorMessage = 'Failed to load the video. Please try another source.';
         setError(errorMessage);
         if (onError) onError(errorMessage);
+      });
+
+      // Custom timeupdate event for progress tracking
+      playerRef.current.on('timeupdate', (event: any) => {
+        if (onTimeUpdate && videoRef.current) {
+          onTimeUpdate(videoRef.current.currentTime);
+        }
       });
     };
 

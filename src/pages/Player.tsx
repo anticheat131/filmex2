@@ -10,6 +10,7 @@ import MediaActions from '@/components/player/MediaActions';
 import { useMediaPlayer } from '@/hooks/use-media-player';
 import { videoSources } from '@/utils/video-sources';
 import { useAuth } from '@/hooks';
+import type { MovieDetails, TVDetails } from '@/utils/types';
 
 const Player = () => {
   const { id, season, episode, type } = useParams<{
@@ -86,6 +87,12 @@ const Player = () => {
           poster={posterUrl}
           onLoaded={handlePlayerLoaded}
           onError={handlePlayerError}
+          mediaId={id}
+          mediaType={mediaType}
+          duration={mediaType === 'movie' ? ((mediaDetails as MovieDetails)?.runtime ? (mediaDetails as MovieDetails).runtime * 60 : 0) : ((mediaDetails as TVDetails)?.episode_run_time?.[0] ? (mediaDetails as TVDetails).episode_run_time[0] * 60 : 0)}
+          season={season ? parseInt(season, 10) : undefined}
+          episode={episode ? parseInt(episode, 10) : undefined}
+          backdropPath={mediaDetails?.backdrop_path}
         />
 
         <motion.div 

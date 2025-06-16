@@ -301,6 +301,10 @@ const Index = () => {
                 <PlatformBar platformFilters={platformFilters} setPlatformFilters={setPlatformFilters} />
               </div>
             </div>
+            {/* Continue Watching section below Browse by Platform */}
+            <div className="mb-8">
+              <ContinueWatching />
+            </div>
             {/* Platform content rows directly below PlatformBar */}
             {platformFilters.length > 0 && (
               <>

@@ -3,6 +3,7 @@ import PlyrPlayer from '@/components/PlyrPlayer';
 import { useEffect, useRef, useState } from 'react';
 import { registerIframeOrigin, setProxyHeaders, resetServiceWorkerData } from '@/utils/iframe-proxy-sw';
 import { createProxyStreamUrl, proxyAndRewriteM3u8 } from '@/utils/cors-proxy-api';
+import { setContinueWatching } from '@/api/continue-watching';
 
 import { useAuth } from '@/hooks/useAuth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -76,25 +77,51 @@ const VideoPlayer = ({
 
   const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  const buildContinueWatchingItem = (params: any) => {
+    const base: any = {
+      id: params.mediaType === 'tv' ? `${params.mediaId}-s${params.season}-e${params.episode}` : params.mediaId.toString(),
+      user_id: params.user.uid,
+      media_id: typeof params.mediaId === 'string' ? parseInt(params.mediaId) : params.mediaId,
+      media_type: params.mediaType,
+      title: params.title || '',
+      poster_path: params.poster || '',
+      backdrop_path: params.backdropPath || '',
+      overview: '',
+      rating: 0,
+      watch_position: params.watchPosition ?? 0,
+      duration: params.duration || 0,
+      created_at: new Date().toISOString(),
+      preferred_source: '',
+    };
+    if (typeof params.season === 'number') (base as any).season = params.season;
+    if (typeof params.episode === 'number') (base as any).episode = params.episode;
+    return base;
+  };
+
   // Save Continue Watching immediately on page open
   useEffect(() => {
+    console.log('[ContinueWatching][DEBUG] user:', user, 'mediaId:', mediaId);
     if (!user || !mediaId) return;
 
-    const initialItem = {
-      id: mediaId.toString(),
-      media_id: mediaId,
-      media_type: mediaType,
+    const initialItem = buildContinueWatchingItem({
+      user,
+      mediaId,
+      mediaType,
       title,
-      backdrop_path: backdropPath || '',
-      created_at: new Date(),
-      watch_position: 0, // start at 0 on page open
+      poster,
+      backdropPath,
       duration,
-      season: season || null,
-      episode: episode || null,
-    };
-
-    saveContinueWatching(user.uid, initialItem).catch(console.error);
-  }, [user, mediaId, mediaType, title, backdropPath, duration, season, episode]);
+      season,
+      episode,
+      watchPosition: 0,
+    });
+    console.log('[ContinueWatching][WRITE initial]', initialItem);
+    setContinueWatching(user.uid, initialItem).then(() => {
+      console.log('[ContinueWatching][WRITE initial] success');
+    }).catch((err) => {
+      console.error('[ContinueWatching][WRITE initial] error', err);
+    });
+  }, [user, mediaId, mediaType, title, poster, backdropPath, duration, season, episode]);
 
   useEffect(() => {
     return () => {
@@ -149,25 +176,68 @@ const VideoPlayer = ({
     if (!user || !mediaId || !isCustomSource) return;
 
     saveIntervalRef.current = setInterval(() => {
-      const item = {
-        id: mediaId.toString(),
-        media_id: mediaId,
-        media_type: mediaType,
+      const item = buildContinueWatchingItem({
+        user,
+        mediaId,
+        mediaType,
         title,
-        backdrop_path: backdropPath || '',
-        created_at: new Date(),
-        watch_position: watchPosition,
+        poster,
+        backdropPath,
         duration,
-        season: season || null,
-        episode: episode || null,
-      };
-      saveContinueWatching(user.uid, item).catch(console.error);
+        season,
+        episode,
+        watchPosition,
+      });
+      console.log('[ContinueWatching][WRITE interval]', item);
+      setContinueWatching(user.uid, item).then(() => {
+        console.log('[ContinueWatching][WRITE interval] success');
+      }).catch((err) => {
+        console.error('[ContinueWatching][WRITE interval] error', err);
+      });
     }, 15000);
 
     return () => {
       if (saveIntervalRef.current) clearInterval(saveIntervalRef.current);
     };
-  }, [user, mediaId, mediaType, title, backdropPath, watchPosition, duration, season, episode, isCustomSource]);
+  }, [user, mediaId, mediaType, title, poster, backdropPath, watchPosition, duration, season, episode, isCustomSource]);
+
+  // Listen for PLAYER_EVENT messages from vidlink.pro iframe and save progress
+  useEffect(() => {
+    function handlePlayerEvent(e: MessageEvent) {
+      // Debug log to confirm message receipt and data
+      console.log('[ContinueWatching][IFRAME MESSAGE]', e.data, 'mediaId:', mediaId, 'user:', user);
+      // Only accept messages from the vidlink.pro iframe
+      if (
+        typeof e.data === 'object' &&
+        e.data?.type === 'PLAYER_EVENT' &&
+        iframeRef.current &&
+        e.source === iframeRef.current.contentWindow
+      ) {
+        const eventData = e.data.data;
+        // Example: { event: 'timeupdate', currentTime: 123, duration: 3600, ... }
+        if (eventData && typeof eventData.currentTime === 'number' && typeof eventData.duration === 'number') {
+          // Save progress to Firestore
+          if (user && mediaId) {
+            const item = buildContinueWatchingItem({
+              user,
+              mediaId,
+              mediaType,
+              title,
+              poster,
+              backdropPath,
+              duration: eventData.duration,
+              season,
+              episode,
+              watchPosition: eventData.currentTime,
+            });
+            setContinueWatching(user.uid, item);
+          }
+        }
+      }
+    }
+    window.addEventListener('message', handlePlayerEvent);
+    return () => window.removeEventListener('message', handlePlayerEvent);
+  }, [user, mediaId, mediaType, title, poster, backdropPath, season, episode, iframeRef]);
 
   const handleTimeUpdate = (currentTime: number) => {
     setWatchPosition(currentTime);
