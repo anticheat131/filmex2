@@ -1,0 +1,14 @@
+[
+  {
+    "id": "demo1",
+    "title": "The Raven (Demo)",
+    "author": "Edgar Allan Poe",
+    "cover": "https://archive.org/services/img/theraven_2007_librivox",
+    "year": 1845,
+    "rating": 4.8,
+    "maturity": "Everyone",
+    "categories": ["Poetry", "Classic"],
+    "audioUrl": "https://ia800201.us.archive.org/23/items/theraven_2007_librivox/raven_poe_apc_64kb.mp3",
+    "about": "A classic poem by Edgar Allan Poe. Public domain via LibriVox."
+  }
+]

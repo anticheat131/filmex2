@@ -23,12 +23,48 @@ const Trending = lazy(() => import('./pages/Trending'));
 const TrendingMovies = lazy(() => import('./pages/TrendingMovies'));
 const TrendingTVShows = lazy(() => import('./pages/TrendingTVShows'));
 const WatchTogether = lazy(() => import('./pages/WatchTogether'));
+const LiveTV = lazy(() => import('./pages/live-tv'));
+const ChannelPage = lazy(() => import('./pages/ChannelPage'));
+const AudiobooksPage = lazy(() => import('./pages/Audiobooks'));
+const ListenAudiobookPage = lazy(() => import('./pages/ListenAudiobook'));
+const PersonDetailPage = lazy(() => import('./pages/person/[id]'));
 
 // Legal pages
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const ContentRemoval = lazy(() => import('./pages/ContentRemoval'));
 const DMCANotice = lazy(() => import('./pages/DMCANotice'));
+
+// Movies
+const MovieDiscover = lazy(() => import('./pages/movie/discover'));
+const MoviePopular = lazy(() => import('./pages/movie/popular'));
+const MovieNowPlaying = lazy(() => import('./pages/movie/now-playing'));
+const MovieUpcoming = lazy(() => import('./pages/movie/upcoming'));
+const MovieTopRated = lazy(() => import('./pages/movie/top-rated'));
+const MovieGenres = lazy(() => import('./pages/movie/genres'));
+const MovieAnime = lazy(() => import('./pages/movie/anime'));
+const MovieNetflix = lazy(() => import('./pages/movie/netflix'));
+const MovieDisney = lazy(() => import('./pages/movie/disney'));
+const MovieApple = lazy(() => import('./pages/movie/apple'));
+const MoviePrime = lazy(() => import('./pages/movie/prime'));
+// TV
+const TVDiscover = lazy(() => import('./pages/tv/discover'));
+const TVPopular = lazy(() => import('./pages/tv/popular'));
+const TVAiringToday = lazy(() => import('./pages/tv/airing-today'));
+const TVOnTheAir = lazy(() => import('./pages/tv/on-the-air'));
+const TVTopRated = lazy(() => import('./pages/tv/top-rated'));
+const TVAnimeSeries = lazy(() => import('./pages/tv/anime-series'));
+const TVNetflix = lazy(() => import('./pages/tv/netflix'));
+const TVApple = lazy(() => import('./pages/tv/apple'));
+const TVDisney = lazy(() => import('./pages/tv/disney'));
+const TVPrime = lazy(() => import('./pages/tv/prime'));
+// Trending
+const TrendingMovie = lazy(() => import('./pages/trending/movie'));
+const TrendingTV = lazy(() => import('./pages/trending/tv'));
+// More
+const PopularPeople = lazy(() => import('./pages/person/popular'));
+const News = lazy(() => import('./pages/news'));
+const Development = lazy(() => import('./pages/development'));
 
 
 export default function AppRoutes() {
@@ -44,6 +80,8 @@ export default function AppRoutes() {
           <Route element={<ProtectedRoute><Outlet /></ProtectedRoute>}>
             <Route path="/profile" element={<Profile />} />
             <Route path="/watch-history" element={<WatchHistory />} />
+            <Route path="/favorites" element={<WatchHistory />} />
+            <Route path="/watchlist" element={<WatchHistory />} />
           </Route>
 
           {/* Content routes */}
@@ -61,6 +99,42 @@ export default function AppRoutes() {
           <Route path="/trending/movie" element={<TrendingMovies />} />
           <Route path="/trending/tv" element={<TrendingTVShows />} />
           <Route path="/watch-together" element={<WatchTogether />} />
+          <Route path="/live-tv" element={<LiveTV />} />
+          <Route path="/watch/channel/:id" element={<ChannelPage />} />
+          <Route path="/audiobooks" element={<AudiobooksPage />} />
+          <Route path="/listen/:id/:slug" element={<ListenAudiobookPage />} />
+          <Route path="/person/:id" element={<PersonDetailPage />} />
+
+          {/* Movies dropdown pages */}
+          <Route path="/movie/discover" element={<MovieDiscover />} />
+          <Route path="/movie/popular" element={<MoviePopular />} />
+          <Route path="/movie/now-playing" element={<MovieNowPlaying />} />
+          <Route path="/movie/upcoming" element={<MovieUpcoming />} />
+          <Route path="/movie/top-rated" element={<MovieTopRated />} />
+          <Route path="/movie/genres" element={<MovieGenres />} />
+          <Route path="/movie/anime" element={<MovieAnime />} />
+          <Route path="/movie/netflix" element={<MovieNetflix />} />
+          <Route path="/movie/disney" element={<MovieDisney />} />
+          <Route path="/movie/apple" element={<MovieApple />} />
+          <Route path="/movie/prime" element={<MoviePrime />} />
+          {/* TV dropdown pages */}
+          <Route path="/tv/discover" element={<TVDiscover />} />
+          <Route path="/tv/popular" element={<TVPopular />} />
+          <Route path="/tv/airing-today" element={<TVAiringToday />} />
+          <Route path="/tv/on-the-air" element={<TVOnTheAir />} />
+          <Route path="/tv/top-rated" element={<TVTopRated />} />
+          <Route path="/tv/anime-series" element={<TVAnimeSeries />} />
+          <Route path="/tv/netflix" element={<TVNetflix />} />
+          <Route path="/tv/apple" element={<TVApple />} />
+          <Route path="/tv/disney" element={<TVDisney />} />
+          <Route path="/tv/prime" element={<TVPrime />} />
+          {/* Trending dropdown pages */}
+          <Route path="/trending/movie" element={<TrendingMovie />} />
+          <Route path="/trending/tv" element={<TrendingTV />} />
+          {/* More dropdown pages */}
+          <Route path="/person/popular" element={<PopularPeople />} />
+          <Route path="/news" element={<News />} />
+          <Route path="/development" element={<Development />} />
 
           {/* Legal routes */}
           <Route path="/privacy" element={<PrivacyPolicy />} />

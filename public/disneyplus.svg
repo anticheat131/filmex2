@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="180" height="40" viewBox="0 0 180 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g>
+    <path d="M30.5 28.5c0-8.5 16-15.5 35.5-15.5s35.5 7 35.5 15.5" stroke="#01B4E4" stroke-width="2.5" fill="none"/>
+    <text x="0" y="32" font-family="Segoe Script, Arial, sans-serif" font-size="32" fill="#113CCF" font-weight="bold">Disney</text>
+    <text x="120" y="32" font-family="Arial, sans-serif" font-size="32" fill="#01B4E4" font-weight="bold">+</text>
+  </g>
+</svg>

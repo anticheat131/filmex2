@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { History, Clock, Trash2, Bookmark, Heart, Loader2 } from 'lucide-react';
 import { useWatchHistory } from '@/hooks/watch-history';
@@ -32,6 +32,7 @@ const WatchHistory = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [activeTab, setActiveTab] = useState<'history' | 'favorites' | 'watchlist'>('history');
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -65,6 +66,13 @@ const WatchHistory = () => {
       }
     };
   }, [hasMore, isLoadingMore, activeTab, handleLoadMore]);
+
+  useEffect(() => {
+    // Set active tab based on path
+    if (location.pathname === '/favorites') setActiveTab('favorites');
+    else if (location.pathname === '/watchlist') setActiveTab('watchlist');
+    else setActiveTab('history');
+  }, [location.pathname]);
 
   const handleClearHistory = () => {
     clearWatchHistory();
@@ -226,7 +234,7 @@ const WatchHistory = () => {
             </div>
           </div>
           
-          <Tabs defaultValue="history" onValueChange={handleTabChange} className="w-full">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="grid grid-cols-3 mb-4 bg-black/20 border border-white/10">
               <TabsTrigger value="history" className="data-[state=active]:bg-accent">
                 <History className="h-4 w-4 mr-2" />

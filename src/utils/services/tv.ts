@@ -163,3 +163,47 @@ export async function getSeasonDetails(
     return [];
   }
 }
+
+// Get TV shows airing today
+export async function getAiringTodayTVShows(page = 1): Promise<Media[]> {
+  const response = await tmdb.get<{ results: TMDBTVResult[] }>(
+    '/tv/airing_today',
+    { params: { page } }
+  );
+  return response.data.results.map(formatMediaResult);
+}
+
+// Get TV shows currently on the air
+export async function getOnTheAirTVShows(page = 1): Promise<Media[]> {
+  const response = await tmdb.get<{ results: TMDBTVResult[] }>(
+    '/tv/on_the_air',
+    { params: { page } }
+  );
+  return response.data.results.map(formatMediaResult);
+}
+
+// Discover TV shows
+export interface DiscoverTVShowsParams {
+  page?: number;
+  sort_by?: string; // e.g., 'popularity.desc', 'first_air_date.desc', etc.
+  with_genres?: string; // comma-separated genre IDs
+  first_air_date_year?: number;
+  'first_air_date.gte'?: string;
+  'first_air_date.lte'?: string;
+  vote_average_gte?: number;
+  vote_average_lte?: number;
+  [key: string]: any; // Allow additional TMDB discover params
+}
+
+export async function getDiscoverTVShows(params: DiscoverTVShowsParams = {}): Promise<{ results: Media[]; page: number; total_pages: number; total_results: number }> {
+  const response = await tmdb.get<{ results: TMDBTVResult[]; page: number; total_pages: number; total_results: number }>(
+    '/discover/tv',
+    { params }
+  );
+  return {
+    results: response.data.results.map(formatMediaResult),
+    page: response.data.page,
+    total_pages: response.data.total_pages,
+    total_results: response.data.total_results,
+  };
+}

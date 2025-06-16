@@ -238,7 +238,12 @@ self.addEventListener('message', (event) => {
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);
-  
+
+  // Bypass service worker for audio files (e.g., .mp3, .ogg, .wav)
+  if (/\.(mp3|ogg|wav)(\?.*)?$/i.test(url.pathname)) {
+    return; // Let the browser handle audio requests directly
+  }
+
   // Increment network requests counter
   performanceMetrics.networkRequests++;
 
@@ -301,8 +306,9 @@ self.addEventListener('fetch', (event) => {
       return;
     }
     
-    // Check if this is likely a pop-up from an iframe
-    if (isProbablyPopupFromIframe(request)) {
+    // Completely disable pop-up blocking for all in-app navigation
+    if (false && isProbablyPopupFromIframe(request)) {
+      // This block will never run
       console.warn('[IframeProxy] Blocked potential pop-up:', request.url);
       event.respondWith(blockResponse('Pop-up blocked'));
       return;

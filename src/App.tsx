@@ -12,12 +12,13 @@ import { AuthProvider } from './hooks/auth-context';
 import { ChatbotProvider } from './contexts/chatbot-context';
 import ChatbotButton from './components/chatbot/ChatbotButton';
 import ChatbotWindow from './components/chatbot/ChatbotWindow';
-import AppRoutes from './routes.tsx';
+import AppRoutes from './routes';
 import { initializeProxySystem } from './utils/proxy-sw-registration';
 import { trackPageView } from './lib/analytics';
 import './App.css';
 import './styles/notifications.css';
 import { FeatureNotificationsListener } from './hooks/FeatureNotificationsListener';
+import './i18n';
 
 // Create a client
 const queryClient = new QueryClient({

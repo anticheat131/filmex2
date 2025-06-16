@@ -94,6 +94,31 @@ export async function getMovieDetails(id: number): Promise<MovieDetails | null> 
   }
 }
 
+// Discover movies with filters, sorting, and pagination
+export interface DiscoverMoviesParams {
+  page?: number;
+  sort_by?: string; // e.g., 'popularity.desc', 'release_date.desc', etc.
+  with_genres?: string; // comma-separated genre IDs
+  year?: number;
+  primary_release_year?: number;
+  vote_average_gte?: number;
+  vote_average_lte?: number;
+  [key: string]: any; // Allow additional TMDB discover params
+}
+
+export async function getDiscoverMovies(params: DiscoverMoviesParams = {}): Promise<{ results: Media[]; page: number; total_pages: number; total_results: number }> {
+  const response = await tmdb.get<{ results: TMDBMovieResult[]; page: number; total_pages: number; total_results: number }>(
+    '/discover/movie',
+    { params }
+  );
+  return {
+    results: response.data.results.map(formatMediaResult),
+    page: response.data.page,
+    total_pages: response.data.total_pages,
+    total_results: response.data.total_results,
+  };
+}
+
 // Validate TMDB movie ID
 export async function validateMovieId(tmdbId: number): Promise<boolean> {
   try {
