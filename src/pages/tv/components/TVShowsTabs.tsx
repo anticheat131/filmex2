@@ -1,5 +1,6 @@
 import { TabsContent, TabsList, TabsTrigger, Tabs } from '@/components/ui/tabs';
 import TabContent from './TabContent';
+import { useTranslation } from 'react-i18next';
 
 interface TVShowsTabsProps {
   activeTab: 'popular' | 'top_rated' | 'trending';
@@ -20,12 +21,13 @@ const TVShowsTabs = ({
   yearFilter, 
   platformFilters 
 }: TVShowsTabsProps) => {
+  const { t } = useTranslation();
   return (
     <Tabs defaultValue={activeTab} onValueChange={onTabChange}>
       <TabsList className="mb-4 md:mb-6">
-        <TabsTrigger value="popular" className="data-[state=active]:bg-accent/20">Popular</TabsTrigger>
-        <TabsTrigger value="top_rated" className="data-[state=active]:bg-accent/20">Top Rated</TabsTrigger>
-        <TabsTrigger value="trending" className="data-[state=active]:bg-accent/20">Trending</TabsTrigger>
+        <TabsTrigger value="popular" className="data-[state=active]:bg-accent/20">{t('Popular')}</TabsTrigger>
+        <TabsTrigger value="top_rated" className="data-[state=active]:bg-accent/20">{t('Top Rated')}</TabsTrigger>
+        <TabsTrigger value="trending" className="data-[state=active]:bg-accent/20">{t('Trending')}</TabsTrigger>
       </TabsList>
       
       <TabsContent value="popular" className="focus-visible:outline-none animate-fade-in">

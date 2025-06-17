@@ -205,6 +205,23 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const toggleContinueWatching = async () => {
+    if (!user || !userPreferences) return;
+    try {
+      await updatePreferences({
+        isContinueWatchingEnabled: !userPreferences.isContinueWatchingEnabled
+      });
+      toast({
+        title: userPreferences.isContinueWatchingEnabled ? "Continue Watching Disabled" : "Continue Watching Enabled",
+        description: userPreferences.isContinueWatchingEnabled
+          ? "Continue Watching tracking is now disabled."
+          : "Continue Watching tracking is now enabled."
+      });
+    } catch (error) {
+      console.error('Error toggling continue watching:', error);
+    }
+  };
+
   const setAccentColor = async (color: string) => {
     if (!user || !userPreferences) return;
 
@@ -236,6 +253,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       updatePreferences,
       isLoading,
       toggleWatchHistory,
+      toggleContinueWatching,
       setAccentColor,
       toggleNotifications
     }}>

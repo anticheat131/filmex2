@@ -42,10 +42,12 @@ import { STREAMING_PLATFORMS } from './tv/constants/streamingPlatforms';
 import PlatformBar from './tv/components/PlatformBar';
 import TrendingToday from '@/components/TrendingToday';
 import TrendingTodayTV from '@/components/TrendingTodayTV';
+import { useTranslation } from 'react-i18next';
 
 const SecondaryContent = lazy(() => import('./components/SecondaryContent'));
 
 const Index = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [sliderMedia, setSliderMedia] = useState<Media[]>([]);
   const [trendingMedia, setTrendingMedia] = useState<Media[]>([]);
@@ -296,7 +298,7 @@ const Index = () => {
             </div>
             {/* Platform filter UI above Trending Now */}
             <div className="flex flex-col items-center mb-8 mt-8 w-full">
-              <span className="text-white text-lg font-semibold mb-3 px-5 py-2 rounded-xl bg-black/40 border border-white/10 shadow-sm backdrop-blur-md" style={{letterSpacing: '.01em'}}>Browse by Platform</span>
+              <span className="text-white text-lg font-semibold mb-3 px-5 py-2 rounded-xl bg-black/40 border border-white/10 shadow-sm backdrop-blur-md" style={{letterSpacing: '.01em'}}>{t('Browse by Platform')}</span>
               <div className="w-full md:w-auto mt-0">
                 <PlatformBar platformFilters={platformFilters} setPlatformFilters={setPlatformFilters} />
               </div>
@@ -349,8 +351,9 @@ const Index = () => {
                     (pf === 'peacock' && peacockContent.length === 0)
                 ) && (
                   <div className="text-center text-gray-400 py-8">
-                    No content available for the selected platform(s) at this time.<br />
-                    This is a limitation of the data source (TMDB), not a bug.
+                    {t('No content available for the selected platform(s) at this time.')}
+                    <br />
+                    {t('This is a limitation of the data source (TMDB), not a bug.')}
                   </div>
                 )}
               </>
@@ -407,8 +410,9 @@ const Index = () => {
                     (pf === 'peacock' && peacockContent.length === 0)
                 ) && (
                   <div className="text-center text-gray-400 py-8">
-                    No content available for the selected platform(s) at this time.<br />
-                    This is a limitation of the data source (TMDB), not a bug.
+                    {t('No content available for the selected platform(s) at this time.')}
+                    <br />
+                    {t('This is a limitation of the data source (TMDB), not a bug.')}
                   </div>
                 )}
               </>

@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import channels from '@/data/channels.json';
+import { useTranslation } from 'react-i18next';
 
 const categories = [
 	{ label: 'All', value: '' },
@@ -29,6 +30,7 @@ const categories = [
 ];
 
 export default function LiveTVPage() {
+	const { t } = useTranslation();
 	const [search, setSearch] = useState('');
 	const [selectedChannel, setSelectedChannel] = useState(null);
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -61,11 +63,11 @@ export default function LiveTVPage() {
 			<main className="flex-1 py-4 mt-6">
 				<div className="container mx-auto px-4 py-8">
 					<div className="mb-8">
-						<h1 className="mb-4 text-3xl font-bold">Live TV</h1>
+						<h1 className="mb-4 text-3xl font-bold">{t('Live TV')}</h1>
 						<div className="mb-6">
 							<input
 								type="text"
-								placeholder="Search TV Channels..."
+								placeholder={t('Search TV Channels...')}
 								className="w-full rounded border bg-black p-2"
 								name="search"
 								value={search}
@@ -86,14 +88,14 @@ export default function LiveTVPage() {
 									if (main) main.scrollIntoView({ behavior: 'smooth' });
 								}}
 							>
-								{cat.label}
+								{t(cat.label)}
 							</a>
 						))}
 					</div>
 					<div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 md:gap-4 lg:grid-cols-4">
 						{filteredChannels.length === 0 ? (
 							<div className="text-center col-span-full text-muted-foreground">
-								No channels found.
+								{t('No channels found.')}
 							</div>
 						) : (
 							filteredChannels.map((channel, idx) => (
@@ -110,7 +112,7 @@ export default function LiveTVPage() {
 										/>
 									) : (
 										<div className="mb-2 h-12 w-auto flex items-center justify-center text-gray-400">
-											No Logo
+											{t('No Logo')}
 										</div>
 									)}
 									<h3 className="text-center text-sm font-semibold text-gray-500">
@@ -123,7 +125,7 @@ export default function LiveTVPage() {
 													key={idx}
 													className="inline-flex items-center rounded-full border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent hover:bg-primary/80 ml-2 bg-gray-50 px-1 py-0 text-[9px] leading-normal tracking-wide text-gray-900"
 												>
-													{cat}
+													{t(cat)}
 												</div>
 											))}
 										</div>
@@ -135,7 +137,7 @@ export default function LiveTVPage() {
 					{selectedChannel && (
 						<div className="mt-8">
 							<h2 className="mb-4 text-xl font-bold">
-								Now Playing: {selectedChannel.name}
+								{t('Now Playing:')} {selectedChannel.name}
 							</h2>
 							<div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
 								<iframe
@@ -151,7 +153,7 @@ export default function LiveTVPage() {
 								className="mt-4 px-4 py-2 rounded bg-gray-700 text-white"
 								onClick={() => setSelectedChannel(null)}
 							>
-								Close Player
+								{t('Close Player')}
 							</button>
 						</div>
 					)}

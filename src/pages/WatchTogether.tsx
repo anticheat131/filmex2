@@ -6,6 +6,7 @@ import { ref, set, onValue, remove, serverTimestamp } from 'firebase/database';
 import WatchTogetherChat from '../components/WatchTogetherChat';
 import VoiceChat from '../components/VoiceChat';
 import { AuthContext } from '../contexts/auth';
+import { useTranslation } from 'react-i18next';
 
 // Room state type
 interface RoomState {
@@ -20,6 +21,7 @@ interface RoomState {
 const generateRoomCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
 
 const WatchTogether = () => {
+  const { t } = useTranslation();
   const [roomCode, setRoomCode] = useState('');
   const [inputCode, setInputCode] = useState('');
   const [joined, setJoined] = useState(false);
@@ -192,31 +194,54 @@ const WatchTogether = () => {
           {!joined ? (
             <div className="flex flex-col items-center justify-center min-h-screen w-full">
               <div className="bg-gray-900 rounded-2xl shadow-2xl p-10 w-full max-w-md flex flex-col items-center gap-6">
-                <div className="text-3xl font-extrabold text-primary mb-2 tracking-tight">Watch Together</div>
+                <div className="text-3xl font-extrabold text-primary mb-2 tracking-tight">{t('Watch Together')}</div>
                 <div className="text-gray-300 text-center mb-4 text-base">
-                  Create or join a room to watch movies and chat in real time.<br/>
-                  <span className="text-yellow-400 font-medium">Login required for chat.</span>
+                  {t('Create or join a room to watch movies and chat in real time.')}
+                  <br />
+                  <span className="text-yellow-400 font-medium">{t('Login required for chat.')}</span>
                 </div>
-                <button className="bg-gray-800 hover:bg-gray-700 text-white rounded-lg px-6 py-2 font-bold w-full transition-colors text-base shadow-md" onClick={createRoom}>Create Room</button>
+                <button className="bg-gray-800 hover:bg-gray-700 text-white rounded-lg px-6 py-2 font-bold w-full transition-colors text-base shadow-md" onClick={createRoom}>
+                  {t('Create Room')}
+                </button>
                 <div className="flex gap-2 w-full">
-                  <input className="flex-1 rounded px-2 py-2 bg-gray-800 text-white border border-gray-700 placeholder-gray-400 text-sm focus:ring-2 focus:ring-primary focus:outline-none transition-all" placeholder="Enter Room Code" value={inputCode} onChange={e => setInputCode(e.target.value)} />
-                  <button className="bg-gray-800 hover:bg-gray-700 text-white rounded-lg px-4 py-2 font-bold text-sm transition-colors shadow-md" onClick={joinRoom}>Join</button>
+                  <input
+                    className="flex-1 rounded px-2 py-2 bg-gray-800 text-white border border-gray-700 placeholder-gray-400 text-sm focus:ring-2 focus:ring-primary focus:outline-none transition-all"
+                    placeholder={t('Enter Room Code')}
+                    value={inputCode}
+                    onChange={(e) => setInputCode(e.target.value)}
+                  />
+                  <button className="bg-gray-800 hover:bg-gray-700 text-white rounded-lg px-4 py-2 font-bold text-sm transition-colors shadow-md" onClick={joinRoom}>
+                    {t('Join')}
+                  </button>
                 </div>
                 <div className="bg-gray-800 rounded-lg p-4 text-sm text-gray-200 w-full mt-2">
-                  <div className="text-primary font-bold mb-2">How to use Watch Together</div>
+                  <div className="text-primary font-bold mb-2">{t('How to use Watch Together')}</div>
                   <ul className="list-disc pl-5 mb-2">
-                    <li>Click <span className='font-bold'>Create Room</span> to start a new session, or enter a code to join a friend's room.</li>
-                    <li>As host, enter a <span className='font-bold'>TMDB Movie ID</span> to select a movie after creating a room.</li>
-                    <li>Share the room code with friends so they can join.</li>
-                    <li>Everyone must be logged in to use the chat.</li>
-                    <li>Use the chat to coordinate playback and stay in sync.</li>
-                    <li><span className='font-bold'>Note:</span> Playback sync is manual due to third-party player limitations. Pause/play as instructed for best experience.</li>
+                    <li>
+                      {t('Click')}{' '}
+                      <span className="font-bold">{t('Create Room')}</span>{' '}
+                      {t('to start a new session, or enter a code to join a friend\'s room.')}
+                    </li>
+                    <li>
+                      {t('As host, enter a')}{' '}
+                      <span className="font-bold">{t('TMDB Movie ID')}</span>{' '}
+                      {t('to select a movie after creating a room.')}
+                    </li>
+                    <li>{t('Share the room code with friends so they can join.')}</li>
+                    <li>{t('Everyone must be logged in to use the chat.')}</li>
+                    <li>{t('Use the chat to coordinate playback and stay in sync.')}</li>
+                    <li>
+                      <span className="font-bold">{t('Note:')}</span>{' '}
+                      {t('Playback sync is manual due to third-party player limitations. Pause/play as instructed for best experience.')}
+                    </li>
                   </ul>
-                  <div className="mt-2 text-yellow-300">If you experience issues, refresh the page or rejoin the room.</div>
+                  <div className="mt-2 text-yellow-300">
+                    {t('If you experience issues, refresh the page or rejoin the room.')}
+                  </div>
                 </div>
                 {joined && roomCode && (
                   <div className="bg-gray-800 rounded-lg p-4 text-sm text-gray-200 w-full mt-4 flex flex-col items-center">
-                    <div className="text-primary font-semibold mb-1">Invite friends with this link:</div>
+                    <div className="text-primary font-semibold mb-1">{t('Invite friends with this link:')}</div>
                     <div className="flex w-full max-w-xs">
                       <input
                         className="flex-1 rounded-l px-2 py-1 bg-gray-700 text-white border border-gray-600 text-xs select-all"
@@ -230,7 +255,7 @@ const WatchTogether = () => {
                           navigator.clipboard.writeText(`${window.location.origin}/watch-together?room=${roomCode}`);
                         }}
                       >
-                        Copy
+                        {t('Copy')}
                       </button>
                     </div>
                   </div>
@@ -239,16 +264,20 @@ const WatchTogether = () => {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              <div className="text-white text-center">Room Code: <span className="font-mono text-lg">{roomCode}</span></div>
+              <div className="text-white text-center">
+                {t('Room Code:')} <span className="font-mono text-lg">{roomCode}</span>
+              </div>
               {isHost && (
                 <div className="flex flex-col items-center w-full mb-2 mt-2">
-                  <label htmlFor="tmdb-id" className="text-xs text-gray-400 mb-1 self-center">TMDB Movie ID</label>
+                  <label htmlFor="tmdb-id" className="text-xs text-gray-400 mb-1 self-center">
+                    {t('TMDB Movie ID')}
+                  </label>
                   <input
                     id="tmdb-id"
                     className="rounded px-2 py-1 bg-gray-800 text-white border border-gray-700 placeholder-gray-400 text-xs w-full max-w-xs focus:ring-2 focus:ring-primary focus:outline-none transition-all text-center"
                     placeholder={'e.g. 1376434'}
                     value={videoId}
-                    onChange={e => {
+                    onChange={(e) => {
                       setVideoId(e.target.value);
                       set(ref(rtdb, `watch-together/${roomCode}`), {
                         ...roomState,
@@ -266,12 +295,12 @@ const WatchTogether = () => {
                 <div className="flex-1 flex flex-col">
                   {(!isHost && roomState && roomState.hasStarted && !roomState.isPlaying) && (
                     <div className="text-yellow-400 text-center py-2">
-                      Host paused the video. Please pause your player to stay in sync.
+                      {t('Host paused the video. Please pause your player to stay in sync.')}
                     </div>
                   )}
                   {(isHost && roomState && roomState.hasStarted && !roomState.isPlaying) && (
                     <div className="text-green-400 text-center py-2">
-                      You paused the video. Guests are notified to pause.
+                      {t('You paused the video. Guests are notified to pause.')}
                     </div>
                   )}
                   {roomState?.videoId ? (
@@ -291,7 +320,7 @@ const WatchTogether = () => {
                         <button className="bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white rounded-xl px-6 py-2 font-bold shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400 w-full md:w-auto" onClick={leaveRoom}>
                           <span className="inline-flex items-center gap-2">
                             <svg xmlns='http://www.w3.org/2000/svg' className='h-5 w-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1' /></svg>
-                            Leave Room
+                            {t('Leave Room')}
                           </span>
                         </button>
                       </div>
@@ -300,13 +329,15 @@ const WatchTogether = () => {
                     <div className="flex flex-col items-center justify-center min-h-[60vh] w-full">
                       {isHost && (
                         <div className="flex flex-col items-center w-full mb-2 mt-2">
-                          <label htmlFor="tmdb-id" className="text-xs text-gray-400 mb-1 self-center">TMDB Movie ID</label>
+                          <label htmlFor="tmdb-id" className="text-xs text-gray-400 mb-1 self-center">
+                            {t('TMDB Movie ID')}
+                          </label>
                           <input
                             id="tmdb-id"
                             className="rounded px-2 py-1 bg-gray-800 text-white border border-gray-700 placeholder-gray-400 text-xs w-full max-w-xs focus:ring-2 focus:ring-primary focus:outline-none transition-all text-center"
                             placeholder={'e.g. 1376434'}
                             value={videoId}
-                            onChange={e => {
+                            onChange={(e) => {
                               setVideoId(e.target.value);
                               set(ref(rtdb, `watch-together/${roomCode}`), {
                                 ...roomState,
@@ -321,7 +352,7 @@ const WatchTogether = () => {
                         </div>
                       )}
                       <div className="flex items-center justify-center w-full" style={{ minHeight: '120px' }}>
-                        <div className="text-white text-center">No video selected yet.</div>
+                        <div className="text-white text-center">{t('No video selected yet.')}</div>
                       </div>
                     </div>
                   )}
@@ -332,21 +363,50 @@ const WatchTogether = () => {
                     <div className="bg-primary/20 rounded-full p-2 shadow-md">
                       <svg xmlns='http://www.w3.org/2000/svg' className='h-7 w-7 text-primary' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z' /></svg>
                     </div>
-                    <span className="text-2xl font-extrabold text-primary tracking-tight drop-shadow">How to use Watch Together</span>
+                    <span className="text-2xl font-extrabold text-primary tracking-tight drop-shadow">{t('How to use Watch Together')}</span>
                   </div>
                   <ul className="list-none space-y-4 px-0">
-                    <li className="flex items-start gap-3"><span className="mt-1 text-primary text-lg">•</span><span><span className='font-bold'>Create Room</span> to start a new session, or enter a code to join a friend's room.</span></li>
-                    <li className="flex items-start gap-3"><span className="mt-1 text-primary text-lg">•</span><span>As host, enter a <span className='font-bold'>TMDB Movie ID</span> to select a movie after creating a room.</span></li>
-                    <li className="flex items-start gap-3"><span className="mt-1 text-primary text-lg">•</span><span>Share the room code or invite link with friends so they can join.</span></li>
-                    <li className="flex items-start gap-3"><span className="mt-1 text-primary text-lg">•</span><span>Everyone must be logged in to use the chat.</span></li>
-                    <li className="flex items-start gap-3"><span className="mt-1 text-primary text-lg">•</span><span>Use the chat to coordinate playback and stay in sync.</span></li>
-                    <li className="flex items-start gap-3"><span className="mt-1 text-primary text-lg">•</span><span><span className='font-bold'>Note:</span> Playback sync is manual due to third-party player limitations. Pause/play as instructed for best experience.</span></li>
+                    <li className="flex items-start gap-3">
+                      <span className="mt-1 text-primary text-lg">•</span>
+                      <span>
+                        <span className='font-bold'>{t('Create Room')}</span> {t('to start a new session, or enter a code to join a friend\'s room.')}
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="mt-1 text-primary text-lg">•</span>
+                      <span>
+                        {t('As host, enter a')}{' '}
+                        <span className='font-bold'>{t('TMDB Movie ID')}</span>{' '}
+                        {t('to select a movie after creating a room.')}
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="mt-1 text-primary text-lg">•</span>
+                      <span>{t('Share the room code or invite link with friends so they can join.')}</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="mt-1 text-primary text-lg">•</span>
+                      <span>{t('Everyone must be logged in to use the chat.')}</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="mt-1 text-primary text-lg">•</span>
+                      <span>{t('Use the chat to coordinate playback and stay in sync.')}</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="mt-1 text-primary text-lg">•</span>
+                      <span>
+                        <span className='font-bold'>{t('Note:')}</span>{' '}
+                        {t('Playback sync is manual due to third-party player limitations. Pause/play as instructed for best experience.')}
+                      </span>
+                    </li>
                   </ul>
-                  <div className="text-yellow-300 font-medium text-sm bg-yellow-900/30 rounded-xl px-4 py-3 shadow-inner">If you experience issues, refresh the page or rejoin the room.</div>
+                  <div className="text-yellow-300 font-medium text-sm bg-yellow-900/30 rounded-xl px-4 py-3 shadow-inner">
+                    {t('If you experience issues, refresh the page or rejoin the room.')}
+                  </div>
                   {roomCode && (
                     <>
                       <div className="mt-6 flex flex-col items-center w-full">
-                        <div className="text-primary font-semibold mb-1">Invite friends with this link:</div>
+                        <div className="text-primary font-semibold mb-1">{t('Invite friends with this link:')}</div>
                         <div className="flex w-full max-w-xs">
                           <input
                             className="flex-1 rounded-l px-2 py-1 bg-gray-800 text-white border border-gray-600 text-xs select-all"
@@ -360,7 +420,7 @@ const WatchTogether = () => {
                               navigator.clipboard.writeText(`${window.location.origin}/watch-together?room=${roomCode}`);
                             }}
                           >
-                            Copy
+                            {t('Copy')}
                           </button>
                         </div>
                       </div>
@@ -369,7 +429,7 @@ const WatchTogether = () => {
                         <div className="bg-gray-900 rounded-2xl shadow-xl p-6 flex flex-col items-center border border-gray-800">
                           <div className="mb-2 text-xl font-extrabold text-primary flex items-center gap-2">
                             <svg xmlns='http://www.w3.org/2000/svg' className='h-6 w-6 text-primary' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 19V6a2 2 0 012-2h2a2 2 0 012 2v13m-6 0h6' /></svg>
-                            Voice Chat
+                            {t('Voice Chat')}
                           </div>
                           <VoiceChat roomCode={roomCode} userId={user?.uid || sessionUser} displayName={user?.displayName || sessionUser} />
                         </div>

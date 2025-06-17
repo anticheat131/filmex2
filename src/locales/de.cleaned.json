@@ -355,14 +355,5 @@
   "Images": "Bilder",
   "Acting": "Schauspiel",
   "Search...": "Suchen...",
-  "TvShow": "Serie",
-  "Search for": "Suche nach ",
-  "TV Show...": "Serie...",
-  "Movie...": "Film...",
-  "Continue Watching": "Weiterschauen",
-  "Continue": "Weiterschauen",
-  "min left": "Min. übrig",
-  "about {{time}} ago": "vor etwa {{time}}",
-  "hours ago": "vor {{count}} Stunden",
-  "minutes ago": "vor {{count}} Minuten"
+  "TvShow": "Serie"
 }

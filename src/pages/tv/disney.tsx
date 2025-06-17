@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import MediaGrid from '@/components/MediaGrid';
@@ -9,6 +10,7 @@ const PAGE_SIZE = 20; // TMDB default
 const DISNEY_PROVIDER_ID = '337';
 
 export default function TVDisney() {
+  const { t } = useTranslation();
   const [shows, setShows] = useState<Media[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -80,7 +82,7 @@ export default function TVDisney() {
               href={`?page=${page + 1}`}
               onClick={e => { e.preventDefault(); if (page < totalPages) setPage(page + 1); }}
             >
-              <span>Next</span>
+              <span>{t('Next')}</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4"><path d="m9 18 6-6-6-6"/></svg>
             </a>
           </li>
@@ -96,12 +98,12 @@ export default function TVDisney() {
         <header className="mb-6 mt-2 flex flex-col items-start">
           <h1 className="mb-2 text-2xl font-medium flex items-center gap-4">
             <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className="size-28" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.22 5.838c-1.307 -.15 -1.22 -.578 -1.22 -.794c0 -.216 .424 -1.044 4.34 -1.044c4.694 0 14.66 3.645 14.66 10.042s-8.71 4.931 -10.435 4.52c-1.724 -.412 -5.565 -2.256 -5.565 -4.174c0 -1.395 3.08 -2.388 6.715 -2.388c3.634 0 5.285 1.041 5.285 2c0 .5 -.074 1.229 -1 1.5"/><path d="M10.02 8a505.153 505.153 0 0 0 0 13"/></svg>
-            Disney+ TV Shows
+            {t('Disney TV Shows')}
           </h1>
-          <p className="max-w-3xl text-muted-foreground text-left">Browse all TV shows available on Disney+. Only TV series are shown here.</p>
+          <p className="max-w-3xl text-muted-foreground text-left">{t('Browse all TV shows available on Disney+. Only TV series are shown here.')}</p>
         </header>
-        {loading && <div className="text-center py-8">Loading...</div>}
-        {error && <div className="text-red-500 mb-4">{error}</div>}
+        {loading && <div className="text-center py-8">{t('Loading...')}</div>}
+        {error && <div className="text-red-500 mb-4">{t(error)}</div>}
         {!loading && <MediaGrid media={ensureExtendedMediaArray(shows)} />}
         <div className="mt-8">{renderPagination()}</div>
       </main>

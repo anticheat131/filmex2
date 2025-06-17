@@ -10,9 +10,11 @@ import MediaActions from '@/components/player/MediaActions';
 import { useMediaPlayer } from '@/hooks/use-media-player';
 import { videoSources } from '@/utils/video-sources';
 import { useAuth } from '@/hooks';
+import { useTranslation } from 'react-i18next';
 import type { MovieDetails, TVDetails } from '@/utils/types';
 
 const Player = () => {
+  const { t } = useTranslation();
   const { id, season, episode, type } = useParams<{
     id: string;
     season?: string;
@@ -112,8 +114,8 @@ const Player = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-medium text-white">Video Sources</h3>
-                <p className="text-sm text-white/60">Select your preferred streaming source</p>
+                <h3 className="text-lg font-medium text-white">{t('Video Sources')}</h3>
+                <p className="text-sm text-white/60">{t('Select your preferred streaming source')}</p>
               </div>
               <Button
                 variant="outline"
@@ -122,7 +124,7 @@ const Player = () => {
                 onClick={goToDetails}
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
-                View Details
+                {t('View Details')}
               </Button>
             </div>
 

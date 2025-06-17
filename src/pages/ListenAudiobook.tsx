@@ -1,11 +1,13 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import audiobooks from '@/data/audiobooks.json';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CustomAudioPlayer from '@/components/CustomAudioPlayer';
 
 export default function ListenAudiobookPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const book = audiobooks.find(b => b.id === id);
@@ -15,7 +17,7 @@ export default function ListenAudiobookPage() {
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
-          <div className="text-center text-xl">Audiobook not found.</div>
+          <div className="text-center text-xl">{t('Audiobook not found.')}</div>
         </main>
         <Footer />
       </div>
@@ -68,21 +70,21 @@ export default function ListenAudiobookPage() {
                 </div>
                 <div className="text-md mt-2">
                   <div className="align-center flex w-full justify-between md:max-w-[300px]">
-                    <span className="font-bold text-gray-300">Published Date:</span> <span className="font-normal text-gray-500">{book.year}</span>
+                    <span className="font-bold text-gray-300">{t('Published Date')}:</span> <span className="font-normal text-gray-500">{book.year}</span>
                   </div>
                 </div>
                 <div className="text-md mt-4">
                   <div className="align-center flex w-full justify-between md:max-w-[300px]">
-                    <span className="font-bold text-gray-300">Rating:</span> <span className="font-normal text-gray-500">{book.rating} / 5</span>
+                    <span className="font-bold text-gray-300">{t('Rating')}:</span> <span className="font-normal text-gray-500">{book.rating} / 5</span>
                   </div>
                 </div>
                 <div className="text-md mt-4">
                   <div className="align-center flex w-full justify-between md:max-w-[300px]">
-                    <span className="font-bold text-gray-300">Maturity Rating:</span> <span className="font-normal text-gray-500">{book.maturity}</span>
+                    <span className="font-bold text-gray-300">{t('Maturity Rating')}:</span> <span className="font-normal text-gray-500">{book.maturity}</span>
                   </div>
                 </div>
                 <div className="mt-8">
-                  <a href="#leave_a_comment" className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2">Leave a Comment</a>
+                  <a href="#leave_a_comment" className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2">{t('Leave a Comment')}</a>
                 </div>
               </div>
             </div>
@@ -92,9 +94,9 @@ export default function ListenAudiobookPage() {
             <div id="leave_a_comment">
               <div>
                 <div className="comments container z-50 mt-4 md:mt-8 md:px-16 xl:mt-12 xl:px-32 undefined">
-                  <h3 className="text-lg font-semibold">Comments</h3>
+                  <h3 className="text-lg font-semibold">{t('Comments')}</h3>
                   <div className="mt-4 flex justify-center">
-                    <button className="mr-2 text-[#4f46e5] hover:underline">Log in</button> to write a comment
+                    <button className="mr-2 text-[#4f46e5] hover:underline">{t('Log in')}</button> {t('to write a comment')}
                   </div>
                   <div className="mt-4"></div>
                 </div>

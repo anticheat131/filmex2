@@ -10,8 +10,11 @@ import ReviewSection from '@/components/ReviewSection';
 import { Play, Clock, Calendar, Star, ArrowLeft, Shield, Heart, Bookmark } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useWatchHistory } from '@/hooks/watch-history';
+import { t } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 const MovieDetailsPage = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const [movie, setMovie] = useState<MovieDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -155,7 +158,7 @@ const MovieDetailsPage = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="animate-pulse-slow text-white font-medium">Loading...</div>
+        <div className="animate-pulse-slow text-white font-medium">{t('Loading...')}</div>
       </div>
     );
   }
@@ -165,7 +168,7 @@ const MovieDetailsPage = () => {
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <h1 className="text-2xl text-white mb-4">{error}</h1>
         <Button onClick={() => navigate('/')} variant="outline">
-          Return to Home
+          {t('Return to Home')}
         </Button>
       </div>
     );
@@ -174,9 +177,9 @@ const MovieDetailsPage = () => {
   if (!movie) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-        <h1 className="text-2xl text-white mb-4">Movie not found</h1>
+        <h1 className="text-2xl text-white mb-4">{t('Movie not found')}</h1>
         <Button onClick={() => navigate('/')} variant="outline">
-          Return to Home
+          {t('Return to Home')}
         </Button>
       </div>
     );
@@ -302,7 +305,7 @@ const MovieDetailsPage = () => {
                       key={genre.id}
                       className="px-2 py-1 rounded bg-white/10 text-white/80 text-xs"
                     >
-                      {genre.name}
+                      {t(genre.name)}
                     </span>
                   ))}
                 </div>
@@ -316,7 +319,7 @@ const MovieDetailsPage = () => {
                   className="bg-accent hover:bg-accent/80 text-white flex items-center"
                 >
                   <Play className="h-4 w-4 mr-2" />
-                  Play
+                  {t('Play')}
                 </Button>
 
                 <Button 
@@ -325,7 +328,7 @@ const MovieDetailsPage = () => {
                   className={`border-white/20 ${isFavorite ? 'bg-accent text-white' : 'bg-black/50 text-white hover:bg-black/70'}`}
                 >
                   <Heart className={`h-4 w-4 mr-2 ${isFavorite ? 'fill-current' : ''}`} />
-                  {isFavorite ? 'In Favorites' : 'Add to Favorites'}
+                  {isFavorite ? t('In Favorites') : t('Add to Favorites')}
                 </Button>
 
                 <Button 
@@ -334,7 +337,7 @@ const MovieDetailsPage = () => {
                   className={`border-white/20 ${isInMyWatchlist ? 'bg-accent text-white' : 'bg-black/50 text-white hover:bg-black/70'}`}
                 >
                   <Bookmark className={`h-4 w-4 mr-2 ${isInMyWatchlist ? 'fill-current' : ''}`} />
-                  {isInMyWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
+                  {isInMyWatchlist ? t('In Watchlist') : t('Add to Watchlist')}
                 </Button>
               </div>
             </div>
@@ -353,7 +356,7 @@ const MovieDetailsPage = () => {
             }`}
             onClick={() => setActiveTab('about')}
           >
-            About
+            {t('About')}
           </button>
           <button
             className={`py-2 px-4 font-medium whitespace-nowrap ${
@@ -363,7 +366,7 @@ const MovieDetailsPage = () => {
             }`}
             onClick={() => setActiveTab('cast')}
           >
-            Cast
+            {t('Cast')}
           </button>
           <button
             className={`py-2 px-4 font-medium whitespace-nowrap ${
@@ -373,7 +376,7 @@ const MovieDetailsPage = () => {
             }`}
             onClick={() => setActiveTab('reviews')}
           >
-            Reviews
+            {t('Reviews')}
           </button>
         </div>
         
@@ -382,25 +385,25 @@ const MovieDetailsPage = () => {
             {/* Additional movie details */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="glass p-6 rounded-xl">
-                <h3 className="text-lg font-semibold text-white mb-3">Status</h3>
+                <h3 className="text-lg font-semibold text-white mb-3">{t('Status')}</h3>
                 <p className="text-white/80">{movie.status}</p>
               </div>
               
               <div className="glass p-6 rounded-xl">
-                <h3 className="text-lg font-semibold text-white mb-3">Budget</h3>
+                <h3 className="text-lg font-semibold text-white mb-3">{t('Budget')}</h3>
                 <p className="text-white/80">
                   {movie.budget > 0 
                     ? `$${movie.budget.toLocaleString()}` 
-                    : 'Not available'}
+                    : t('Not available')}
                 </p>
               </div>
               
               <div className="glass p-6 rounded-xl">
-                <h3 className="text-lg font-semibold text-white mb-3">Revenue</h3>
+                <h3 className="text-lg font-semibold text-white mb-3">{t('Revenue')}</h3>
                 <p className="text-white/80">
                   {movie.revenue > 0 
                     ? `$${movie.revenue.toLocaleString()}` 
-                    : 'Not available'}
+                    : t('Not available')}
                 </p>
               </div>
             </div>
@@ -408,7 +411,7 @@ const MovieDetailsPage = () => {
             {/* Production companies */}
             {movie.production_companies.length > 0 && (
               <div className="mt-8">
-                <h3 className="text-xl font-semibold text-white mb-4">Production Companies</h3>
+                <h3 className="text-xl font-semibold text-white mb-4">{t('Production Companies')}</h3>
                 <div className="flex flex-wrap gap-6">
                   {movie.production_companies.map((company) => (
                     <div key={company.id} className="text-center">
@@ -434,7 +437,7 @@ const MovieDetailsPage = () => {
           </>
         ) : activeTab === 'cast' ? (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-6">Cast</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">{t('Cast')}</h2>
             {cast.length > 0 ? (
               <div className="flex flex-wrap gap-6">
                 {cast.map((member) => (
@@ -447,7 +450,7 @@ const MovieDetailsPage = () => {
                       />
                     ) : (
                       <div className="rounded-lg w-24 h-32 bg-white/10 flex items-center justify-center mx-auto mb-2 text-white/60 text-xs">
-                        No Image
+                        {t('No Image')}
                       </div>
                     )}
                     <p className="text-white/90 text-sm font-medium truncate">{member.name}</p>
@@ -456,13 +459,13 @@ const MovieDetailsPage = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-white/70">No cast information available.</div>
+              <div className="text-white/70">{t('No cast information available.')}</div>
             )}
           </div>
         ) : (
           /* Reviews section */
           <div className="mb-8">
-            <h3 className="text-xl font-semibold text-white mb-4">User Reviews</h3>
+            <h3 className="text-xl font-semibold text-white mb-4">{t('User Reviews')}</h3>
             <ReviewSection mediaId={parseInt(id!, 10)} mediaType="movie" />
           </div>
         )}
@@ -471,7 +474,7 @@ const MovieDetailsPage = () => {
       {/* Recommendations Section */}
       {recommendations.length > 0 && (
         <ContentRow
-          title="More Like This"
+          title={t('More Like This')}
           media={recommendations}
         />
       )}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -14,6 +15,7 @@ function getKnownFor(knownFor) {
 }
 
 export default function PopularPeoplePage() {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,13 +40,11 @@ export default function PopularPeoplePage() {
       <main className="relative flex-1 py-4">
         <div className="container space-y-8">
           <div className="md:mb-24 md:mt-12">
-            <h1 className="mb-2 text-2xl font-medium">Popular People</h1>
-            <p className="max-w-3xl text-muted-foreground">
-              Explore the most popular people in the entertainment industry. From award-winning actors to visionary directors, discover the faces behind your favorite movies and TV shows.
-            </p>
+            <h1 className="mb-2 text-2xl font-medium">{t('Popular People')}</h1>
+            <p className="max-w-3xl text-muted-foreground">{t('Explore the most popular people in the entertainment industry. From award-winning actors to visionary directors, discover the faces behind your favorite movies and TV shows.')}</p>
           </div>
           {loading ? (
-            <div className="text-center py-12">Loading...</div>
+            <div className="text-center py-12">{t('Loading...')}</div>
           ) : (
             <div className="grid-list grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {people.map(person => (
@@ -66,7 +66,7 @@ export default function PopularPeoplePage() {
                     <div className="overlay">
                       <div className="p-2 md:p-4">
                         <h2 className="line-clamp-1 text-sm font-medium md:text-lg mt-2">{person.name}</h2>
-                        <p className="line-clamp-3 text-xs text-muted-foreground md:text-base">Known for {/* --> */}{person.known_for_department || getKnownFor(person.known_for) || 'Acting'}</p>
+                        <p className="line-clamp-3 text-xs text-muted-foreground md:text-base">{t('Known for')} {/* --> */}{person.known_for_department || getKnownFor(person.known_for) || 'Acting'}</p>
                       </div>
                     </div>
                   </div>
@@ -95,7 +95,7 @@ export default function PopularPeoplePage() {
               {totalPages > 3 && (
                 <span aria-hidden="true" className="size-9 items-center justify-center hidden md:flex">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-ellipsis size-4"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
-                  <span className="sr-only">More pages</span>
+                  <span className="sr-only">{t('More pages')}</span>
                 </span>
               )}
               {totalPages > 1 && (
@@ -110,7 +110,7 @@ export default function PopularPeoplePage() {
                       setSearchParams({ page: (page + 1).toString() });
                     }}
                   >
-                    <span>Next</span>
+                    <span>{t('Next')}</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4"><path d="m9 18 6-6-6-6"></path></svg>
                   </a>
                 </li>

@@ -7,6 +7,7 @@ import { posterSizes } from '@/utils/api';
 import { cn } from '@/lib/utils';
 import { trackMediaPreference, trackMediaView } from '@/lib/analytics';
 import { Media } from '@/utils/types';
+import { useTranslation } from 'react-i18next';
 
 const genreMap: Record<number, string> = {
   28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
@@ -39,6 +40,7 @@ const MediaCard = ({
   const [quality, setQuality] = useState<string | null>(null);
 
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const mediaId = media.media_id || media.id;
   const slug = slugifyTitle(media.title || media.name || '');
@@ -173,7 +175,7 @@ const MediaCard = ({
             tabIndex={-1}
             style={{ pointerEvents: 'auto' }}
           >
-            <span>Details</span>
+            <span>{t('Details')}</span>
             <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className="ml-2 size-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M13 5h8"></path><path d="M13 9h5"></path><path d="M13 15h8"></path><path d="M13 19h5"></path><path d="M3 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path><path d="M3 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path></svg>
           </a>
           <a
@@ -182,7 +184,7 @@ const MediaCard = ({
             tabIndex={-1}
             style={{ pointerEvents: 'auto' }}
           >
-            <span>Watch</span>
+            <span>{t('Watch')}</span>
             <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="ml-2 size-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M133 440a35.37 35.37 0 0 1-17.5-4.67c-12-6.8-19.46-20-19.46-34.33V111c0-14.37 7.46-27.53 19.46-34.33a35.13 35.13 0 0 1 35.77.45l247.85 148.36a36 36 0 0 1 0 61l-247.89 148.4A35.5 35.5 0 0 1 133 440z"></path></svg>
           </a>
         </div>

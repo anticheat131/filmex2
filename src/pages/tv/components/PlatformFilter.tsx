@@ -1,4 +1,3 @@
-
 import { Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -10,6 +9,7 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { STREAMING_PLATFORMS } from '../constants/streamingPlatforms';
+import { useTranslation } from 'react-i18next';
 
 interface PlatformFilterProps {
   platformFilters: string[];
@@ -26,6 +26,7 @@ const PlatformFilter = ({
   togglePlatformBar,
   showPlatformBar
 }: PlatformFilterProps) => {
+  const { t } = useTranslation();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -35,7 +36,7 @@ const PlatformFilter = ({
           className="border-white/10 text-white hover:bg-white/10 relative"
         >
           <Filter className="h-4 w-4 mr-2" />
-          Platforms
+          {t('Platforms')}
           {platformFilters.length > 0 && (
             <span className="absolute -top-2 -right-2 bg-accent text-xs rounded-full w-5 h-5 flex items-center justify-center">
               {platformFilters.length}
@@ -44,7 +45,7 @@ const PlatformFilter = ({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56 bg-background border-white/10 text-white">
-        <DropdownMenuLabel>Streaming Platforms</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('Streaming Platforms')}</DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-white/10" />
         {STREAMING_PLATFORMS.map(platform => (
           <DropdownMenuCheckboxItem
@@ -60,7 +61,7 @@ const PlatformFilter = ({
               {!platform.icon && (
                 <div className={`h-3 w-3 rounded-full ${platform.color}`} />
               )}
-              {platform.name}
+              {t(platform.name)}
             </div>
           </DropdownMenuCheckboxItem>
         ))}
@@ -74,7 +75,7 @@ const PlatformFilter = ({
                 className="w-full"
                 onClick={clearPlatformFilters}
               >
-                Clear Platforms
+                {t('Clear Platforms')}
               </Button>
             </div>
           </>
@@ -87,7 +88,7 @@ const PlatformFilter = ({
             className="w-full"
             onClick={togglePlatformBar}
           >
-            {showPlatformBar ? "Hide Platform Bar" : "Show Platform Bar"}
+            {showPlatformBar ? t('Hide Platform Bar') : t('Show Platform Bar')}
           </Button>
         </div>
       </DropdownMenuContent>

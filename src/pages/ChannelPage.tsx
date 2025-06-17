@@ -1,10 +1,12 @@
 import React from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import channels from '@/data/channels.json';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 export default function ChannelPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -51,11 +53,11 @@ export default function ChannelPage() {
                   }}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-big-left mr-2"><path d="M18 15h-6v4l-7-7 7-7v4h6v6z"></path></svg>
-                  Back to search
+                  {t('Back to search')}
                 </button>
               </a>
               <h1 className="text-2xl font-bold sm:text-sm">
-                Now Streaming: <span className="font-normal text-gray-400">{channelName}</span>
+                {t('Now Streaming')}: <span className="font-normal text-gray-400">{channelName}</span>
               </h1>
             </div>
             <div className="aspect-video w-full overflow-hidden rounded-lg">
@@ -72,9 +74,9 @@ export default function ChannelPage() {
             <div id="leave_a_comment" className="w-full">
               <div>
                 <div className="comments container z-50 mt-4 md:mt-8 md:px-16 xl:mt-12 xl:px-32 w-full !p-0">
-                  <h3 className="text-lg font-semibold">Comments</h3>
+                  <h3 className="text-lg font-semibold">{t('Comments')}</h3>
                   <div className="mt-4 flex justify-center">
-                    <button className="mr-2 text-[#4f46e5] hover:underline">Log in</button> to write a comment
+                    <button className="mr-2 text-[#4f46e5] hover:underline">{t('Log in')}</button> {t('to write a comment')}
                   </div>
                   <div className="mt-4"></div>
                 </div>

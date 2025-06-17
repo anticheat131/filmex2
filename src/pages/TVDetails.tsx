@@ -10,6 +10,7 @@ import TVShowAbout from '@/components/tv/TVShowAbout';
 import TVShowCast from '@/components/tv/TVShowCast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTVDetails } from '@/hooks/use-tv-details';
+import { useTranslation } from 'react-i18next';
 
 function generateTVShowSlugURL(
   id: number | string,
@@ -30,6 +31,7 @@ function generateTVShowSlugURL(
 }
 
 const TVDetailsPage = () => {
+  const { t } = useTranslation();
   const { id: rawId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -72,7 +74,7 @@ const TVDetailsPage = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="animate-pulse-slow text-white font-medium">Loading...</div>
+        <div className="animate-pulse-slow text-white font-medium">{t('Loading...')}</div>
       </div>
     );
   }
@@ -82,7 +84,7 @@ const TVDetailsPage = () => {
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <h1 className="text-2xl text-white mb-4">{error}</h1>
         <Button onClick={() => navigate('/')} variant="outline">
-          Return to Home
+          {t('Return to Home')}
         </Button>
       </div>
     );
@@ -91,9 +93,9 @@ const TVDetailsPage = () => {
   if (!tvShow) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-        <h1 className="text-2xl text-white mb-4">TV Show not found</h1>
+        <h1 className="text-2xl text-white mb-4">{t('TV Show not found')}</h1>
         <Button onClick={() => navigate('/')} variant="outline">
-          Return to Home
+          {t('Return to Home')}
         </Button>
       </div>
     );
@@ -105,7 +107,7 @@ const TVDetailsPage = () => {
       value={selectedSeason ?? ''}
       onChange={(e) => setSelectedSeason(Number(e.target.value))}
       className="bg-background border border-white/20 rounded-md text-white px-4 py-2 max-w-[160px] appearance-none cursor-pointer relative pr-8"
-      aria-label="Select Season"
+      aria-label={t('Select Season')}
       style={{
         backgroundImage: `url("data:image/svg+xml;utf8,<svg fill='white' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")`,
         backgroundRepeat: 'no-repeat',
@@ -120,7 +122,7 @@ const TVDetailsPage = () => {
           </option>
         ))
       ) : (
-        <option>No seasons available</option>
+        <option>{t('No seasons available')}</option>
       )}
     </select>
   );
@@ -133,7 +135,7 @@ const TVDetailsPage = () => {
         <button
           onClick={() => navigate(-1)}
           className="absolute top-20 left-6 z-10 text-white p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors"
-          aria-label="Go back"
+          aria-label={t('Go back')}
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -171,7 +173,7 @@ const TVDetailsPage = () => {
             }`}
             onClick={() => setActiveTab('episodes')}
           >
-            Episodes
+            {t('Episodes')}
           </button>
           <button
             className={`py-2 px-4 font-medium whitespace-nowrap ${
@@ -181,7 +183,7 @@ const TVDetailsPage = () => {
             }`}
             onClick={() => setActiveTab('about')}
           >
-            About
+            {t('About')}
           </button>
           <button
             className={`py-2 px-4 font-medium whitespace-nowrap ${
@@ -191,7 +193,7 @@ const TVDetailsPage = () => {
             }`}
             onClick={() => setActiveTab('cast')}
           >
-            Cast
+            {t('Cast')}
           </button>
           <button
             className={`py-2 px-4 font-medium whitespace-nowrap ${
@@ -201,7 +203,7 @@ const TVDetailsPage = () => {
             }`}
             onClick={() => setActiveTab('reviews')}
           >
-            Reviews
+            {t('Reviews')}
           </button>
         </div>
 
@@ -237,7 +239,7 @@ const TVDetailsPage = () => {
                       />
                     ) : (
                       <div className="rounded-md mb-2 w-full h-40 bg-gray-700 flex items-center justify-center text-gray-400 text-sm select-none">
-                        No photo available
+                        {t('No photo available')}
                       </div>
                     )}
 
@@ -246,7 +248,7 @@ const TVDetailsPage = () => {
                         className="text-white font-semibold truncate max-w-[70%]"
                         title={episodeTitle}
                       >
-                        Ep {ep.episode_number}: {episodeTitle}
+                        {t('Ep')} {ep.episode_number}: {episodeTitle}
                       </p>
 
                       <button
@@ -289,7 +291,7 @@ const TVDetailsPage = () => {
   </div>
 
   <ContentRow
-    title="Recommended TV Shows"
+    title={t('Recommended TV Shows')}
     media={recommendations}
   />
 </div>

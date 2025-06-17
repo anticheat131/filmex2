@@ -15,8 +15,10 @@ import {
 } from '@/utils/sports-api';
 import { useToast } from '@/components/ui/use-toast';
 import { useUserPreferences } from '@/hooks/user-preferences';
+import { useTranslation } from 'react-i18next';
 
 const Sports = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<string>('popular');
   const [selectedSport, setSelectedSport] = useState<string>('all');
   const { toast } = useToast();
@@ -96,8 +98,8 @@ const Sports = () => {
         <div className="pt-20 pb-12">
           <div className="container mx-auto px-4 md:px-6">
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">Sports</h1>
-              <p className="text-white/70">Stream live and upcoming sports events from around the world.</p>
+              <h1 className="text-3xl font-bold text-white mb-2">{t('Sports')}</h1>
+              <p className="text-white/70">{t('Stream live and upcoming sports events from around the world.')}</p>
             </div>
 
             {/* Sports categories */}
@@ -115,7 +117,7 @@ const Sports = () => {
                     border: `1px solid ${selectedSport === 'all' ? 'transparent' : 'rgba(255,255,255,0.2)'}`
                   }}
                 >
-                  All Sports
+                  {t('All Sports')}
                 </button>
 
                 {sportsLoading ? (
@@ -150,13 +152,13 @@ const Sports = () => {
 
               <div className="flex justify-between items-center mb-4">
                 <button className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20">
-                  Hide Filters
+                  {t('Hide Filters')}
                 </button>
                 <div className="flex items-center space-x-2">
-                  <label className="text-white/70">Sort by:</label>
+                  <label className="text-white/70">{t('Sort by')}:</label>
                   <select className="bg-white/10 text-white border-none rounded-lg">
-                    <option value="time">Time</option>
-                    <option value="relevance">Relevance</option>
+                    <option value="time">{t('Time')}</option>
+                    <option value="relevance">{t('Relevance')}</option>
                   </select>
                 </div>
               </div>
@@ -166,7 +168,7 @@ const Sports = () => {
             <div className="mb-4">
               <input
                 type="text"
-                placeholder="Search for matches..."
+                placeholder={t('Search for matches...')}
                 className="w-full px-4 py-2 rounded-lg bg-white/10 text-white border-none"
               />
             </div>
@@ -181,7 +183,7 @@ const Sports = () => {
                     backgroundColor: activeTab === 'popular' ? accentColor : 'transparent'
                   }}
                 >
-                  Popular
+                  {t('Popular')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="live"
@@ -190,7 +192,7 @@ const Sports = () => {
                     backgroundColor: activeTab === 'live' ? accentColor : 'transparent'
                   }}
                 >
-                  Live
+                  {t('Live')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="all"
@@ -199,7 +201,7 @@ const Sports = () => {
                     backgroundColor: activeTab === 'all' ? accentColor : 'transparent'
                   }}
                 >
-                  All
+                  {t('All')}
                 </TabsTrigger>
               </TabsList>
 
@@ -213,7 +215,7 @@ const Sports = () => {
                 ) : (
                   <SportMatchGrid
                     matches={activeTab === 'popular' && selectedSport === 'all' ? popularMatches : sportMatches}
-                    emptyMessage={activeTab === 'popular' && selectedSport === 'all' ? "No popular matches available at the moment." : `No popular ${sportsList.find(s => s.id === selectedSport)?.name || ''} matches available.`}
+                    emptyMessage={activeTab === 'popular' && selectedSport === 'all' ? t("No popular matches available at the moment.") : t(`No popular {{sportName}} matches available.`, { sportName: sportsList.find(s => s.id === selectedSport)?.name })}
                   />
                 )}
               </TabsContent>
@@ -228,7 +230,7 @@ const Sports = () => {
                 ) : (
                   <SportMatchGrid
                     matches={activeTab === 'live' && selectedSport === 'all' ? liveMatches : sportMatches}
-                    emptyMessage={activeTab === 'live' && selectedSport === 'all' ? "No live matches available at the moment." : `No live ${sportsList.find(s => s.id === selectedSport)?.name || ''} matches right now.`}
+                    emptyMessage={activeTab === 'live' && selectedSport === 'all' ? t("No live matches available at the moment.") : t(`No live {{sportName}} matches right now.`, { sportName: sportsList.find(s => s.id === selectedSport)?.name })}
                   />
                 )}
               </TabsContent>
@@ -243,7 +245,7 @@ const Sports = () => {
                 ) : (
                   <SportMatchGrid
                     matches={activeTab === 'all' && selectedSport === 'all' ? todayMatches : sportMatches}
-                    emptyMessage={activeTab === 'all' && selectedSport === 'all' ? "No matches scheduled for today." : `No ${sportsList.find(s => s.id === selectedSport)?.name || ''} matches available.`}
+                    emptyMessage={activeTab === 'all' && selectedSport === 'all' ? t("No matches scheduled for today.") : t(`No {{sportName}} matches available.`, { sportName: sportsList.find(s => s.id === selectedSport)?.name })}
                   />
                 )}
               </TabsContent>

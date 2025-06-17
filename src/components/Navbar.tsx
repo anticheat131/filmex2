@@ -21,14 +21,8 @@ import { useTranslation } from 'react-i18next';
 import { setTmdbLanguage } from '@/utils/services/tmdb';
 
 const regions = [
-  { code: 'us', name: 'United States', flag: 'us' },
-  { code: 'gb', name: 'United Kingdom', flag: 'gb' },
-  { code: 'fr', name: 'France', flag: 'fr' },
-  { code: 'de', name: 'Germany', flag: 'de' },
-  { code: 'jp', name: 'Japan', flag: 'jp' },
-  { code: 'in', name: 'India', flag: 'in' },
-  { code: 'td', name: 'Chad', flag: 'td' },
-  // ...add more as needed
+  { code: 'en', flag: 'gb' },
+  { code: 'de', flag: 'de' }
 ];
 
 const Navbar = () => {
@@ -40,12 +34,20 @@ const Navbar = () => {
   const [showTrendingDropdown, setShowTrendingDropdown] = React.useState(false);
   const [showMoreDropdown, setShowMoreDropdown] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);                                                                                                                                                                                                                                                                                                                                                            
-  const [region, setRegion] = useState('td');
+  const [region, setRegion] = useState(() => {
+    const saved = localStorage.getItem('language');
+    return saved === 'de' ? 'de' : 'en';
+  }); // Default to United States
   const [regionDropdown, setRegionDropdown] = useState(false);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const isMobile = useIsMobile();
   const { theme, setTheme } = useTheme ? useTheme() : { theme: 'system', setTheme: () => {} };
   const { t, i18n } = useTranslation();
+
+  const regionNames: Record<string, string> = {
+    en: t('English', 'English'),
+    de: t('German', 'German')
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -69,7 +71,6 @@ const Navbar = () => {
   const handleRegionChange = (code: string) => {
     setRegion(code);
     setRegionDropdown(false);
-    // Set i18n language
     if (code === 'de') {
       i18n.changeLanguage('de');
       setTmdbLanguage('de-DE');
@@ -79,9 +80,20 @@ const Navbar = () => {
       setTmdbLanguage('en-US');
       localStorage.setItem('language', 'en');
     }
-    // Optionally: update TMDB API language globally
-    // (see note below)
   };
+
+  useEffect(() => {
+    const saved = localStorage.getItem('language');
+    if (saved === 'de') {
+      i18n.changeLanguage('de');
+      setTmdbLanguage('de-DE');
+      setRegion('de');
+    } else {
+      i18n.changeLanguage('en');
+      setTmdbLanguage('en-US');
+      setRegion('en');
+    }
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 w-full border-b bg-background">
@@ -105,7 +117,7 @@ const Navbar = () => {
                   <button className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 group gap-2">
                     {/* Movies icon */}
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-clapperboard size-4"><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"></path><path d="m6.2 5.3 3.1 3.9"></path><path d="m12.4 3.4 3.1 4"></path><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"></path></svg>
-                    Movies
+                    {t('Movies')}
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down relative top-px ml-1 size-3 transition duration-200 group-data-[state=open]:rotate-180"><path d="m6 9 6 6 6-6"></path></svg>
                   </button>
                   {showMoviesDropdown && <MoviesDropdown />}
@@ -117,7 +129,7 @@ const Navbar = () => {
                 >
                   <button className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 group gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-tv size-4"><rect width="20" height="15" x="2" y="7" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
-                    Shows
+                    {t('Shows')}
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down relative top-px ml-1 size-3 transition duration-200 group-data-[state=open]:rotate-180"><path d="m6 9 6 6 6-6"></path></svg>
                   </button>
                   {showShowsDropdown && <ShowsDropdown />}
@@ -125,7 +137,7 @@ const Navbar = () => {
                 <li>
                   <Link className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 gap-2 relative" to="/live-tv">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-antenna size-4"><path d="M2 12 7 2"></path><path d="m7 12 5-10"></path><path d="m12 12 5-10"></path><path d="m17 12 5-10"></path><path d="M4.5 7h15"></path><path d="M12 16v6"></path></svg>
-                    TV
+                    {t('TV')}
                   </Link>
                 </li>
                 <li>
@@ -141,7 +153,7 @@ const Navbar = () => {
                 >
                   <button className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 group gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trending-up size-4"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
-                    Trending
+                    {t('Trending')}
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down relative top-px ml-1 size-3 transition duration-200 group-data-[state=open]:rotate-180"><path d="m6 9 6 6 6-6"></path></svg>
                   </button>
                   {showTrendingDropdown && <TrendingDropdown />}
@@ -153,7 +165,7 @@ const Navbar = () => {
                 >
                   <button className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 group gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-list-collapse size-4"><path d="m3 10 2.5-2.5L3 5"></path><path d="m3 19 2.5-2.5L3 14"></path><path d="M10 6h11"></path><path d="M10 12h11"></path><path d="M10 18h11"></path></svg>
-                    More
+                    {t('More')}
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down relative top-px ml-1 size-3 transition duration-200 group-data-[state=open]:rotate-180"><path d="m6 9 6 6 6-6"></path></svg>
                   </button>
                   {showMoreDropdown && <MoreDropdown />}
@@ -161,7 +173,7 @@ const Navbar = () => {
                 <li>
                   <Link className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 gap-2 relative" to="/4k-contents">
                     <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 16 16" className="size-6" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.577 8.9v.03h1.828V5.898h-.062a47 47 0 0 0-1.766 3.001z"></path><path d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm2.372 3.715.435-.714h1.71v3.93h.733v.957h-.733V11H5.405V9.888H2.5v-.971c.574-1.077 1.225-2.142 1.872-3.202m7.73-.714h1.306l-2.14 2.584L13.5 11h-1.428l-1.679-2.624-.615.7V11H8.59V5.001h1.187v2.686h.057L12.102 5z"></path></svg>
-                    Contents
+                    {t('Contents')}
                   </Link>
                 </li>
               </ul>
@@ -187,7 +199,7 @@ const Navbar = () => {
                 aria-controls="settings-menu"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-settings size-4"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                <span className="sr-only">Settings</span>
+                <span className="sr-only">{t('Settings')}</span>
               </button>
             </PopoverTrigger>
             <PopoverContent sideOffset={8} align="end" className="z-[2147483647] w-72 rounded-sm border bg-popover p-4 text-popover-foreground shadow-md outline-none space-y-4">
@@ -203,21 +215,12 @@ const Navbar = () => {
                             {t('Profile')}
                           </button>
                         </a>
-                        <a href="/watch-history">
-                          <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 w-full rounded-sm border bg-background px-4 py-2 text-white transition duration-300 ease-in-out hover:bg-accent text-left">
-                            {t('Watch History')}
-                          </button>
-                        </a>
-                        <a href="/favorites">
-                          <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 w-full rounded-sm border bg-background px-4 py-2 text-white transition duration-300 ease-in-out hover:bg-accent text-left">
-                            {t('Favorites')}
-                          </button>
-                        </a>
-                        <a href="/watchlist">
-                          <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 w-full rounded-sm border bg-background px-4 py-2 text-white transition duration-300 ease-in-out hover:bg-accent text-left">
-                            {t('Watchlist')}
-                          </button>
-                        </a>
+                        <button
+                          className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 w-full rounded-sm border bg-background px-4 py-2 text-white transition duration-300 ease-in-out hover:bg-red-600 text-left"
+                          onClick={logout}
+                        >
+                          {t('Logout')}
+                        </button>
                       </>
                     ) : (
                       <a href="/login">
@@ -234,8 +237,8 @@ const Navbar = () => {
                     <button type="button" onClick={() => setRegionDropdown(v => !v)} className="flex h-10 w-full items-center justify-between rounded-sm border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 text-left">
                       <span style={{ pointerEvents: 'none' }}>
                         <div className="flex items-center gap-2">
-                          <img src={`https://cdn.jsdelivr.net/gh/lipis/flag-icons/flags/4x3/${region}.svg`} style={{ display: 'inline-block', width: '1em', height: '1em', verticalAlign: 'middle' }} alt={region} />
-                          {regions.find(r => r.code === region)?.name || 'Select region'}
+                          <img src={`https://cdn.jsdelivr.net/gh/lipis/flag-icons/flags/4x3/${region === 'en' ? 'gb' : region}.svg`} style={{ display: 'inline-block', width: '1em', height: '1em', verticalAlign: 'middle' }} alt={region} />
+                          {regionNames[region] || t('Select region')}
                         </div>
                       </span>
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4 opacity-50" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
@@ -244,8 +247,8 @@ const Navbar = () => {
                       <div className="absolute left-0 top-full mt-1 w-full bg-background border border-input shadow-lg z-50 rounded-sm max-h-48 overflow-y-auto">
                         {regions.map(r => (
                           <button key={r.code} onClick={() => { handleRegionChange(r.code); }} className={`flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent ${region === r.code ? 'bg-accent text-accent-foreground font-bold' : ''} rounded-sm`}>
-                            <img src={`https://cdn.jsdelivr.net/gh/lipis/flag-icons/flags/4x3/${r.flag}.svg`} style={{ width: '1em', height: '1em', verticalAlign: 'middle' }} alt={r.name} />
-                            {r.name}
+                            <img src={`https://cdn.jsdelivr.net/gh/lipis/flag-icons/flags/4x3/${r.flag}.svg`} style={{ width: '1em', height: '1em', verticalAlign: 'middle' }} alt={regionNames[r.code]} />
+                            {regionNames[r.code]}
                           </button>
                         ))}
                       </div>
@@ -257,15 +260,15 @@ const Navbar = () => {
                   <div className="flex flex-col gap-2">
                     <button onClick={() => setTheme && setTheme('light')} className={`inline-flex items-center justify-start gap-2 whitespace-nowrap rounded-sm text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 ${theme === 'light' ? 'bg-primary text-primary-foreground' : ''}`}> 
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-sun size-4 mr-2"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
-                      <span className="capitalize">Light</span>
+                      <span className="capitalize">{t('Light')}</span>
                     </button>
                     <button onClick={() => setTheme && setTheme('dark')} className={`inline-flex items-center justify-start gap-2 whitespace-nowrap rounded-sm text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 ${theme === 'dark' ? 'bg-primary text-primary-foreground' : ''}`}> 
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-moon size-4 mr-2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
-                      <span className="capitalize">Dark</span>
+                      <span className="capitalize">{t('Dark')}</span>
                     </button>
                     <button onClick={() => setTheme && setTheme('system')} className={`inline-flex items-center justify-start gap-2 whitespace-nowrap rounded-sm text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 ${theme === 'system' ? 'bg-primary text-primary-foreground' : ''}`}> 
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-monitor-cog size-4 mr-2"><path d="M12 17v4"></path><path d="m15.2 4.9-.9-.4"></path><path d="m15.2 7.1-.9.4"></path><path d="m16.9 3.2-.4-.9"></path><path d="m16.9 8.8-.4.9"></path><path d="m19.5 2.3-.4.9"></path><path d="m19.5 9.7-.4-.9"></path><path d="M21.7 4.5-.9.4"></path><path d="M21.7 7.5-.9-.4"></path><path d="M22 13v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path><path d="M8 21h8"></path><circle cx="18" cy="6" r="3"></circle></svg>
-                      <span className="capitalize">System</span>
+                      <span className="capitalize">{t('System')}</span>
                     </button>
                   </div>
                 </div>

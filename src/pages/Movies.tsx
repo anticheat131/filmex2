@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import MultiSelect from '@/components/MultiSelect';
 import PlatformFilter from './movies/components/PlatformFilter';
 import PlatformBar from './movies/components/PlatformBar';
+import { useTranslation } from 'react-i18next';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -33,6 +34,7 @@ const yearOptions = Array.from({ length: 50 }, (_, i) => {
 });
 
 const Movies = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'popular' | 'top_rated'>('popular');
@@ -241,14 +243,14 @@ const Movies = () => {
         <main className="container mx-auto px-4 py-8">
           <div className="flex items-center gap-3 pt-10 mb-6">
             <Film className="h-8 w-8 text-accent animate-pulse-slow" />
-            <h1 className="text-3xl font-bold text-white">Movies</h1>
+            <h1 className="text-3xl font-bold text-white">{t('Movies')}</h1>
           </div>
 
           <Tabs defaultValue={activeTab} onValueChange={handleTabChange}>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
               <TabsList className="mb-4 md:mb-0">
-                <TabsTrigger value="popular" className="data-[state=active]:bg-accent/20">Popular</TabsTrigger>
-                <TabsTrigger value="top_rated" className="data-[state=active]:bg-accent/20">Top Rated</TabsTrigger>
+                <TabsTrigger value="popular" className="data-[state=active]:bg-accent/20">{t('Popular')}</TabsTrigger>
+                <TabsTrigger value="top_rated" className="data-[state=active]:bg-accent/20">{t('Top Rated')}</TabsTrigger>
               </TabsList>
             </div>
 
@@ -259,13 +261,13 @@ const Movies = () => {
                 onValueChange={(value: 'default' | 'title' | 'release_date' | 'rating') => setSortBy(value)}
               >
                 <SelectTrigger className="w-[180px] border-white/10 text-white bg-transparent">
-                  <SelectValue placeholder="Sort By" />
+                  <SelectValue placeholder={t('Sort By')} />
                 </SelectTrigger>
                 <SelectContent className="bg-background border-white/10 text-white">
-                  <SelectItem value="default">Default</SelectItem>
-                  <SelectItem value="title">Title</SelectItem>
-                  <SelectItem value="release_date">Release Date</SelectItem>
-                  <SelectItem value="rating">Rating</SelectItem>
+                  <SelectItem value="default">{t('Default')}</SelectItem>
+                  <SelectItem value="title">{t('Title')}</SelectItem>
+                  <SelectItem value="release_date">{t('Release Date')}</SelectItem>
+                  <SelectItem value="rating">{t('Rating')}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -274,7 +276,7 @@ const Movies = () => {
                 options={genreOptions}
                 selected={genreFilters}
                 onChange={setGenreFilters}
-                placeholder="Filter by Genre(s)"
+                placeholder={t('Filter by Genre(s)')}
                 className="min-w-[180px]"
               />
 
@@ -282,10 +284,10 @@ const Movies = () => {
               <div className="flex flex-col">
                 <Select value={yearFilter} onValueChange={setYearFilter}>
                   <SelectTrigger className="w-[120px] border-white/10 text-white bg-transparent">
-                    <SelectValue placeholder="Year" />
+                    <SelectValue placeholder={t('Year')} />
                   </SelectTrigger>
                   <SelectContent className="bg-background border-white/10 text-white max-h-60 overflow-y-auto">
-                    <SelectItem value="all">All Years</SelectItem>
+                    <SelectItem value="all">{t('All Years')}</SelectItem>
                     {yearOptions.map(opt => (
                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                     ))}
@@ -311,12 +313,12 @@ const Movies = () => {
                 {viewMode === 'grid' ? (
                   <>
                     <List className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
-                    List View
+                    {t('List View')}
                   </>
                 ) : (
                   <>
                     <Grid3X3 className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
-                    Grid View
+                    {t('Grid View')}
                   </>
                 )}
               </Button>
@@ -330,10 +332,10 @@ const Movies = () => {
               {popularMoviesQuery.isLoading ? (
                 <MediaGridSkeleton listView={viewMode === 'list'} />
               ) : popularMoviesQuery.isError ? (
-                <div className="py-12 text-center text-white">Error loading movies. Please try again.</div>
+                <div className="py-12 text-center text-white">{t('Error loading movies. Please try again.')}</div>
               ) : (
                 <>
-                  <MediaGrid media={ensureExtendedMediaArray(filteredPopularMovies)} title="Popular Movies" listView={viewMode === 'list'} />
+                  <MediaGrid media={ensureExtendedMediaArray(filteredPopularMovies)} title={t('Popular Movies')} listView={viewMode === 'list'} />
                   
                   {hasMorePopular && (
                     <div className="flex justify-center my-8">
@@ -345,7 +347,7 @@ const Movies = () => {
                         {popularMoviesQuery.isFetching ? (
                           <>Loading...</>
                         ) : (
-                          <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>
+                          <>{t('Show More')} <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>
                         )}
                       </Button>
                     </div>
@@ -358,10 +360,10 @@ const Movies = () => {
               {topRatedMoviesQuery.isLoading ? (
                 <MediaGridSkeleton listView={viewMode === 'list'} />
               ) : topRatedMoviesQuery.isError ? (
-                <div className="py-12 text-center text-white">Error loading movies. Please try again.</div>
+                <div className="py-12 text-center text-white">{t('Error loading movies. Please try again.')}</div>
               ) : (
                 <>
-                  <MediaGrid media={ensureExtendedMediaArray(filteredTopRatedMovies)} title="Top Rated Movies" listView={viewMode === 'list'} />
+                  <MediaGrid media={ensureExtendedMediaArray(filteredTopRatedMovies)} title={t('Top Rated Movies')} listView={viewMode === 'list'} />
                   
                   {hasMoreTopRated && (
                     <div className="flex justify-center my-8">
@@ -373,7 +375,7 @@ const Movies = () => {
                         {topRatedMoviesQuery.isFetching ? (
                           <>Loading...</>
                         ) : (
-                          <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>
+                          <>{t('Show More')} <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>
                         )}
                       </Button>
                     </div>

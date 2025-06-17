@@ -13,8 +13,10 @@ import {
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Separator } from '@/components/ui/separator';
+import { useTranslation } from 'react-i18next';
 
 const Footer = () => {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
   const isMobile = useIsMobile();
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
@@ -46,7 +48,7 @@ const Footer = () => {
               onClick={() => toggleSection(id)}
               className="w-full flex justify-between items-center py-3 text-white font-medium"
             >
-              <span>{title}</span>
+              <span>{t(title)}</span>
               <ChevronDown 
                 className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'transform rotate-180' : ''}`} 
               />
@@ -62,7 +64,7 @@ const Footer = () => {
           </div>
         ) : (
           <div className="w-full">
-            <h3 className="text-white font-medium text-lg mb-4">{title}</h3>
+            <h3 className="text-white font-medium text-lg mb-4">{t(title)}</h3>
             {children}
           </div>
         )}
@@ -76,86 +78,86 @@ const Footer = () => {
         <div className={`${isMobile ? 'flex flex-col' : 'grid grid-cols-1 md:grid-cols-4 gap-8'}`}>
           
           {/* About Section */}
-          <FooterSection title="Watch on Filmex.to" id="about">
+          <FooterSection title={t("Watch on Filmex.to")} id="about">
             <p className="text-white/70 text-sm mb-4">
-              Discover and enjoy the best movies and TV shows all in one place. Let's Filmex helps you find, explore, and watch your favorite content online.
+              {t('Discover and enjoy the best movies and TV shows all in one place. Let\'s Filmex helps you find, explore, and watch your favorite content online.')}
             </p>
             {isMobile && (
               <div className="flex items-center mb-2">
                 <Smartphone className="h-4 w-4 text-accent mr-2" />
-                <span className="text-white/70 text-xs">Download our mobile app</span>
+                <span className="text-white/70 text-xs">{t('Download our mobile app')}</span>
               </div>
             )}
           </FooterSection>
           
           {/* Quick Links */}
-          <FooterSection title="Explore" id="explore">
+          <FooterSection title={t("Explore")} id="explore">
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to="/" className="text-white/70 hover:text-accent transition-colors flex items-center">
                   <span className="w-1 h-1 bg-accent/70 rounded-full mr-2"></span>
-                  Home
+                  {t('Home')}
                 </Link>
               </li>
               <li>
                 <Link to="/movies" className="text-white/70 hover:text-accent transition-colors flex items-center">
                   <span className="w-1 h-1 bg-accent/70 rounded-full mr-2"></span>
-                  Movies
+                  {t('Movies')}
                 </Link>
               </li>
               <li>
                 <Link to="/tv" className="text-white/70 hover:text-accent transition-colors flex items-center">
                   <span className="w-1 h-1 bg-accent/70 rounded-full mr-2"></span>
-                  TV Shows
+                  {t('TV Shows')}
                 </Link>
               </li>
               <li>
                 <Link to="/trending" className="text-white/70 hover:text-accent transition-colors flex items-center">
                   <span className="w-1 h-1 bg-accent/70 rounded-full mr-2"></span>
-                  Trending
+                  {t('Trending')}
                 </Link>
               </li>
               <li>
                 <Link to="/search" className="text-white/70 hover:text-accent transition-colors flex items-center">
                   <span className="w-1 h-1 bg-accent/70 rounded-full mr-2"></span>
-                  Search
+                  {t('Search')}
                 </Link>
               </li>
             </ul>
           </FooterSection>
           
           {/* Legal */}
-          <FooterSection title="Legal" id="legal">
+          <FooterSection title={t("Legal")} id="legal">
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to="/terms" className="text-white/70 hover:text-accent transition-colors flex items-center">
                   <span className="w-1 h-1 bg-accent/70 rounded-full mr-2"></span>
-                  Terms of Service
+                  {t('Terms of Service')}
                 </Link>
               </li>
               <li>
                 <Link to="/privacy" className="text-white/70 hover:text-accent transition-colors flex items-center">
                   <span className="w-1 h-1 bg-accent/70 rounded-full mr-2"></span>
-                  Privacy Policy
+                  {t('Privacy Policy')}
                 </Link>
               </li>
               <li>
                 <Link to="/dmca" className="text-white/70 hover:text-accent transition-colors flex items-center">
                   <span className="w-1 h-1 bg-accent/70 rounded-full mr-2"></span>
-                  DMCA Notice
+                  {t('DMCA Notice')}
                 </Link>
               </li>
               <li>
                 <Link to="/content-removal" className="text-white/70 hover:text-accent transition-colors flex items-center">
                   <span className="w-1 h-1 bg-accent/70 rounded-full mr-2"></span>
-                  Content Removal
+                  {t('Content Removal')}
                 </Link>
               </li>
             </ul>
           </FooterSection>
           
           {/* Social */}
-          <FooterSection title="Connect" id="connect">
+          <FooterSection title={t("Connect")} id="connect">
             <div className="flex flex-wrap gap-2">
               <a 
                 href="https://discord.gg/ascmZ7nExu" 
@@ -194,7 +196,7 @@ const Footer = () => {
               </a>
             </div>
             <p className="mt-4 text-white/50 text-xs flex items-center">
-              <span className="mr-1">Powered by</span>
+              <span className="mr-1">{t('Powered by')}</span>
               <a 
                 href="https://www.themoviedb.org/" 
                 className="hover:text-accent transition-colors"
@@ -212,18 +214,18 @@ const Footer = () => {
             <p className="text-white/50 text-xs flex items-center">
               © {currentYear} Filmex.to All rights reserved.
               <span className="inline-flex items-center mx-1">
-                Built with <Heart className="h-3 w-3 text-accent mx-1" fill="#E63462" /> by the community
+                {t('Built with')} <Heart className="h-3 w-3 text-accent mx-1" fill="#E63462" /> {t('by the community')}
               </span>
             </p>
             
             <p className="text-white/50 text-xs hidden md:block">
-              This site does not store any files on its server. All contents are provided by non-affiliated third parties.
+              {t('This site does not store any files on its server. All contents are provided by non-affiliated third parties.')}
             </p>
           </div>
           
           {isMobile && (
             <p className="text-white/50 text-xs mt-2">
-              This site does not store any files on its server.
+              {t('This site does not store any files on its server.')}
             </p>
           )}
         </div>

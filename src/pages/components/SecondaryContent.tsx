@@ -15,6 +15,7 @@ import {
   getJioCinemaContent,
   getSonyLivContent
 } from '@/utils/api';
+import { useTranslation } from 'react-i18next';
 
 // Helper to assign quality
 const applyQuality = (items: Media[]) =>
@@ -30,6 +31,7 @@ const applyQuality = (items: Media[]) =>
   });
 
 const SecondaryContent = () => {
+  const { t } = useTranslation();
   const [bollywoodMovies, setBollywoodMovies] = useState<Media[]>([]);
   const [actionMovies, setActionMovies] = useState<Media[]>([]);
   const [dramaMovies, setDramaMovies] = useState<Media[]>([]);
@@ -99,20 +101,20 @@ const SecondaryContent = () => {
   return (
     <>
       {/* Genre-based content */}
-      {bollywoodMovies.length > 0 && <ContentRow title="Bollywood" media={bollywoodMovies} />}
-      {actionMovies.length > 0 && <ContentRow title="Action" media={actionMovies} />}
-      {dramaMovies.length > 0 && <ContentRow title="Drama" media={dramaMovies} />}
+      {bollywoodMovies.length > 0 && <ContentRow title={t('Bollywood')} media={bollywoodMovies} />}
+      {actionMovies.length > 0 && <ContentRow title={t('Action')} media={actionMovies} />}
+      {dramaMovies.length > 0 && <ContentRow title={t('Drama')} media={dramaMovies} />}
 
       {/* Platform-specific content */}
-      {netflixContent.length > 0 && <ContentRow title="Netflix" media={netflixContent} />}
-      {huluContent.length > 0 && <ContentRow title="Hulu" media={huluContent} />}
-      {primeContent.length > 0 && <ContentRow title="Prime Video" media={primeContent} />}
-      {paramountContent.length > 0 && <ContentRow title="Paramount+" media={paramountContent} />}
-      {disneyContent.length > 0 && <ContentRow title="Disney+" media={disneyContent} />}
-      {hotstarContent.length > 0 && <ContentRow title="Hotstar" media={hotstarContent} />}
-      {appleTVContent.length > 0 && <ContentRow title="Apple TV+" media={appleTVContent} />}
-      {jioCinemaContent.length > 0 && <ContentRow title="JioCinema" media={jioCinemaContent} />}
-      {sonyLivContent.length > 0 && <ContentRow title="Sony Liv" media={sonyLivContent} />}
+      {netflixContent.length > 0 && <ContentRow title={t('Netflix')} media={netflixContent} />}
+      {huluContent.length > 0 && <ContentRow title={t('Hulu')} media={huluContent} />}
+      {primeContent.length > 0 && <ContentRow title={t('Prime Video')} media={primeContent} />}
+      {paramountContent.length > 0 && <ContentRow title={t('Paramount+')} media={paramountContent} />}
+      {disneyContent.length > 0 && <ContentRow title={t('Disney+')} media={disneyContent} />}
+      {hotstarContent.length > 0 && <ContentRow title={t('Hotstar')} media={hotstarContent} />}
+      {appleTVContent.length > 0 && <ContentRow title={t('Apple TV+')} media={appleTVContent} />}
+      {jioCinemaContent.length > 0 && <ContentRow title={t('JioCinema')} media={jioCinemaContent} />}
+      {sonyLivContent.length > 0 && <ContentRow title={t('Sony Liv')} media={sonyLivContent} />}
     </>
   );
 };

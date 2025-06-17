@@ -1,4 +1,3 @@
-
 import { Tv, Heart, Bookmark, History, Play, Calendar, Star, List, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { backdropSizes, posterSizes } from '@/utils/api';
@@ -7,6 +6,7 @@ import { TVDetails } from '@/utils/types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { t } from 'i18next';
 
 interface TVShowHeaderProps {
   tvShow: TVDetails;
@@ -163,7 +163,7 @@ export const TVShowHeader = ({
                 )}
               >
                 <Heart className={cn("h-4 w-4 mr-2", isFavorite && "fill-current")} />
-                {isFavorite ? 'In Favorites' : 'Add to Favorites'}
+                {isFavorite ? t('In Favorites') : t('Add to Favorites')}
               </Button>
 
               <Button 

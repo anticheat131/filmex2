@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { searchMedia } from '@/utils/api';
 import { Media } from '@/utils/types';
 import { Search as SearchIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 // Animated placeholder logic
 const useAnimatedPlaceholder = () => {
-  const staticText = 'Search for ';
-  const dynamicPhrases = ['TV Show...', 'Movie...'];
+  const { t } = useTranslation();
+  const staticText = t('Search for', 'Search for ');
+  const dynamicPhrases = [t('TV Show...', 'TV Show...'), t('Movie...', 'Movie...')];
   const [displayedText, setDisplayedText] = useState('');
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);

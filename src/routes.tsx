@@ -2,6 +2,7 @@ import { Routes, Route, Outlet } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AnalyticsWrapper } from '@/components/AnalyticsWrapper';
+import { useTranslation } from 'react-i18next';
 
 // Lazy load pages
 const Index = lazy(() => import('./pages/Index'));
@@ -68,8 +69,10 @@ const Development = lazy(() => import('./pages/development'));
 
 
 export default function AppRoutes() {
+  const { t } = useTranslation();
+
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{t('Loading...')}</div>}>
       <AnalyticsWrapper>
         <Routes>
           <Route path="/" element={<Index />} />

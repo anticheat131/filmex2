@@ -6,48 +6,7 @@ import { STREAMING_PLATFORMS } from '../constants/streamingPlatforms';
 import PlatformFilter from './PlatformFilter';
 import PlatformBar from './PlatformBar';
 import { useMemo } from 'react';
-
-// TV genre options (should match TMDB genre IDs)
-const genreOptions = [
-  { value: '10759', label: 'Action & Adventure' },
-  { value: '16', label: 'Animation' },
-  { value: '35', label: 'Comedy' },
-  { value: '80', label: 'Crime' },
-  { value: '99', label: 'Documentary' },
-  { value: '18', label: 'Drama' },
-  { value: '10751', label: 'Family' },
-  { value: '10762', label: 'Kids' },
-  { value: '9648', label: 'Mystery' },
-  { value: '10763', label: 'News' },
-  { value: '10764', label: 'Reality' },
-  { value: '10765', label: 'Sci-Fi & Fantasy' },
-  { value: '10766', label: 'Soap' },
-  { value: '10767', label: 'Talk' },
-  { value: '10768', label: 'War & Politics' },
-  { value: '37', label: 'Western' },
-];
-
-// Generate year options (e.g. 2025-1950)
-const currentYear = new Date().getFullYear();
-const yearOptions = Array.from({ length: 76 }, (_, i) => {
-  const year = currentYear - i;
-  return { value: year.toString(), label: year.toString() };
-});
-
-interface TVShowsFiltersProps {
-  sortBy: 'default' | 'name' | 'first_air_date' | 'rating';
-  onSortChange: (value: 'default' | 'name' | 'first_air_date' | 'rating') => void;
-  genreFilters: string[];
-  onGenreFiltersChange: (genres: string[]) => void;
-  yearFilter: string;
-  onYearChange: (year: string) => void;
-  platformFilters: string[];
-  setPlatformFilters: (platforms: string[]) => void;
-  viewMode: 'grid' | 'list';
-  toggleViewMode: () => void;
-  showPlatformBar: boolean;
-  togglePlatformBar: () => void;
-}
+import { useTranslation } from 'react-i18next';
 
 const TVShowsFilters = ({
   sortBy,
@@ -63,6 +22,35 @@ const TVShowsFilters = ({
   yearFilter,
   onYearChange,
 }: TVShowsFiltersProps) => {
+  const { t } = useTranslation();
+
+  // TV genre options (should match TMDB genre IDs)
+  const genreOptions = [
+    { value: '10759', label: t('Action & Adventure') },
+    { value: '16', label: t('Animation') },
+    { value: '35', label: t('Comedy') },
+    { value: '80', label: t('Crime') },
+    { value: '99', label: t('Documentary') },
+    { value: '18', label: t('Drama') },
+    { value: '10751', label: t('Family') },
+    { value: '10762', label: t('Kids') },
+    { value: '9648', label: t('Mystery') },
+    { value: '10763', label: t('News') },
+    { value: '10764', label: t('Reality') },
+    { value: '10765', label: t('Sci-Fi & Fantasy') },
+    { value: '10766', label: t('Soap') },
+    { value: '10767', label: t('Talk') },
+    { value: '10768', label: t('War & Politics') },
+    { value: '37', label: t('Western') },
+  ];
+
+  // Generate year options (e.g. 2025-1950)
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 76 }, (_, i) => {
+    const year = currentYear - i;
+    return { value: year.toString(), label: year.toString() };
+  });
+
   const clearPlatformFilters = () => {
     setPlatformFilters([]);
   };
@@ -87,13 +75,13 @@ const TVShowsFilters = ({
             onValueChange={onSortChange}
           >
             <SelectTrigger className="w-[180px] border-white/10 text-white bg-transparent">
-              <SelectValue placeholder="Sort By" />
+              <SelectValue placeholder={t('Sort By')} />
             </SelectTrigger>
             <SelectContent className="bg-background border-white/10 text-white">
-              <SelectItem value="default">Default</SelectItem>
-              <SelectItem value="name">Name</SelectItem>
-              <SelectItem value="first_air_date">First Air Date</SelectItem>
-              <SelectItem value="rating">Rating</SelectItem>
+              <SelectItem value="default">{t('Default')}</SelectItem>
+              <SelectItem value="name">{t('Name')}</SelectItem>
+              <SelectItem value="first_air_date">{t('First Air Date')}</SelectItem>
+              <SelectItem value="rating">{t('Rating')}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -102,17 +90,17 @@ const TVShowsFilters = ({
             options={genreOptions}
             selected={genreFilters}
             onChange={onGenreFiltersChange}
-            placeholder="Filter by Genre(s)"
+            placeholder={t('Filter by Genre(s)')}
             className="min-w-[180px]"
           />
 
           {/* Year filter */}
           <Select value={yearFilter} onValueChange={onYearChange}>
             <SelectTrigger className="w-[120px] border-white/10 text-white bg-transparent">
-              <SelectValue placeholder="Year" />
+              <SelectValue placeholder={t('Year')} />
             </SelectTrigger>
             <SelectContent className="bg-background border-white/10 text-white max-h-60 overflow-y-auto">
-              <SelectItem value="all">All Years</SelectItem>
+              <SelectItem value="all">{t('All Years')}</SelectItem>
               {yearOptions.map(opt => (
                 <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
               ))}
@@ -136,12 +124,12 @@ const TVShowsFilters = ({
             {viewMode === 'grid' ? (
               <>
                 <List className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
-                List View
+                {t('List View')}
               </>
             ) : (
               <>
                 <Grid3X3 className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
-                Grid View
+                {t('Grid View')}
               </>
             )}
           </Button>
@@ -159,7 +147,7 @@ const TVShowsFilters = ({
       {/* Platform Filter Summary */}
       {platformFilters.length > 0 && (
         <div className="flex flex-wrap gap-2 items-center text-sm text-white/70 mb-4">
-          <span>Showing on:</span>
+          <span>{t('Showing on:')}</span>
           {platformFilters.map(platformId => {
             const platform = STREAMING_PLATFORMS.find(p => p.id === platformId);
             return platform ? (
@@ -167,7 +155,7 @@ const TVShowsFilters = ({
                 {platform.icon && (
                   <platform.icon className={`h-3 w-3 ${platform.color}`} />
                 )}
-                {platform.name}
+                {t(platform.name)}
                 <button onClick={() => togglePlatformFilter(platformId)} className="ml-1 text-white/60 hover:text-white">
                   ×
                 </button>
@@ -179,7 +167,7 @@ const TVShowsFilters = ({
               onClick={clearPlatformFilters}
               className="text-xs underline text-accent hover:text-accent/80"
             >
-              Clear all
+              {t('Clear all')}
             </button>
           )}
         </div>

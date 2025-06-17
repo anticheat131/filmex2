@@ -4,11 +4,13 @@ import Footer from '@/components/Footer';
 import MediaGrid from '@/components/MediaGrid';
 import { getDiscoverMovies, DiscoverMoviesParams } from '@/utils/services/movies';
 import { ensureExtendedMediaArray } from '@/utils/types';
+import { useTranslation } from 'react-i18next';
 
 const PAGE_SIZE = 20; // TMDB default
 const PRIME_PROVIDER_ID = '9';
 
 export default function MoviePrime() {
+  const { t } = useTranslation();
   const [movies, setMovies] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -29,9 +31,9 @@ export default function MoviePrime() {
         setMovies(ensureExtendedMediaArray(data.results));
         setTotalPages(Math.min(data.total_pages, 500));
       })
-      .catch(() => setError('Failed to load Amazon Prime movies.'))
+      .catch(() => setError(t('Failed to load Amazon Prime movies.')))
       .finally(() => setLoading(false));
-  }, [page]);
+  }, [page, t]);
 
   // Pagination logic for first 3, last, and next
   const renderPagination = () => {
@@ -50,7 +52,7 @@ export default function MoviePrime() {
             p === 'ellipsis' ? (
               <span key={idx} aria-hidden="true" className="size-9 items-center justify-center hidden md:flex">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-ellipsis size-4"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
-                <span className="sr-only">More pages</span>
+                <span className="sr-only">{t('More pages')}</span>
               </span>
             ) : (
               <li key={p}>
@@ -68,12 +70,12 @@ export default function MoviePrime() {
           <li>
             <a
               className={`items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 gap-1 pr-2.5 hidden md:flex ${page >= totalPages ? 'pointer-events-none opacity-50' : ''}`}
-              aria-label="Go to next page"
+              aria-label={t('Go to next page')}
               rel="next"
               href={`?page=${page + 1}`}
               onClick={e => { e.preventDefault(); if (page < totalPages) setPage(page + 1); }}
             >
-              <span>Next</span>
+              <span>{t('Next')}</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4"><path d="m9 18 6-6-6-6"/></svg>
             </a>
           </li>
@@ -95,9 +97,9 @@ export default function MoviePrime() {
               <path d="M18 28c24 8 72 8 96 0" stroke="#00A8E1" strokeWidth="3" fill="none"/>
             </svg>
           </h1>
-          <p className="max-w-3xl text-muted-foreground text-left">Explore Amazon Prime's diverse offerings, including exclusive Amazon Originals, popular movies, and hit TV shows. Enjoy perks like early access to releases and Amazon Channels.</p>
+          <p className="max-w-3xl text-muted-foreground text-left">{t('Explore Amazon Prime\'s diverse offerings, including exclusive Amazon Originals, popular movies, and hit TV shows. Enjoy perks like early access to releases and Amazon Channels.')}</p>
         </header>
-        {loading && <div className="text-center py-8">Loading...</div>}
+        {loading && <div className="text-center py-8">{t('Loading...')}</div>}
         {error && <div className="text-red-500 mb-4">{error}</div>}
         {!loading && <MediaGrid media={movies} />}
         <div className="mt-8">{renderPagination()}</div>

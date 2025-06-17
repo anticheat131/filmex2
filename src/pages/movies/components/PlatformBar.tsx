@@ -1,5 +1,6 @@
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { STREAMING_PLATFORMS } from '../constants/streamingPlatforms';
+import { useTranslation } from 'react-i18next';
 
 interface PlatformBarProps {
   platformFilters: string[];
@@ -7,6 +8,7 @@ interface PlatformBarProps {
 }
 
 const PlatformBar = ({ platformFilters, setPlatformFilters }: PlatformBarProps) => {
+  const { t } = useTranslation();
   return (
     <div className="mb-6 bg-black/30 rounded-lg p-3 overflow-x-auto">
       <ToggleGroup 
@@ -28,7 +30,7 @@ const PlatformBar = ({ platformFilters, setPlatformFilters }: PlatformBarProps) 
             {!platform.icon && (
               <div className={`h-3 w-3 rounded-full ${platform.color}`} />
             )}
-            <span className="hidden sm:inline">{platform.name}</span>
+            <span className="hidden sm:inline">{t(platform.name)}</span>
           </ToggleGroupItem>
         ))}
       </ToggleGroup>

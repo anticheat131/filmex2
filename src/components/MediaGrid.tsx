@@ -82,6 +82,15 @@ const MediaGrid = ({
     }
   };
 
+  // Helper to handle delete selected and reset selection state
+  const handleDeleteSelected = () => {
+    if (onDeleteSelected) {
+      onDeleteSelected(selectedItems);
+      setSelectedItems([]);
+      setSelectMode(false);
+    }
+  };
+
   const renderTimestamp = (media: ExtendedMedia) => {
     if (!media.created_at) return null;
     
@@ -127,7 +136,7 @@ const MediaGrid = ({
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={() => onDeleteSelected(selectedItems)}
+                onClick={handleDeleteSelected}
                 className="ml-auto"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
@@ -216,13 +225,18 @@ const MediaGrid = ({
             <motion.div 
               key={`${mediaItem.media_type}-${mediaItem.id}-${mediaItem.docId ?? idx}`} 
               variants={item}
-              className="group relative"
+              className={`group relative${selectMode ? ' cursor-pointer' : ''}`}
+              onClick={selectMode && mediaItem.docId ? (e => {
+                e.stopPropagation();
+                handleSelect(mediaItem.docId!);
+              }) : undefined}
             >
               {selectMode && mediaItem.docId && (
                 <div className="absolute top-2 left-2 z-10">
                   <Checkbox 
                     checked={selectedItems.includes(mediaItem.docId)}
                     onCheckedChange={() => handleSelect(mediaItem.docId!)}
+                    onClick={e => e.stopPropagation()}
                   />
                 </div>
               )}

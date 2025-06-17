@@ -4,11 +4,13 @@ import Footer from '@/components/Footer';
 import MediaGrid from '@/components/MediaGrid';
 import { getDiscoverMovies, DiscoverMoviesParams } from '@/utils/services/movies';
 import { ensureExtendedMediaArray } from '@/utils/types';
+import { useTranslation } from 'react-i18next';
 
 const PAGE_SIZE = 20; // TMDB default
 const NETFLIX_PROVIDER_ID = '8';
 
 export default function MovieNetflix() {
+  const { t } = useTranslation();
   const [movies, setMovies] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -29,7 +31,7 @@ export default function MovieNetflix() {
         setMovies(ensureExtendedMediaArray(data.results));
         setTotalPages(Math.min(data.total_pages, 500));
       })
-      .catch(() => setError('Failed to load Netflix movies.'))
+      .catch(() => setError(t('Failed to load Netflix movies.')))
       .finally(() => setLoading(false));
   }, [page]);
 
@@ -50,7 +52,7 @@ export default function MovieNetflix() {
             p === 'ellipsis' ? (
               <span key={idx} aria-hidden="true" className="size-9 items-center justify-center hidden md:flex">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-ellipsis size-4"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
-                <span className="sr-only">More pages</span>
+                <span className="sr-only">{t('More pages')}</span>
               </span>
             ) : (
               <li key={p}>
@@ -90,10 +92,10 @@ export default function MovieNetflix() {
           <h1 className="mb-2 text-2xl font-medium flex items-center gap-4">
             <svg stroke="currentColor" fill="currentColor" strokeWidth="0" role="img" viewBox="0 0 24 24" className="size-28" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M5.398 0v.006c3.028 8.556 5.37 15.175 8.348 23.596 2.344.058 4.85.398 4.854.398-2.8-7.924-5.923-16.747-8.487-24zm8.489 0v9.63L18.6 22.951c-.043-7.86-.004-15.913.002-22.95zM5.398 1.05V24c1.873-.225 2.81-.312 4.715-.398v-9.22z"></path></svg>
           </h1>
-          <p className="max-w-3xl text-muted-foreground text-left">Dive into Netflix's vast library of original series, blockbuster movies, documentaries, and more. Stay ahead with their continually updated selection of binge-worthy content.</p>
+          <p className="max-w-3xl text-muted-foreground text-left">{t('Dive into Netflix\'s vast library of original series, blockbuster movies, documentaries, and more. Stay ahead with their continually updated selection of binge-worthy content.')}</p>
         </header>
-        {loading && <div className="text-center py-8">Loading...</div>}
-        {error && <div className="text-red-500 mb-4">{error}</div>}
+        {loading && <div className="text-center py-8">{t('Loading...')}</div>}
+        {error && <div className="text-red-500 mb-4">{t(error)}</div>}
         {!loading && <MediaGrid media={movies} />}
         <div className="mt-8">{renderPagination()}</div>
       </main>

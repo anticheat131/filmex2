@@ -8,10 +8,12 @@ import { getMatchStreams } from '@/utils/sports-api';
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { saveLocalData, getLocalData } from '@/utils/supabase';
+import { useTranslation } from 'react-i18next';
 
 const ALL_SOURCES = ['alpha', 'bravo', 'charlie', 'delta', 'echo', 'foxtrot'];
 
 const SportMatchPlayer = () => {
+  const { t } = useTranslation();
   const { id, source } = useParams();
   const { toast } = useToast();
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
@@ -69,31 +71,31 @@ const SportMatchPlayer = () => {
     setIsPlayerLoaded(false);
     setLoadAttempts(0);
     toast({
-      title: "Source changed",
-      description: `Switched to ${src}`,
+      title: t("Source changed"),
+      description: t(`Switched to ${src}`),
       duration: 2000,
     });
   };
 
   const handleIframeLoad = () => {
     setIsPlayerLoaded(true);
-    toast({ title: "Stream loaded", description: "Video player ready", duration: 2000 });
+    toast({ title: t("Stream loaded"), description: t("Video player ready"), duration: 2000 });
   };
 
   const handleIframeError = () => {
     setLoadAttempts(prev => prev + 1);
     if (loadAttempts < 2) {
       toast({
-        title: "Stream loading failed",
-        description: "Attempting to reload...",
+        title: t("Stream loading failed"),
+        description: t("Attempting to reload..."),
         variant: "destructive",
         duration: 3000,
       });
       setIsPlayerLoaded(false);
     } else {
       toast({
-        title: "Stream unavailable",
-        description: "Please try another source",
+        title: t("Stream unavailable"),
+        description: t("Please try another source"),
         variant: "destructive",
         duration: 5000,
       });
@@ -103,7 +105,7 @@ const SportMatchPlayer = () => {
   if (!id) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center text-white">
-        <p>Invalid match ID. Please check the URL.</p>
+        <p>{t("Invalid match ID. Please check the URL.")}</p>
       </div>
     );
   }
@@ -113,7 +115,7 @@ const SportMatchPlayer = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-white text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-accent mx-auto mb-4"></div>
-          <p>Loading video player...</p>
+          <p>{t("Loading video player...")}</p>
         </div>
       </div>
     );
@@ -123,9 +125,9 @@ const SportMatchPlayer = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-white text-center p-6 max-w-md">
-          <h2 className="text-2xl font-bold mb-4">Error Loading Player</h2>
-          <p className="text-white/70 mb-4">We couldn't load the video player for this match.</p>
-          <p className="text-sm text-white/50">Technical details: {error.message}</p>
+          <h2 className="text-2xl font-bold mb-4">{t("Error Loading Player")}</h2>
+          <p className="text-white/70 mb-4">{t("We couldn't load the video player for this match.")}</p>
+          <p className="text-sm text-white/50">{t("Technical details:")} {error.message}</p>
         </div>
       </div>
     );
@@ -138,15 +140,15 @@ const SportMatchPlayer = () => {
         <div className="pt-20 pb-12">
           <div className="container mx-auto px-4 md:px-6">
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">Sport Match Player</h1>
-              <p className="text-white/70">Watching match ID: {id}</p>
+              <h1 className="text-3xl font-bold text-white mb-2">{t("Sport Match Player")}</h1>
+              <p className="text-white/70">{t("Watching match ID:")} {id}</p>
             </div>
 
             {/* Source Dropdown */}
             <div className="mb-4 flex items-center gap-4">
               <DropdownMenu>
                 <DropdownMenuTrigger className="bg-white/10 text-white rounded-md px-4 py-2 inline-flex items-center justify-center">
-                  {selectedSource ? `Source: ${selectedSource}` : 'Select Source'}
+                  {selectedSource ? `${t("Source")}: ${selectedSource}` : t('Select Source')}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-background border border-white/20">
                   {ALL_SOURCES.map((src) => {
@@ -159,7 +161,7 @@ const SportMatchPlayer = () => {
                         }}
                         className={isAvailable ? '' : 'text-white/30 pointer-events-none'}
                       >
-                        {src} {isAvailable ? '' : ' (Unavailable)'}
+                        {src} {isAvailable ? '' : ` (${t('Unavailable')})`}
                       </DropdownMenuItem>
                     );
                   })}
@@ -168,11 +170,11 @@ const SportMatchPlayer = () => {
 
               <div className="text-sm text-white/50">
                 {isPlayerLoaded ? (
-                  <span className="text-green-400">✓ Stream loaded</span>
+                  <span className="text-green-400">✓ {t("Stream loaded")}</span>
                 ) : embedUrl ? (
-                  <span className="animate-pulse">Loading stream...</span>
+                  <span className="animate-pulse">{t("Loading stream...")}</span>
                 ) : (
-                  <span>No embed URL</span>
+                  <span>{t("No embed URL")}</span>
                 )}
               </div>
             </div>
@@ -193,7 +195,7 @@ const SportMatchPlayer = () => {
                 ></iframe>
               ) : (
                 <div className="flex items-center justify-center h-full text-white">
-                  <p>No streams or embed URL available for this match.</p>
+                  <p>{t("No streams or embed URL available for this match.")}</p>
                 </div>
               )}
 
@@ -201,7 +203,7 @@ const SportMatchPlayer = () => {
                 <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
                   <div className="text-white text-center">
                     <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-accent mx-auto mb-2"></div>
-                    <p>Loading stream...</p>
+                    <p>{t("Loading stream...")}</p>
                   </div>
                 </div>
               )}
@@ -210,11 +212,11 @@ const SportMatchPlayer = () => {
             {/* Stream Info */}
             {selectedSource && currentStream && (
               <div className="mt-4 p-4 bg-white/5 rounded-md">
-                <h3 className="text-lg font-medium text-white mb-2">Stream Information</h3>
+                <h3 className="text-lg font-medium text-white mb-2">{t("Stream Information")}</h3>
                 <p className="text-sm text-white/70">
-                  Source: {selectedSource} • 
-                  Quality: {currentStream.hd ? 'HD' : 'SD'} •
-                  Status: {isPlayerLoaded ? 'Ready' : 'Loading'}
+                  {t("Source")}: {selectedSource} • 
+                  {t("Quality")}: {currentStream.hd ? t('HD') : t('SD')} •
+                  {t("Status")}: {isPlayerLoaded ? t('Ready') : t('Loading')}
                 </p>
               </div>
             )}

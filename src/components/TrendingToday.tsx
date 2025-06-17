@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, ArrowRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
@@ -26,6 +27,7 @@ const TrendingToday = () => {
   const [movies, setMovies] = useState([]);
   const [logos, setLogos] = useState({});
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchTrendingToday().then(async (movies) => {
@@ -54,12 +56,12 @@ const TrendingToday = () => {
               {/* Overlay gradient for readability */}
               <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/90 z-10" />
               {/* Heart icon top right */}
-              <button className="absolute top-5 right-5 z-20 bg-black/40 hover:bg-black/70 rounded-full p-3 text-white shadow transition" tabIndex={-1} aria-label="Add to favorites">
+              <button className="absolute top-5 right-5 z-20 bg-black/40 hover:bg-black/70 rounded-full p-3 text-white shadow transition" tabIndex={-1} aria-label={t('Add to Favorites')}>
                 <svg xmlns='http://www.w3.org/2000/svg' fill='currentColor' viewBox='0 0 24 24' className='w-7 h-7'><path d='M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z'/></svg>
               </button>
               <div className="relative z-20 flex flex-col items-center justify-end px-2 md:px-4 pt-2 md:pt-4 pb-6 md:pb-10 w-full h-full">
                 {/* Trending Now badge */}
-                <span className="mb-2 md:mb-3 px-3 md:px-4 py-1 md:py-1.5 rounded-full bg-white/90 text-black text-xs md:text-sm font-semibold shadow">Trending Now</span>
+                <span className="mb-2 md:mb-3 px-3 md:px-4 py-1 md:py-1.5 rounded-full bg-white/90 text-black text-xs md:text-sm font-semibold shadow">{t('Trending Now Movies')}</span>
                 {/* Logo or Title */}
                 {logos[movie.id] && !logos[movie.id].includes('/images') ? (
                   <img src={`https://image.tmdb.org/t/p/w780${logos[movie.id]}`} alt={movie.title} className="max-h-16 mb-2 md:mb-3 object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]" style={{filter:'drop-shadow(0 2px 8px #000)'}} />
@@ -86,6 +88,11 @@ const TrendingToday = () => {
               </div>
             </div>
           ))}
+        </div>
+        <div className="mt-8 text-center">
+          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all text-sm md:text-base">
+            {t('Explore more')}
+          </button>
         </div>
       </section>
     </>

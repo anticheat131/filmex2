@@ -6,6 +6,7 @@ import MediaGrid from '@/components/MediaGrid';
 import { MediaGridSkeleton } from '@/components/MediaSkeleton';
 import ShowMoreButton from './ShowMoreButton';
 import useFilteredShows from '../hooks/useFilteredShows';
+import { useTranslation } from 'react-i18next';
 
 const ITEMS_PER_PAGE = 20;
 const MAX_PAGES = 20;
@@ -20,6 +21,7 @@ interface TabContentProps {
 }
 
 const TabContent = ({ type, viewMode, sortBy, genreFilters, yearFilter, platformFilters }: TabContentProps) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [allShows, setAllShows] = useState<Media[]>([]);
@@ -198,7 +200,7 @@ const TabContent = ({ type, viewMode, sortBy, genreFilters, yearFilter, platform
 
   // Error state handler
   if (showsQuery.isError) {
-    return <div className="py-12 text-center text-white">Error loading TV shows. Please try again.</div>;
+    return <div className="py-12 text-center text-white">{t('Error loading TV shows. Please try again.')}</div>;
   }
 
   // Determine if there are more shows to fetch
@@ -206,10 +208,10 @@ const TabContent = ({ type, viewMode, sortBy, genreFilters, yearFilter, platform
 
   // Determine the title based on the type
   const title = type === 'popular' 
-    ? "Popular TV Shows" 
+    ? t('Popular TV Shows')
     : type === 'top_rated' 
-      ? "Top Rated TV Shows" 
-      : "Trending TV Shows";
+      ? t('Top Rated TV Shows')
+      : t('Trending TV Shows');
 
   return (
     <>

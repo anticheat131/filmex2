@@ -14,13 +14,17 @@ import {
 } from '@/components/ui/tooltip';
 import { formatDistanceToNow } from 'date-fns';
 import { getContinueWatching, setContinueWatching, removeContinueWatching } from '@/api/continue-watching';
+import { useUserPreferences } from '@/hooks/user-preferences';
+import { useTranslation } from 'react-i18next';
 
 interface ContinueWatchingProps {
   maxItems?: number;
 }
 
 const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { userPreferences } = useUserPreferences();
   const [continuableItems, setContinuableItems] = useState<WatchHistoryItem[]>([]);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -104,13 +108,13 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
     return Array.from(map.values()).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [continuableItems]);
 
-  if (!user || processedItems.length === 0) return null;
+  if (!user || processedItems.length === 0 || userPreferences?.isContinueWatchingEnabled === false) return null;
 
   return (
     <div className="px-4 md:px-8 mt-8 mb-6">
       <h2 className="text-xl md:text-2xl font-bold text-white mb-4 flex items-center">
         <Clock className="h-5 w-5 mr-2 text-accent" />
-        Continue Watching
+        {t('Continue Watching')}
       </h2>
 
       <div
@@ -169,19 +173,22 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
                 <div className="flex items-center justify-between text-xs text-white/70 mb-2">
                   <span className="flex items-center">
                     <Clock className="h-3 w-3 mr-1" />
-                    {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                    {t('about {{time}} ago', { time: formatDistanceToNow(new Date(item.created_at), { addSuffix: false, locale: i18n.language === 'de' ? undefined : undefined })
+                      .replace('about ', '')
+                      .replace('vor ', '')
+                      .replace('ago', t('ago', 'ago')) })}
                   </span>
                   {item.media_type === 'tv' && <span>S{item.season} E{item.episode}</span>}
                 </div>
                 <div className="mb-3 relative">
                   <Progress value={(item.watch_position / item.duration) * 100} className="h-1" />
                   <div className="text-xs text-white/70 mt-1 text-right">
-                    {Math.floor((item.duration - item.watch_position) / 60)} min left
+                    {`${Math.floor((item.duration - item.watch_position) / 60)} ${t('min left')}`}
                   </div>
                 </div>
                 <Button className="w-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center gap-1" size="sm">
                   <Play className="h-3 w-3" />
-                  Continue
+                  {t('Continue')}
                 </Button>
               </div>
             </motion.div>

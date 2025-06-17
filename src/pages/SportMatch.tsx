@@ -18,8 +18,10 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from '@/components/ui/use-toast';
 import { ArrowLeft, Sparkles, Tv, Languages, Check, Info } from 'lucide-react';
 import { useUserPreferences } from '@/hooks/user-preferences';
+import { useTranslation } from 'react-i18next';
 
 const SportMatch = () => {
+  const { t } = useTranslation();
   const { source, id } = useParams<{ source: string; id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -61,20 +63,20 @@ const SportMatch = () => {
   useEffect(() => {
     if (error) {
       toast({
-        title: "Error",
-        description: "Failed to load streams. Please try again later.",
+        title: t('Error'),
+        description: t('Failed to load streams. Please try again later.'),
         variant: "destructive"
       });
     }
-  }, [error, toast]);
+  }, [error, toast, t]);
   
   const handleStreamChange = (streamId: string) => {
     setSelectedStream(streamId);
     const stream = streams.find(s => s.id === streamId);
     if (stream) {
       toast({
-        title: "Stream Changed",
-        description: `Switched to Stream #${stream.streamNo} (${stream.language})`,
+        title: t('Stream Changed'),
+        description: t(`Switched to Stream #${stream.streamNo} (${stream.language})`),
       });
     }
   };
@@ -91,27 +93,27 @@ const SportMatch = () => {
               <button 
                 onClick={() => navigate('/sports')}
                 className="text-white p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-                aria-label="Go back"
+                aria-label={t('Go back')}
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
-              <h1 className="ml-3 text-xl font-medium text-white">Stream Details</h1>
+              <h1 className="ml-3 text-xl font-medium text-white">{t('Stream Details')}</h1>
             </div>
             
             {isLoading ? (
               <div className="w-full aspect-video flex items-center justify-center bg-black/50 rounded-lg">
-                <div className="animate-pulse text-white">Loading stream...</div>
+                <div className="animate-pulse text-white">{t('Loading stream...')}</div>
               </div>
             ) : streams.length === 0 ? (
               <div className="w-full aspect-video flex flex-col items-center justify-center bg-black/50 rounded-lg text-white">
                 <Info className="h-12 w-12 mb-4 text-white/50" />
-                <p className="text-lg mb-2">No streams available</p>
-                <p className="text-white/70 text-sm mb-6">This match doesn't have any available streams at the moment.</p>
+                <p className="text-lg mb-2">{t('No streams available')}</p>
+                <p className="text-white/70 text-sm mb-6">{t("This match doesn't have any available streams at the moment.")}</p>
                 <Button 
                   onClick={() => navigate('/sports')}
                   style={{ backgroundColor: accentColor }}
                 >
-                  Back to Sports
+                  {t('Back to Sports')}
                 </Button>
               </div>
             ) : (
@@ -123,7 +125,7 @@ const SportMatch = () => {
                       src={iframeUrl}
                       allowFullScreen
                       className="absolute inset-0 w-full h-full"
-                      title="Sports Stream"
+                      title={t('Sports Stream')}
                       loading="lazy"
                     ></iframe>
                   </div>
@@ -131,16 +133,16 @@ const SportMatch = () => {
                 
                 {/* Stream selector */}
                 <div className="glass p-4 rounded-lg mb-8">
-                  <h3 className="text-white font-medium mb-3">Available Streams</h3>
+                  <h3 className="text-white font-medium mb-3">{t('Available Streams')}</h3>
                   <p className="text-white/70 text-sm mb-4">
-                    If the current stream isn't working, try another one below.
+                    {t("If the current stream isn't working, try another one below.")}
                   </p>
                   
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="w-full sm:w-64">
                       <Select value={selectedStream} onValueChange={handleStreamChange}>
                         <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                          <SelectValue placeholder="Select a stream" />
+                          <SelectValue placeholder={t('Select a stream')} />
                         </SelectTrigger>
                         <SelectContent className="border-white/10">
                           {streams.map((stream) => (
@@ -151,7 +153,7 @@ const SportMatch = () => {
                             >
                               <div className="flex items-center gap-2">
                                 {selectedStream === stream.id && <Check className="h-4 w-4" />}
-                                Stream #{stream.streamNo} ({stream.language})
+                                {t(`Stream #${stream.streamNo} (${stream.language})`)}
                                 {stream.hd && (
                                   <Badge 
                                     variant="outline" 
@@ -211,9 +213,9 @@ const SportMatch = () => {
                       <Languages className="h-5 w-5 text-white" />
                     </div>
                     <div className="ml-3">
-                      <h3 className="text-white font-medium">Multiple Languages</h3>
+                      <h3 className="text-white font-medium">{t('Multiple Languages')}</h3>
                       <p className="text-white/70 text-sm">
-                        Streams available in {Array.from(new Set(streams.map(s => s.language))).join(', ')}
+                        {t('Streams available in {{languages}}', { languages: Array.from(new Set(streams.map(s => s.language))).join(', ') })}
                       </p>
                     </div>
                   </div>
@@ -223,9 +225,9 @@ const SportMatch = () => {
                       <Sparkles className="h-5 w-5 text-white" />
                     </div>
                     <div className="ml-3">
-                      <h3 className="text-white font-medium">HD Quality</h3>
+                      <h3 className="text-white font-medium">{t('HD Quality')}</h3>
                       <p className="text-white/70 text-sm">
-                        {streams.filter(s => s.hd).length} of {streams.length} streams available in HD
+                        {t('{{count}} of {{total}} streams available in HD', { count: streams.filter(s => s.hd).length, total: streams.length })}
                       </p>
                     </div>
                   </div>
@@ -235,9 +237,9 @@ const SportMatch = () => {
                       <Tv className="h-5 w-5 text-white" />
                     </div>
                     <div className="ml-3">
-                      <h3 className="text-white font-medium">Multiple Sources</h3>
+                      <h3 className="text-white font-medium">{t('Multiple Sources')}</h3>
                       <p className="text-white/70 text-sm">
-                        {streams.length} streams from {Array.from(new Set(streams.map(s => s.source))).length} sources
+                        {t('{{count}} streams from {{sources}} sources', { count: streams.length, sources: Array.from(new Set(streams.map(s => s.source))).length })}
                       </p>
                     </div>
                   </div>

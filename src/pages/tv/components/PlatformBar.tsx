@@ -1,5 +1,6 @@
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { STREAMING_PLATFORMS } from '../constants/streamingPlatforms';
+import { useTranslation } from 'react-i18next';
 
 interface PlatformBarProps {
   platformFilters: string[];
@@ -7,6 +8,7 @@ interface PlatformBarProps {
 }
 
 const PlatformBar = ({ platformFilters, setPlatformFilters }: PlatformBarProps) => {
+  const { t } = useTranslation();
   return (
     <div
       className="mb-4 flex justify-center"
@@ -35,7 +37,7 @@ const PlatformBar = ({ platformFilters, setPlatformFilters }: PlatformBarProps) 
               {!platform.icon && (
                 <div className={`h-3.5 w-3.5 rounded-full ${platform.color}`} />
               )}
-              <span className="hidden sm:inline font-medium text-white/90 text-xs">{platform.name}</span>
+              <span className="hidden sm:inline font-medium text-white/90 text-xs">{t(platform.name)}</span>
             </ToggleGroupItem>
           ))}
         </ToggleGroup>

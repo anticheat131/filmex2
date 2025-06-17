@@ -8,6 +8,7 @@ import { Sheet, SheetTrigger, SheetContent, SheetClose } from '@/components/ui/s
 import { Slider } from '@/components/ui/slider';
 import * as Select from '@/components/ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { useTranslation } from 'react-i18next';
 
 const TV_GENRES = [
 	{ id: 10759, name: 'Action & Adventure' },
@@ -64,68 +65,27 @@ const TV_PROVIDERS = [
 	{ id: 2, name: 'Apple iTunes' },
 ];
 
-const SORT_OPTIONS = [
-	{ value: 'popularity.desc', label: 'Highest Popularity', icon: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trending-up mr-2 size-4"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
-	), chevron: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
-	)},
-	{ value: 'popularity.asc', label: 'Lowest Popularity', icon: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trending-down mr-2 size-4"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline><polyline points="16 17 22 17 22 11"></polyline></svg>
-	), chevron: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
-	)},
-	{ value: 'first_air_date.desc', label: 'Most Recent', icon: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar-arrow-up mr-2 size-4"><path d="m14 18 4-4 4 4"></path><path d="M16 2v4"></path><path d="M18 22v-8"></path><path d="M21 11.343V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9"></path><path d="M3 10h18"></path><path d="M8 2v4"></path></svg>
-	), chevron: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
-	)},
-	{ value: 'first_air_date.asc', label: 'Least Recent', icon: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar-arrow-down mr-2 size-4"><path d="m14 18 4 4 4-4"></path><path d="M16 2v4"></path><path d="M18 14v8"></path><path d="M21 11.354V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7.343"></path><path d="M3 10h18"></path><path d="M8 2v4"></path></svg>
-	), chevron: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
-	)},
-	{ value: 'vote_average.desc', label: 'Highest Rating', icon: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-thumbs-up mr-2 size-4"><path d="M7 10v12"></path><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"></path></svg>
-	), chevron: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
-	)},
-	{ value: 'vote_average.asc', label: 'Lowest Rating', icon: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-thumbs-down mr-2 size-4"><path d="M17 14V2"></path><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"></path></svg>
-	), chevron: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
-	)},
-	{ value: 'vote_count.desc', label: 'Most Voted', icon: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user-plus mr-2 size-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" x2="19" y1="8" y2="14"></line><line x1="22" x2="16" y1="11" y2="11"></line></svg>
-	), chevron: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
-	)},
-	{ value: 'vote_count.asc', label: 'Least Voted', icon: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user-minus mr-2 size-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="22" x2="16" y1="11" y2="11"></line></svg>
-	), chevron: (
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
-	)},
-];
-
-const currentYear = new Date().getFullYear();
-
 export default function TVDiscover() {
-	const [shows, setShows] = useState<Media[]>([]);
-	const [loading, setLoading] = useState(true);
+	const { t } = useTranslation();
+
+	// Add missing state for page and totalPages
 	const [page, setPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
-	const [sortBy, setSortBy] = useState('popularity.desc');
-	const [filterOpen, setFilterOpen] = useState(false);
 
-	// Filter states
+	// Add all other required state variables
+	const [loading, setLoading] = useState(false);
+	const [shows, setShows] = useState<Media[]>([]);
+	const [sortBy, setSortBy] = useState('popularity.desc');
 	const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
 	const [fromYear, setFromYear] = useState<number | null>(null);
 	const [toYear, setToYear] = useState<number | null>(null);
-	const [language, setLanguage] = useState<string>('');
+	const [language, setLanguage] = useState('');
 	const [provider, setProvider] = useState<number | null>(null);
-	const [voteAverage, setVoteAverage] = useState<number>(0);
-	const [minVotes, setMinVotes] = useState<number>(0);
+	const [voteAverage, setVoteAverage] = useState(0);
+	const [minVotes, setMinVotes] = useState(0);
+	const [filterOpen, setFilterOpen] = useState(false);
 
+	// Add clearFilters function
 	const clearFilters = () => {
 		setSelectedGenres([]);
 		setFromYear(null);
@@ -134,7 +94,53 @@ export default function TVDiscover() {
 		setProvider(null);
 		setVoteAverage(0);
 		setMinVotes(0);
+		setPage(1);
 	};
+
+	const SORT_OPTIONS = [
+		{ value: 'popularity.desc', label: t('Highest Popularity'), icon: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trending-up mr-2 size-4"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+		), chevron: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
+		)},
+		{ value: 'popularity.asc', label: t('Lowest Popularity'), icon: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trending-down mr-2 size-4"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline><polyline points="16 17 22 17 22 11"></polyline></svg>
+		), chevron: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
+		)},
+		{ value: 'first_air_date.desc', label: t('Most Recent'), icon: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar-arrow-up mr-2 size-4"><path d="m14 18 4-4 4 4"></path><path d="M16 2v4"></path><path d="M18 22v-8"></path><path d="M21 11.343V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9"></path><path d="M3 10h18"></path><path d="M8 2v4"></path></svg>
+		), chevron: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
+		)},
+		{ value: 'first_air_date.asc', label: t('Least Recent'), icon: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar-arrow-down mr-2 size-4"><path d="m14 18 4 4 4-4"></path><path d="M16 2v4"></path><path d="M18 14v8"></path><path d="M21 11.354V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7.343"></path><path d="M3 10h18"></path><path d="M8 2v4"></path></svg>
+		), chevron: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
+		)},
+		{ value: 'vote_average.desc', label: t('Highest Rating'), icon: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-thumbs-up mr-2 size-4"><path d="M7 10v12"></path><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"></path></svg>
+		), chevron: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
+		)},
+		{ value: 'vote_average.asc', label: t('Lowest Rating'), icon: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-thumbs-down mr-2 size-4"><path d="M17 14V2"></path><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"></path></svg>
+		), chevron: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
+		)},
+		{ value: 'vote_count.desc', label: t('Most Voted'), icon: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user-plus mr-2 size-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" x2="19" y1="8" y2="14"></line><line x1="22" x2="16" y1="11" y2="11"></line></svg>
+		), chevron: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
+		)},
+		{ value: 'vote_count.asc', label: t('Least Voted'), icon: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user-minus mr-2 size-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="22" x2="16" y1="11" y2="11"></line></svg>
+		), chevron: (
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
+		)},
+	];
+
+const currentYear = new Date().getFullYear();
 
 	useEffect(() => {
 		async function fetchTVShows() {
@@ -180,11 +186,10 @@ export default function TVDiscover() {
 					<div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
 						<div className="text-left">
 							<h1 className="text-3xl md:text-4xl font-bold text-white text-left">
-								Discover TV Shows
+								{t('Discover TV Shows')}
 							</h1>
 							<p className="text-gray-300 mt-1 text-base max-w-2xl text-left">
-								Find TV shows by genre, rating, year, and more. Use the filters and
-								sorting options to explore TMDB’s vast TV show collection.
+								{t('Find TV shows by genre, rating, year, and more. Use the filters and sorting options to explore TMDB’s vast TV show collection.')}
 							</p>
 						</div>
 						<div className="flex gap-2 items-center">
@@ -213,7 +218,7 @@ export default function TVDiscover() {
 											<line x1="8" x2="8" y1="10" y2="14"></line>
 											<line x1="16" x2="16" y1="18" y2="22"></line>
 										</svg>
-										Filters
+										{t('Filters')}
 									</button>
 								</SheetTrigger>
 								<SheetContent
@@ -222,10 +227,10 @@ export default function TVDiscover() {
 								>
 									<div className="flex flex-col space-y-2 text-center sm:text-left px-4 md:px-6">
 										<h2 className="text-lg font-semibold text-foreground">
-											Filters
+											{t('Filters')}
 										</h2>
 										<p className="text-sm text-muted-foreground">
-											Narrow down your search results with the following filters.
+											{t('Narrow down your search results with the following filters.')}
 										</p>
 									</div>
 									<div
@@ -236,7 +241,7 @@ export default function TVDiscover() {
 											{/* Genres */}
 											<div className="space-y-2">
 												<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">
-													Genres
+													{t('Genres')}
 												</label>
 												<div className="flex flex-wrap gap-2">
 													{TV_GENRES.map((genre) => (
@@ -250,7 +255,7 @@ export default function TVDiscover() {
 															onClick={() => handleGenreToggle(genre.id)}
 															type="button"
 														>
-															{genre.name}
+															{t(genre.name)}
 														</button>
 													))}
 												</div>
@@ -259,7 +264,7 @@ export default function TVDiscover() {
 											<div className="grid gap-2 md:grid-cols-2">
 												<div className="space-y-2">
 													<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex text-muted-foreground">
-														From
+														{t('From')}
 													</label>
 													<select
 														className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full justify-start text-left font-normal text-muted-foreground"
@@ -270,7 +275,7 @@ export default function TVDiscover() {
 															)
 														}
 													>
-														<option value="">Select date...</option>
+														<option value="">{t('Select date...')}</option>
 														{yearOptions.map((y) => (
 															<option key={y} value={y}>
 																{y}
@@ -280,7 +285,7 @@ export default function TVDiscover() {
 												</div>
 												<div className="space-y-2">
 													<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex text-muted-foreground">
-														To
+														{t('To')}
 													</label>
 													<select
 														className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full justify-start text-left font-normal text-muted-foreground"
@@ -291,7 +296,7 @@ export default function TVDiscover() {
 															)
 														}
 													>
-														<option value="">Select date...</option>
+														<option value="">{t('Select date...')}</option>
 														{yearOptions.map((y) => (
 															<option key={y} value={y}>
 																{y}
@@ -303,14 +308,14 @@ export default function TVDiscover() {
 											{/* Language */}
 											<div className="space-y-2">
 												<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex text-muted-foreground">
-													Language
+													{t('Language')}
 												</label>
 												<select
 													className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-muted-foreground w-full justify-between text-left"
 													value={language}
 													onChange={(e) => setLanguage(e.target.value)}
 												>
-													<option value="">Select language...</option>
+													<option value="">{t('Select language...')}</option>
 													{TV_LANGUAGES.map((l) => (
 														<option key={l.code} value={l.code}>
 															{l.name}
@@ -321,7 +326,7 @@ export default function TVDiscover() {
 											{/* Provider */}
 											<div className="space-y-2">
 												<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 text-muted-foreground">
-													Where to watch
+													{t('Where to watch')}
 													<button
 														data-state="closed"
 														tabIndex={-1}
@@ -354,7 +359,7 @@ export default function TVDiscover() {
 														)
 													}
 												>
-													<option value="">Select providers...</option>
+													<option value="">{t('Select providers...')}</option>
 													{TV_PROVIDERS.map((p) => (
 														<option key={p.id} value={p.id}>
 															{p.name}
@@ -365,7 +370,7 @@ export default function TVDiscover() {
 											{/* Vote Average */}
 											<div className="space-y-4">
 												<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">
-													Vote Average
+													{t('Vote Average')}
 												</label>
 												<Slider
 													min={0}
@@ -388,7 +393,7 @@ export default function TVDiscover() {
 											{/* Minimum Votes */}
 											<div className="space-y-4">
 												<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">
-													Minimum Votes
+													{t('Minimum Votes')}
 												</label>
 												<Slider
 													min={0}
@@ -418,7 +423,7 @@ export default function TVDiscover() {
 											onClick={clearFilters}
 											type="button"
 										>
-											Clear
+											{t('Clear')}
 										</button>
 										<SheetClose asChild>
 											<button
@@ -426,7 +431,7 @@ export default function TVDiscover() {
 												className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
 												onClick={handleApplyFilters}
 											>
-												Save Changes
+												{t('Save Changes')}
 											</button>
 										</SheetClose>
 									</div>
@@ -450,7 +455,7 @@ export default function TVDiscover() {
 											<path d="M18 6 6 18"></path>
 											<path d="m6 6 12 12"></path>
 										</svg>
-										<span className="sr-only">Close</span>
+										<span className="sr-only">{t('Close')}</span>
 									</button>
 								</SheetContent>
 							</Sheet>
@@ -483,7 +488,7 @@ export default function TVDiscover() {
 											<path d="M11 8h7"></path>
 											<path d="M11 12h4"></path>
 										</svg>
-										Sort by
+										{t('Sort by')}
 									</button>
 								</PopoverTrigger>
 								<PopoverContent
@@ -515,7 +520,7 @@ export default function TVDiscover() {
 					<div>
 						{loading ? (
 							<div className="text-white text-center py-12">
-								Loading TV shows...
+								{t('Loading TV shows...')}
 							</div>
 						) : (
 							<MediaGrid media={ensureExtendedMediaArray(shows)} title="" />
@@ -528,17 +533,17 @@ export default function TVDiscover() {
 							onClick={() => setPage(page - 1)}
 							disabled={page === 1}
 						>
-							Previous
+							{t('Previous')}
 						</button>
 						<span className="px-4 py-2 text-white">
-							Page {page} of {totalPages}
+							{t('Page {{page}} of {{totalPages}}', { page, totalPages })}
 						</span>
 						<button
 							className="px-3 py-2 mx-1 rounded bg-gray-800 text-white disabled:opacity-50"
 							onClick={() => setPage(page + 1)}
 							disabled={page === totalPages}
 						>
-							Next
+							{t('Next')}
 						</button>
 					</div>
 				</div>

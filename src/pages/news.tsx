@@ -5,6 +5,7 @@ import { getDiscoverMovies } from '@/utils/services/movies';
 import { getDiscoverTVShows } from '@/utils/services/tv';
 import { getImageUrl } from '@/utils/services/tmdb';
 import { ensureExtendedMediaArray, ExtendedMedia } from '@/utils/types';
+import { useTranslation } from 'react-i18next';
 
 function getUpcomingDateRange() {
   const now = new Date();
@@ -15,7 +16,8 @@ function getUpcomingDateRange() {
   return { start, end };
 }
 
-export default function News() {
+const News = () => {
+  const { t } = useTranslation();
   const [items, setItems] = useState<ExtendedMedia[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -63,14 +65,14 @@ export default function News() {
       <Navbar />
       <div className="page-container max-w-screen-2xl mx-auto py-10 px-4 md:px-12 xl:px-24 mt-20">
         <h1 className="text-4xl font-extrabold mb-10 text-center tracking-tight bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-          Upcoming Movie & TV Show News
+          {t('Upcoming Movie & TV Show News')}
         </h1>
         {loading ? (
-          <div className="text-center py-16 text-xl text-gray-400 font-medium animate-pulse">Loading news...</div>
+          <div className="text-center py-16 text-xl text-gray-400 font-medium animate-pulse">{t('Loading news...')}</div>
         ) : error ? (
-          <div className="text-center py-16 text-xl text-red-400 font-medium">{error}</div>
+          <div className="text-center py-16 text-xl text-red-400 font-medium">{t(error)}</div>
         ) : items.length === 0 ? (
-          <div className="text-center py-16 text-xl text-gray-400 font-medium">No upcoming news found.</div>
+          <div className="text-center py-16 text-xl text-gray-400 font-medium">{t('No upcoming news found.')}</div>
         ) : (
           <div className="grid gap-10 md:grid-cols-2">
             {items.map(item => {
@@ -104,7 +106,7 @@ export default function News() {
                       <div>
                         <div className="flex items-center gap-3 mb-3">
                           <span className={`text-sm px-4 py-1 rounded-full font-bold shadow ${item.media_type === 'movie' ? 'bg-gradient-to-r from-green-400 to-blue-500' : 'bg-gradient-to-r from-pink-400 to-purple-500'} text-white uppercase tracking-wide`}> 
-                            {item.media_type === 'movie' ? 'Upcoming Movie' : 'Upcoming TV Show'}
+                            {item.media_type === 'movie' ? t('Upcoming Movie') : t('Upcoming TV Show')}
                           </span>
                           <span className="text-sm text-gray-200/80 font-medium">
                             {item.release_date || item.first_air_date}
@@ -114,7 +116,7 @@ export default function News() {
                           {item.title || item.name}
                         </h2>
                         <p className="text-base text-gray-100 mb-5 line-clamp-5 drop-shadow">
-                          {item.overview || 'No description available.'}
+                          {item.overview || t('No description available.')}
                         </p>
                       </div>
                       <a
@@ -123,7 +125,7 @@ export default function News() {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        View Details
+                        {t('View Details')}
                       </a>
                     </div>
                   </div>
@@ -137,3 +139,5 @@ export default function News() {
     </>
   );
 }
+
+export default News;

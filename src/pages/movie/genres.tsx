@@ -1,4 +1,8 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+
 export default function MovieGenres() {
-  return <div className="page-container">Movie Genres (mapple.tv style placeholder)</div>;
+  const { t } = useTranslation();
+
+  return <div className="page-container">{t('Movie Genres')} (mapple.tv style placeholder)</div>;
 }

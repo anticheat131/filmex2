@@ -4,11 +4,13 @@ import Footer from '@/components/Footer';
 import MediaGrid from '@/components/MediaGrid';
 import { ensureExtendedMediaArray, Media } from '@/utils/types';
 import { tmdb } from '@/utils/services/tmdb';
+import { useTranslation } from 'react-i18next';
 
 const PAGE_SIZE = 20; // TMDB default
 const PRIME_PROVIDER_IDS = '9|10';
 
 export default function TVPrime() {
+  const { t } = useTranslation();
   const [shows, setShows] = useState<Media[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -80,7 +82,7 @@ export default function TVPrime() {
               href={`?page=${page + 1}`}
               onClick={e => { e.preventDefault(); if (page < totalPages) setPage(page + 1); }}
             >
-              <span>Next</span>
+              <span>{t('Next')}</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4"><path d="m9 18 6-6-6-6"/></svg>
             </a>
           </li>
@@ -101,12 +103,12 @@ export default function TVPrime() {
               <text x="80" y="24" fontFamily="Arial, Helvetica, sans-serif" fontWeight="bold" fontSize="24" fill="#232F3E">video</text>
               <path d="M18 28c24 8 72 8 96 0" stroke="#00A8E1" strokeWidth="3" fill="none"/>
             </svg>
-            Prime Video TV Shows
+            {t('Prime Video TV Shows')}
           </h1>
-          <p className="max-w-3xl text-muted-foreground text-left">Browse all TV shows available on Prime Video. Only TV series are shown here.</p>
+          <p className="max-w-3xl text-muted-foreground text-left">{t('Browse all TV shows available on Prime Video. Only TV series are shown here.')}</p>
         </header>
-        {loading && <div className="text-center py-8">Loading...</div>}
-        {error && <div className="text-red-500 mb-4">{error}</div>}
+        {loading && <div className="text-center py-8">{t('Loading...')}</div>}
+        {error && <div className="text-red-500 mb-4">{t(error)}</div>}
         {!loading && <MediaGrid media={ensureExtendedMediaArray(shows)} />}
         <div className="mt-8">{renderPagination()}</div>
       </main>

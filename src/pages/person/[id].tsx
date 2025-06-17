@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { t } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { getPersonDetails, getPersonCombinedCredits, getPersonImages } from '../../utils/services/tmdb';
@@ -27,6 +29,7 @@ const getHeroImage = (credits, images, person, id) => {
 };
 
 const PersonDetailPage = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const [person, setPerson] = useState(null);
   const [credits, setCredits] = useState(null);
@@ -74,12 +77,12 @@ const PersonDetailPage = () => {
     : '';
 
   const personalInfo = [
-    { label: 'Known For', value: person.known_for_department },
-    { label: 'Known Credits', value: credits?.cast?.length || 0 },
-    { label: 'Gender', value: person.gender === 2 ? 'Male' : person.gender === 1 ? 'Female' : 'Other' },
-    { label: 'Birthday', value: formatDate(person.birthday) },
-    { label: 'Place of Birth', value: person.place_of_birth },
-    { label: 'Also Known As', value: person.also_known_as?.join(', ') },
+    { label: t('Known For'), value: t(person.known_for_department) },
+    { label: t('Known Credits'), value: credits?.cast?.length || 0 },
+    { label: t('Gender'), value: person.gender === 2 ? t('Male') : person.gender === 1 ? t('Female') : t('Other') },
+    { label: t('Birthday'), value: formatDate(person.birthday) },
+    { label: t('Place of Birth'), value: person.place_of_birth },
+    { label: t('Also Known As'), value: person.also_known_as?.join(', ') },
   ];
 
   return (
@@ -117,7 +120,7 @@ const PersonDetailPage = () => {
             )}
             {/* Personal Info below profile image, even more left and more down */}
             <aside className="w-full rounded-2xl p-6 shadow-xl border mt-20 ml-[-48px] md:ml-[-64px] xl:ml-[-96px]">
-              <h2 className="text-lg font-semibold mb-4">Personal Info</h2>
+              <h2 className="text-lg font-semibold mb-4">{t('Personal Info')}</h2>
               <ul className="space-y-3">
                 {personalInfo.map(
                   (item, idx) => item.value && (
@@ -145,7 +148,7 @@ const PersonDetailPage = () => {
                     className="absolute bottom-2 right-4 z-10 px-4 py-1 rounded bg-background/80 text-primary font-medium shadow hover:bg-background"
                     onClick={() => setShowFullBio(true)}
                   >
-                    Show more
+                    {t('Show more')}
                   </button>
                 </>
               )}
@@ -154,7 +157,7 @@ const PersonDetailPage = () => {
                   className="mt-2 px-4 py-1 rounded bg-background/80 text-primary font-medium shadow hover:bg-background"
                   onClick={() => setShowFullBio(false)}
                 >
-                  Show less
+                  {t('Show less')}
                 </button>
               )}
             </div>
@@ -185,7 +188,7 @@ const PersonDetailPage = () => {
                 data-radix-collection-item=""
                 onClick={() => setTab('known')}
               >
-                Known for
+                {t('Known for')}
               </button>
               <button
                 type="button"
@@ -200,7 +203,7 @@ const PersonDetailPage = () => {
                 data-radix-collection-item=""
                 onClick={() => setTab('credits')}
               >
-                Credits
+                {t('Credits')}
               </button>
               <button
                 type="button"
@@ -215,7 +218,7 @@ const PersonDetailPage = () => {
                 data-radix-collection-item=""
                 onClick={() => setTab('images')}
               >
-                Images
+                {t('Images')}
               </button>
             </div>
             {/* Tab Panels */}
@@ -242,10 +245,10 @@ const PersonDetailPage = () => {
                       src={item.poster_path ? `//wsrv.nl/?url=https://image.tmdb.org/t/p/w500/${item.poster_path}&w=320&h=576&sharp=1&output=webp` : '/placeholder.svg'}
                     />
                     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center space-y-2 opacity-100 transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100">
-                      <a className="hidden min-w-24 items-center justify-between rounded-lg bg-white/80 px-4 py-2 text-black transition-all hover:bg-red-200 hover:text-black md:flex md:bg-white/60" href={`/${item.media_type === 'tv' ? 'tv' : 'movie'}/${item.id}-${(item.title || item.name || '').toLowerCase().replace(/\s+/g, '-')}`}>Details <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className="ml-2 size-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M13 5h8"></path><path d="M13 9h5"></path><path d="M13 15h8"></path><path d="M13 19h5"></path><path d="M3 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path><path d="M3 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path></svg></a>
-                      <a className="flex min-w-24 items-center justify-between rounded-lg bg-black/80 px-4 py-2 text-white transition-all hover:bg-red-200 hover:text-black md:bg-black/60" href={`/watch/${item.media_type === 'tv' ? 'tv' : 'movie'}/${item.season_number || 1}-${item.episode_number || 1}/${item.id}-${(item.title || item.name || '').toLowerCase().replace(/\s+/g, '-')}`}>Watch <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="ml-2 size-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M133 440a35.37 35.37 0 0 1-17.5-4.67c-12-6.8-19.46-20-19.46-34.33V111c0-14.37 7.46-27.53 19.46-34.33a35.13 35.13 0 0 1 35.77.45l247.85 148.36a36 36 0 0 1 0 61l-247.89 148.4A35.5 35.5 0 0 1 133 440z"></path></svg></a>
+                      <a className="hidden min-w-24 items-center justify-between rounded-lg bg-white/80 px-4 py-2 text-black transition-all hover:bg-red-200 hover:text-black md:flex md:bg-white/60" href={`/${item.media_type === 'tv' ? 'tv' : 'movie'}/${item.id}-${(item.title || item.name || '').toLowerCase().replace(/\s+/g, '-')}`}>{t('Details')} <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className="ml-2 size-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M13 5h8"></path><path d="M13 9h5"></path><path d="M13 15h8"></path><path d="M13 19h5"></path><path d="M3 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path><path d="M3 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path></svg></a>
+                      <a className="flex min-w-24 items-center justify-between rounded-lg bg-black/80 px-4 py-2 text-white transition-all hover:bg-red-200 hover:text-black md:bg-black/60" href={`/watch/${item.media_type === 'tv' ? 'tv' : 'movie'}/${item.season_number || 1}-${item.episode_number || 1}/${item.id}-${(item.title || item.name || '').toLowerCase().replace(/\s+/g, '-')}`}>{t('Watch')} <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="ml-2 size-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M133 440a35.37 35.37 0 0 1-17.5-4.67c-12-6.8-19.46-20-19.46-34.33V111c0-14.37 7.46-27.53 19.46-34.33a35.13 35.13 0 0 1 35.77.45l247.85 148.36a36 36 0 0 1 0 61l-247.89 148.4A35.5 35.5 0 0 1 133 440z"></path></svg></a>
                     </div>
-                    <button className="absolute right-2 top-2 z-10 rounded-full p-2 text-white" title="Add to Favorites">
+                    <button className="absolute right-2 top-2 z-10 rounded-full p-2 text-white" title={t('Add to Favorites')}>
                       <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 24 24" className="size-6" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path fill="none" d="M0 0h24v24H0z"></path><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"></path></svg>
                     </button>
                     <div className="overlay">
@@ -275,14 +278,14 @@ const PersonDetailPage = () => {
                 <div tabIndex={-1} className="flex size-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-lg font-medium">Acting</h2>
+                      <h2 className="text-lg font-medium">{t('Acting')}</h2>
                       <div className="flex items-center gap-4">
                         <div className="rounded-md border-x border-t">
                           <div className="flex items-center border-b px-3">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-search mr-2 size-4 shrink-0 opacity-50"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
                             <input
                               className="flex rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 h-10 w-40"
-                              placeholder="Search..."
+                              placeholder={t('Search...')}
                               autoComplete="off"
                               autoCorrect="off"
                               spellCheck={false}
@@ -300,9 +303,9 @@ const PersonDetailPage = () => {
                           value={filterType}
                           onChange={e => setFilterType(e.target.value)}
                         >
-                          <option value="all">All</option>
-                          <option value="movie">Movies</option>
-                          <option value="tv">TvShow</option>
+                          <option value="all">{t('All')}</option>
+                          <option value="movie">{t('Movies')}</option>
+                          <option value="tv">{t('TvShow')}</option>
                         </select>
                       </div>
                     </div>
@@ -312,8 +315,8 @@ const PersonDetailPage = () => {
                           <thead className="[&_tr]:border-b">
                             <tr className="border-b transition-colors hover:bg-muted/50">
                               <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-12"></th>
-                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-24">Year</th>
-                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-full align-bottom">Details</th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-24">{t('Year')}</th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-full align-bottom">{t('Details')}</th>
                             </tr>
                           </thead>
                           <tbody>

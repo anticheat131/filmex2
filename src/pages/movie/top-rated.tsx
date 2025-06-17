@@ -4,11 +4,13 @@ import Footer from '@/components/Footer';
 import MediaGrid from '@/components/MediaGrid';
 import { getTopRatedMovies } from '@/utils/services/movies';
 import { ensureExtendedMediaArray } from '@/utils/types';
+import { useTranslation } from 'react-i18next';
 
 const PAGE_SIZE = 20; // TMDB default
 const TOTAL_PAGES = 510; // TMDB max for top rated
 
 export default function MovieTopRated() {
+  const { t } = useTranslation();
   const [movies, setMovies] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -19,7 +21,7 @@ export default function MovieTopRated() {
     setError('');
     getTopRatedMovies(page)
       .then((data) => setMovies(ensureExtendedMediaArray(data)))
-      .catch(() => setError('Failed to load movies.'))
+      .catch(() => setError(t('Failed to load movies.')))
       .finally(() => setLoading(false));
   }, [page]);
 
@@ -38,7 +40,7 @@ export default function MovieTopRated() {
             p === 'ellipsis' ? (
               <span key={idx} aria-hidden="true" className="size-9 items-center justify-center hidden md:flex">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-ellipsis size-4"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
-                <span className="sr-only">More pages</span>
+                <span className="sr-only">{t('More pages')}</span>
               </span>
             ) : (
               <li key={p}>
@@ -62,7 +64,7 @@ export default function MovieTopRated() {
               onClick={e => { e.preventDefault(); if (page < TOTAL_PAGES) setPage(page + 1); }}
               style={page >= TOTAL_PAGES ? { pointerEvents: 'none', opacity: 0.5 } : {}}
             >
-              <span>Next</span>
+              <span>{t('Next')}</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4"><path d="m9 18 6-6-6-6"></path></svg>
             </a>
           </li>
@@ -77,13 +79,13 @@ export default function MovieTopRated() {
       <div className="relative flex-1 py-4">
         <div className="container space-y-8">
           <div className="md:mb-12 md:mt-6 pt-16 text-left">
-            <h1 className="mb-2 text-2xl font-medium text-left">Top Rated Movies</h1>
+            <h1 className="mb-2 text-2xl font-medium text-left">{t('Top Rated Movies')}</h1>
             <p className="max-w-3xl text-muted-foreground text-left">
-              Explore the pinnacle of cinematic excellence with our collection of top-rated movies. These films have been recognized for their outstanding storytelling, direction, and performances.
+              {t('Explore the pinnacle of cinematic excellence with our collection of top-rated movies. These films have been recognized for their outstanding storytelling, direction, and performances.')}
             </p>
           </div>
           {loading ? (
-            <div className="py-16 text-center text-white">Loading…</div>
+            <div className="py-16 text-center text-white">{t('Loading…')}</div>
           ) : error ? (
             <div className="py-16 text-center text-red-500">{error}</div>
           ) : (
