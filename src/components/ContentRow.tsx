@@ -150,14 +150,14 @@ const ContentRow = ({ title, media, featured = false }: ContentRowProps) => {
               (title !== 'Trending Now Movies' && title !== 'Trending Now TV Shows')
             )
             .map((item, index) => (
-              <div
-                role="group"
-                aria-roledescription="slide"
-                key={`${item.media_type}-${item.id}`}
-                className="min-w-0 shrink-0 grow-0 pl-4 basis-[80vw] sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
-              >
-                <MediaCard media={item} />
-              </div>
+                <div
+                  role="group"
+                  aria-roledescription="slide"
+                  key={`${item.media_type}-${item.id}`}
+                  className="min-w-0 shrink-0 grow-0 pl-0 basis-[48vw] sm:pl-4 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
+                >
+                  <MediaCard media={item} />
+                </div>
             ))}
         </div>
       </div>
