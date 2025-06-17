@@ -294,31 +294,31 @@ const Profile = () => {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-          <TabsList
-            className="bg-background border border-white/10 overflow-x-auto flex-nowrap whitespace-nowrap scrollbar-hide md:overflow-visible md:flex-wrap md:whitespace-normal"
-            style={{ WebkitOverflowScrolling: 'touch' }}
-          >
-            <TabsTrigger value="profile" className="data-[state=active]:bg-accent">
-              <User className="h-4 w-4 mr-2" />
-              {t('Profile')}
-            </TabsTrigger>
-            <TabsTrigger value="history" className="data-[state=active]:bg-accent">
-              <span className="h-4 w-4 mr-2">📜</span>
-              {t('Watch History')}
-            </TabsTrigger>
-            <TabsTrigger value="favorites" className="data-[state=active]:bg-accent">
-              <span className="h-4 w-4 mr-2">❤️</span>
-              {t('Favorites')}
-            </TabsTrigger>
-            <TabsTrigger value="watchlist" className="data-[state=active]:bg-accent">
-              <span className="h-4 w-4 mr-2">🔖</span>
-              {t('Watchlist')}
-            </TabsTrigger>
-            <TabsTrigger value="preferences" className="data-[state=active]:bg-accent">
-              <Settings className="h-4 w-4 mr-2" />
-              {t('Preferences')}
-            </TabsTrigger>
-          </TabsList>
+          {/* Mobile scrollable tab bar wrapper */}
+          <div className="w-full overflow-x-auto pb-2 -mx-2 md:mx-0 md:overflow-visible md:pb-0">
+            <TabsList className="min-w-max px-2 md:px-0">
+              <TabsTrigger value="profile" className="data-[state=active]:bg-accent">
+                <User className="h-4 w-4 mr-2" />
+                {t('Profile')}
+              </TabsTrigger>
+              <TabsTrigger value="history" className="data-[state=active]:bg-accent">
+                <span className="h-4 w-4 mr-2">📜</span>
+                {t('Watch History')}
+              </TabsTrigger>
+              <TabsTrigger value="favorites" className="data-[state=active]:bg-accent">
+                <span className="h-4 w-4 mr-2">❤️</span>
+                {t('Favorites')}
+              </TabsTrigger>
+              <TabsTrigger value="watchlist" className="data-[state=active]:bg-accent">
+                <span className="h-4 w-4 mr-2">🔖</span>
+                {t('Watchlist')}
+              </TabsTrigger>
+              <TabsTrigger value="preferences" className="data-[state=active]:bg-accent">
+                <Settings className="h-4 w-4 mr-2" />
+                {t('Preferences')}
+              </TabsTrigger>
+            </TabsList>
+          </div>
           <TabsContent value="profile" className="pt-4">
             {/* Profile Statistics */}
             <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
