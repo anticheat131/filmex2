@@ -294,7 +294,10 @@ const Profile = () => {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-          <TabsList className="bg-background border border-white/10">
+          <TabsList
+            className="bg-background border border-white/10 overflow-x-auto flex-nowrap whitespace-nowrap scrollbar-hide md:overflow-visible md:flex-wrap md:whitespace-normal"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             <TabsTrigger value="profile" className="data-[state=active]:bg-accent">
               <User className="h-4 w-4 mr-2" />
               {t('Profile')}

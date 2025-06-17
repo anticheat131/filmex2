@@ -82,7 +82,7 @@ export default function TVApple() {
               href={`?page=${page + 1}`}
               onClick={e => { e.preventDefault(); if (page < totalPages) setPage(page + 1); }}
             >
-              <span>{t('Next')}</span>
+              <span>Next</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-right size-4"><path d="m9 18 6-6-6-6"/></svg>
             </a>
           </li>
@@ -103,7 +103,7 @@ export default function TVApple() {
           <p className="max-w-3xl text-muted-foreground text-left">{t('Browse all TV shows available on Apple TV+ and iTunes. Only TV series are shown here.')}</p>
         </header>
         {loading && <div className="text-center py-8">{t('Loading...')}</div>}
-        {error && <div className="text-red-500 mb-4">{t(error)}</div>}
+        {error && <div className="text-red-500 mb-4">{error}</div>}
         {!loading && <MediaGrid media={ensureExtendedMediaArray(shows)} />}
         <div className="mt-8">{renderPagination()}</div>
       </main>

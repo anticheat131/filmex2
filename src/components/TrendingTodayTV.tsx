@@ -82,14 +82,7 @@ const TrendingTodayTV = () => {
             </div>
           ))}
         </div>
-        <div className="mt-8 text-center">
-          <button
-            className="flex items-center justify-center gap-2 mx-auto bg-white text-black font-semibold rounded-lg px-4 py-2 shadow-lg hover:bg-red-200 transition-all text-sm md:text-base"
-            onClick={() => navigate('/tv')}
-          >
-            {t('Explore more')} <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
-          </button>
-        </div>
+        {/* Removed Explore more button */}
       </section>
     </>
   );

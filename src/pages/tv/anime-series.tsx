@@ -12,6 +12,42 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { useTranslation } from 'react-i18next';
 
 const ANIME_GENRE_ID = 16;
+const TV_LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'ja', name: 'Japanese' },
+  { code: 'ko', name: 'Korean' },
+  { code: 'zh', name: 'Chinese' },
+  { code: 'fr', name: 'French' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'de', name: 'German' },
+  { code: 'it', name: 'Italian' },
+];
+const SORT_OPTIONS = [
+  { value: 'popularity.desc', label: 'Highest Popularity', chevron: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
+  ) },
+  { value: 'popularity.asc', label: 'Lowest Popularity', chevron: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
+  ) },
+  { value: 'first_air_date.desc', label: 'Most Recent', chevron: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
+  ) },
+  { value: 'first_air_date.asc', label: 'Least Recent', chevron: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
+  ) },
+  { value: 'vote_average.desc', label: 'Highest Rating', chevron: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
+  ) },
+  { value: 'vote_average.asc', label: 'Lowest Rating', chevron: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
+  ) },
+  { value: 'vote_count.desc', label: 'Most Voted', chevron: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
+  ) },
+  { value: 'vote_count.asc', label: 'Least Voted', chevron: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
+  ) },
+];
 const currentYear = new Date().getFullYear();
 
 export default function TVAnimeSeries() {
@@ -29,43 +65,6 @@ export default function TVAnimeSeries() {
   const [language, setLanguage] = useState<string>('');
   const [voteAverage, setVoteAverage] = useState<number>(0);
   const [minVotes, setMinVotes] = useState<number>(0);
-
-  const TV_LANGUAGES = [
-    { code: 'en', name: t('English') },
-    { code: 'ja', name: t('Japanese') },
-    { code: 'ko', name: t('Korean') },
-    { code: 'zh', name: t('Chinese') },
-    { code: 'fr', name: t('French') },
-    { code: 'es', name: t('Spanish') },
-    { code: 'de', name: t('German') },
-    { code: 'it', name: t('Italian') },
-  ];
-  const SORT_OPTIONS = [
-    { value: 'popularity.desc', label: t('Highest Popularity'), chevron: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
-    ) },
-    { value: 'popularity.asc', label: t('Lowest Popularity'), chevron: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
-    ) },
-    { value: 'first_air_date.desc', label: t('Most Recent'), chevron: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
-    ) },
-    { value: 'first_air_date.asc', label: t('Least Recent'), chevron: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
-    ) },
-    { value: 'vote_average.desc', label: t('Highest Rating'), chevron: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
-    ) },
-    { value: 'vote_average.asc', label: t('Lowest Rating'), chevron: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
-    ) },
-    { value: 'vote_count.desc', label: t('Most Voted'), chevron: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down size-4"><path d="m6 9 6 6 6-6"></path></svg>
-    ) },
-    { value: 'vote_count.asc', label: t('Least Voted'), chevron: (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up size-4"><path d="m18 15-6-6-6 6"></path></svg>
-    ) },
-  ];
 
   const clearFilters = () => {
     setFromYear(null);

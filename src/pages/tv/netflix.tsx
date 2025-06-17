@@ -105,7 +105,7 @@ export default function TVNetflix() {
           <p className="max-w-3xl text-muted-foreground text-left">{t('Browse all TV shows available on Netflix. Only TV series are shown here.')}</p>
         </header>
         {loading && <div className="text-center py-8">{t('Loading...')}</div>}
-        {error && <div className="text-red-500 mb-4">{t(error)}</div>}
+        {error && <div className="text-red-500 mb-4">{error}</div>}
         {!loading && <MediaGrid media={ensureExtendedMediaArray(shows)} />}
         <div className="mt-8">{renderPagination()}</div>
       </main>

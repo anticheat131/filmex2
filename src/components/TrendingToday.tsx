@@ -89,11 +89,7 @@ const TrendingToday = () => {
             </div>
           ))}
         </div>
-        <div className="mt-8 text-center">
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-all text-sm md:text-base">
-            {t('Explore more')}
-          </button>
-        </div>
+        {/* Removed Explore more button */}
       </section>
     </>
   );
