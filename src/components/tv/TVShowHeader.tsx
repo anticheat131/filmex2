@@ -56,7 +56,7 @@ export const TVShowHeader = ({
       <div className="absolute inset-0 details-gradient" />
         
       <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 lg:p-16">
-        <div className="flex flex-col md:flex-row items-start gap-6 max-w-6xl mx-auto">
+        <div className="flex flex-col md:flex-row items-start gap-6 main-container mx-auto">
           <div className="hidden md:block flex-shrink-0 w-48 xl:w-64 rounded-lg overflow-hidden shadow-lg">            <img 
               src={getImageUrl(tvShow.poster_path, posterSizes.medium)}
               alt={tvShow.name || 'TV show poster'} 

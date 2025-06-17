@@ -356,7 +356,7 @@ const Profile = () => {
           <TabsContent value="preferences" className="pt-4">
             <div className="glass p-6 rounded-lg flex flex-col items-center justify-center text-center">
               <h2 className="text-xl font-semibold text-white mb-4">{t('Your Preferences')}</h2>
-              <div className="space-y-6 w-full max-w-md">
+              <div className="space-y-6 w-full main-container max-w-[1510px]">
                 <div className="flex flex-col items-center">
                   <div className="space-y-0.5 mb-2">
                     <h3 className="text-lg font-medium text-white">{t('Watch History')}</h3>

@@ -232,7 +232,7 @@ const MovieDetailsPage = () => {
 
         {/* Movie info overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 lg:p-16">
-          <div className="flex flex-col md:flex-row items-start gap-6 max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row items-start gap-6 main-container mx-auto">
             <div className="hidden md:block flex-shrink-0 w-48 xl:w-64 rounded-lg overflow-hidden shadow-lg">
               <img 
                 src={getImageUrl(movie.poster_path, posterSizes.medium)} 
@@ -346,7 +346,7 @@ const MovieDetailsPage = () => {
       </div>
       
       {/* Tabs for About, Cast, and Reviews */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="main-container mx-auto px-4 py-8">
         <div className="flex border-b border-white/10 mb-6">
           <button
             className={`py-2 px-4 font-medium whitespace-nowrap ${

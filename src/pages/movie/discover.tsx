@@ -175,7 +175,7 @@ const currentYear = new Date().getFullYear();
 		<>
 			<Navbar />
 			<main className="flex flex-col min-h-screen pt-20">
-				<div className="max-w-7xl mx-auto px-4 py-8 w-full flex-1">
+				<div className="main-container mx-auto px-4 py-8 w-full flex-1" style={{maxWidth:'1850px'}}>
 					<div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
 						<div className="text-left">
 							<h1 className="text-3xl md:text-4xl font-bold text-white text-left">{t('Discover Movies')}</h1>

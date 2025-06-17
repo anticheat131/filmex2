@@ -41,7 +41,7 @@ export default function PopularPeoplePage() {
         <div className="container space-y-8">
           <div className="md:mb-24 md:mt-12">
             <h1 className="mb-2 text-2xl font-medium">{t('Popular People')}</h1>
-            <p className="max-w-3xl text-muted-foreground">{t('Explore the most popular people in the entertainment industry. From award-winning actors to visionary directors, discover the faces behind your favorite movies and TV shows.')}</p>
+            <p className="main-container text-muted-foreground">{t('Explore the most popular people in the entertainment industry. From award-winning actors to visionary directors, discover the faces behind your favorite movies and TV shows.')}</p>
           </div>
           {loading ? (
             <div className="text-center py-12">{t('Loading...')}</div>

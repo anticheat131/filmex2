@@ -284,7 +284,7 @@ const Search = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-grow pt-24 px-4 md:px-8 max-w-6xl mx-auto w-full">
+      <div className="flex-grow pt-24 px-4 md:px-8 main-container w-full">
         <h1 className="text-2xl md:text-3xl font-bold text-white mb-6">Search</h1>
         
         <form onSubmit={handleSearch} className="mb-8">

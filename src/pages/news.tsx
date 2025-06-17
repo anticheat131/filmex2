@@ -63,7 +63,7 @@ const News = () => {
   return (
     <>
       <Navbar />
-      <div className="page-container max-w-screen-2xl mx-auto py-10 px-4 md:px-12 xl:px-24 mt-20">
+      <div className="page-container main-container mx-auto py-10 px-4 md:px-12 xl:px-24 mt-20">
         <h1 className="text-4xl font-extrabold mb-10 text-center tracking-tight bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
           {t('Upcoming Movie & TV Show News')}
         </h1>

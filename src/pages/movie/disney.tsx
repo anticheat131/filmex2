@@ -87,7 +87,7 @@ export default function MovieDisney() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main className="flex-1 px-4 pt-20 pb-8 max-w-7xl mx-auto w-full">
+      <main className="flex-1 px-4 pt-20 pb-8 main-container mx-auto w-full">
         <header className="mb-6 mt-2 flex flex-col items-start">
           <h1 className="mb-2 text-2xl font-medium flex items-center gap-4">
             <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className="size-28" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.22 5.838c-1.307 -.15 -1.22 -.578 -1.22 -.794c0 -.216 .424 -1.044 4.34 -1.044c4.694 0 14.66 3.645 14.66 10.042s-8.71 4.931 -10.435 4.52c-1.724 -.412 -5.565 -2.256 -5.565 -4.174c0 -1.395 3.08 -2.388 6.715 -2.388c3.634 0 5.285 1.041 5.285 2c0 .5 -.074 1.229 -1 1.5"/><path d="M10.02 8a505.153 505.153 0 0 0 0 13"/></svg>

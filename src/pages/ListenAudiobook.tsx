@@ -69,17 +69,17 @@ export default function ListenAudiobookPage() {
                   ))}
                 </div>
                 <div className="text-md mt-2">
-                  <div className="align-center flex w-full justify-between md:max-w-[300px]">
+                  <div className="align-center flex w-full justify-between main-container">
                     <span className="font-bold text-gray-300">{t('Published Date')}:</span> <span className="font-normal text-gray-500">{book.year}</span>
                   </div>
                 </div>
                 <div className="text-md mt-4">
-                  <div className="align-center flex w-full justify-between md:max-w-[300px]">
+                  <div className="align-center flex w-full justify-between main-container">
                     <span className="font-bold text-gray-300">{t('Rating')}:</span> <span className="font-normal text-gray-500">{book.rating} / 5</span>
                   </div>
                 </div>
                 <div className="text-md mt-4">
-                  <div className="align-center flex w-full justify-between md:max-w-[300px]">
+                  <div className="align-center flex w-full justify-between main-container">
                     <span className="font-bold text-gray-300">{t('Maturity Rating')}:</span> <span className="font-normal text-gray-500">{book.maturity}</span>
                   </div>
                 </div>

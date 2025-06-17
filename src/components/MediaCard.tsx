@@ -146,7 +146,12 @@ const MediaCard = ({
         'group',
         'relative inline-block rounded-sm border border-[#131313] bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
         'hover:border-[#181818] hover:shadow-white/10 hover:scale-[1.04]',
-        large ? 'w-[240px] md:w-[270px] aspect-[2/3] p-0 m-0' : 'hover:scale-[1.02]',
+        // PC/tablet: original sizes, phone: more left margin, right margin as before
+        large
+          ? 'w-[240px] md:w-[270px] aspect-[2/3] p-0 m-0'
+          : 'w-[180px] sm:w-[243px] md:w-[288px] aspect-[2/3] p-0 m-0',
+        // On phone: more left margin, right margin moderate
+        'ml-5 mr-4 sm:ml-0 sm:mr-0',
         className
       )}
       style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.10)', outline: 'none', borderWidth: '1px', borderRadius: '3px' }}
@@ -154,7 +159,7 @@ const MediaCard = ({
       onMouseDown={e => e.preventDefault()}
       onClick={handleClick}
     >
-      <div className={cn('relative w-full overflow-hidden rounded-sm', large ? 'aspect-[2/3]' : 'aspect-[2/3.5')}> 
+      <div className={cn('relative w-full overflow-hidden rounded-sm', large ? 'aspect-[2/3]' : 'aspect-[2/3]')}> 
         {/* Quality badge at top left */}
         {quality && (
           <div className="absolute top-2 left-2 z-20 px-3 py-1 rounded-full bg-black/70 border border-white/20 shadow-md backdrop-blur-md text-white text-xs font-semibold select-none pointer-events-none tracking-wider uppercase" style={{letterSpacing:'0.06em', fontSize:'0.78rem'}}>
@@ -198,7 +203,7 @@ const MediaCard = ({
               </div>
             )}
             {/* Title */}
-            <div className="font-semibold text-[17px] text-white leading-tight truncate max-w-[180px] mb-0">
+            <div className="font-semibold text-[15px] sm:text-[17px] text-white leading-tight truncate max-w-[150px] sm:max-w-[180px] mb-0">
               {media.title || media.name}
             </div>
             {/* Year */}

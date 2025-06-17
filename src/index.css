@@ -360,3 +360,9 @@ border-left: 1px solid rgb(22 22 22);
 h2 {
   @apply font-bold text-left;
 }
+
+main, .main-container, .site-max-width {
+  max-width: 1510px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}

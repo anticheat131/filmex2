@@ -87,7 +87,7 @@ export default function MovieAnime() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main className="flex-1 px-4 pt-20 pb-8 max-w-7xl mx-auto w-full">
+      <main className="flex-1 px-4 pt-20 pb-8 main-container mx-auto w-full">
         <header className="mb-6 mt-2">
           <h1 className="text-3xl font-bold mb-1 text-left">{t('Discover Anime')}</h1>
           <p className="text-muted-foreground text-left max-w-2xl">{t('Explore the best and latest anime movies from around the world. Filter, sort, and find your next favorite anime film.')}</p>

@@ -87,7 +87,7 @@ export default function MoviePrime() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main className="flex-1 px-4 pt-20 pb-8 max-w-7xl mx-auto w-full">
+      <main className="flex-1 px-4 pt-20 pb-8 main-container mx-auto w-full">
         <header className="mb-6 mt-2 flex flex-col items-start">
           <h1 className="mb-2 text-2xl font-medium flex items-center gap-4">
             {/* Improved Prime Video icon: full text and smile arc visible */}

@@ -106,7 +106,7 @@ const Navbar = () => {
             </span>
           </Link>
           {/* Main nav links (desktop, centered relative to logo) */}
-          <nav aria-label="Main" data-orientation="horizontal" dir="ltr" className="relative z-10 max-w-max flex-1 items-center justify-center ml-2 hidden lg:flex">
+          <nav aria-label="Main" data-orientation="horizontal" dir="ltr" className="relative z-10 main-container flex-1 items-center justify-center ml-2 hidden lg:flex">
             <div style={{position:'relative'}}>
               <ul data-orientation="horizontal" className="group flex flex-1 list-none items-center justify-center space-x-1" dir="ltr">
                 <li
@@ -181,7 +181,7 @@ const Navbar = () => {
           </nav>
         </div>
         {/* Right side: search, settings, menu */}
-        <div className="flex items-center gap-1 sm:gap-2 w-full max-w-xs sm:max-w-none">
+        <div className="flex items-center gap-1 sm:gap-2 w-full max-w-xs sm:max-w-none lg:ml-24">
           <div className="relative flex items-center flex-[0.96] min-w-0 w-full sm:w-44 md:w-56 max-w-xs sm:max-w-xs md:max-w-sm lg:max-w-xs">
             <NavbarSearch />
           </div>
