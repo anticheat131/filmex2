@@ -336,7 +336,7 @@ const WatchHistory = () => {
                 )}
               </TabsContent>
             </Tabs>
-          </div>
+          </motion.div>
         </div>
       </main>
       <Footer />
