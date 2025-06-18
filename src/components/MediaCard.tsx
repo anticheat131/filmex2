@@ -145,7 +145,7 @@ const MediaCard = ({
       className={cn(
         'relative bg-black/30 rounded-lg overflow-hidden shadow-lg group transition-all duration-200',
         smaller ? 'scale-[0.97]' : '',
-        large ? 'md:h-[420px] h-[320px] w-full' : 'md:h-[340px] h-[220px] w-full',
+        large ? 'md:h-[420px] h-[360px] w-full' : 'md:h-[340px] h-[260px] w-full',
         className
       )}
       tabIndex={0}
@@ -196,7 +196,7 @@ const MediaCard = ({
         </div>
         {/* Bottom overlay bar for IMDB, title, year */}
         <div style={{position:'absolute',left:0,right:0,bottom:0,padding:0}}>
-          <div className="media-card-info-bar flex flex-col items-start gap-0 absolute left-1.5 bottom-12 z-10 px-2 py-1 rounded-sm" style={{maxWidth:'85%'}}>
+          <div className="media-card-info-bar flex flex-col items-start gap-0 absolute left-1.5 bottom-4 md:bottom-12 z-10 px-2 py-1 rounded-sm" style={{maxWidth:'85%'}}>
             {/* IMDB badge */}
             {media.vote_average > 0 && (
               <div className="flex items-center bg-white text-black rounded-full h-[22px] min-w-[32px] px-[10px] font-bold text-[13px] shadow mb-1 justify-center">
