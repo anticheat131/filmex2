@@ -46,7 +46,7 @@ const TrendingToday = () => {
       <section className="w-full mt-8 p-0 m-0">
         <div className="grid grid-cols-1 gap-y-14 gap-x-[2vw] w-full pb-32 md:grid-cols-2 md:grid-rows-2 md:gap-[2vw] md:h-[72vw] md:max-h-[140vh]">
           {movies.map((movie, idx) => (
-            <div key={movie.id} className="relative bg-black/80 overflow-hidden shadow-2xl flex flex-col justify-center items-center w-full h-full min-h-[95vw] mb-10 rounded-xl md:min-h-0 md:mb-0 group flex-1">
+            <div key={movie.id} className="relative bg-black/80 overflow-hidden shadow-2xl flex flex-col justify-center items-center w-full h-[32vw] min-h-[104vw] mb-10 rounded-xl md:min-h-0 md:mb-0 group flex-1">
               <img
                 src={movie.backdrop_path ? `https://image.tmdb.org/t/p/w780${movie.backdrop_path}` : '/placeholder.svg'}
                 alt={movie.title}

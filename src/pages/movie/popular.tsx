@@ -77,7 +77,7 @@ export default function MoviePopular() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <div className="relative flex-1 py-4">
-        <div className="main-container mx-auto px-4 py-8 w-full flex-1" style={{maxWidth:'1850px'}}>
+        <div className="main-container mx-auto px-4 py-16 w-full flex-1" style={{maxWidth:'1850px'}}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
             <div className="text-left">
               <h1 className="text-3xl md:text-4xl font-bold text-white text-left">{t('Popular Movies')}</h1>

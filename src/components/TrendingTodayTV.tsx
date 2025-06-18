@@ -45,7 +45,7 @@ const TrendingTodayTV = () => {
       <section className="w-full mt-8 p-0 m-0">
         <div className="grid grid-cols-1 gap-y-14 gap-x-[2vw] w-full pb-32 md:grid-cols-2 md:grid-rows-2 md:gap-[2vw] md:h-[72vw] md:max-h-[140vh]">
           {shows.map((show, idx) => (
-            <div key={show.id} className="relative bg-black/80 overflow-hidden shadow-2xl flex flex-col justify-center items-center w-full h-full min-h-[130vw] mb-10 rounded-xl md:min-h-0 md:mb-0 group flex-1">
+            <div key={show.id} className="relative bg-black/80 overflow-hidden shadow-2xl flex flex-col justify-center items-center w-full h-[32vw] min-h-[143vw] mb-10 rounded-xl md:min-h-0 md:mb-0 group flex-1">
               <img
                 src={show.backdrop_path ? `https://image.tmdb.org/t/p/w780${show.backdrop_path}` : '/placeholder.svg'}
                 alt={show.name}
