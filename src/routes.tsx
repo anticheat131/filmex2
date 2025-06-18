@@ -99,8 +99,7 @@ export default function AppRoutes() {
           <Route path="/watch/:type/:id/:season/:episode" element={<Player />} />
           <Route path="/search" element={<Search />} />
           <Route path="/trending" element={<Trending />} />
-          <Route path="/trending/movie" element={<TrendingMovies />} />
-          <Route path="/trending/tv" element={<TrendingTVShows />} />
+          <Route path="/trending/movie" element={<TrendingMovie />} />
           <Route path="/watch-together" element={<WatchTogether />} />
           <Route path="/live-tv" element={<LiveTV />} />
           <Route path="/watch/channel/:id" element={<ChannelPage />} />

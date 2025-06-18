@@ -141,23 +141,24 @@ const MediaCard = ({
   const year = (media.release_date || media.first_air_date || '').slice(0, 4);
 
   return (
-    <article
+    <div
       className={cn(
-        'group',
-        'relative inline-block rounded-sm border border-[#131313] bg-card shadow-md transition-all duration-300 cursor-pointer overflow-hidden',
-        'hover:border-[#181818] hover:shadow-white/10 hover:scale-[1.04]',
-        // PC/tablet: original sizes, phone: more left margin, right margin as before
-        large
-          ? 'w-[240px] md:w-[270px] aspect-[2/3] p-0 m-0'
-          : 'w-[180px] sm:w-[243px] md:w-[288px] aspect-[2/3] p-0 m-0',
-        // On phone: more left margin, right margin moderate
-        'ml-5 mr-4 sm:ml-0 sm:mr-0',
+        'relative bg-black/30 rounded-lg overflow-hidden shadow-lg group transition-all duration-200',
+        smaller ? 'scale-[0.97]' : '',
+        large ? 'md:h-[420px] h-[320px] w-full' : 'md:h-[340px] h-[220px] w-full',
         className
       )}
-      style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.10)', outline: 'none', borderWidth: '1px', borderRadius: '3px' }}
-      tabIndex={-1}
-      onMouseDown={e => e.preventDefault()}
-      onClick={handleClick}
+      tabIndex={0}
+      aria-label={media.title || media.name}
+      onClick={() => navigate(detailPath)}
+      onKeyDown={e => {
+        if (e.key === 'Enter') navigate(detailPath);
+      }}
+      onMouseEnter={e => {
+        if (!minimal && !smaller) setShowPopup(true);
+        setPopupPos({ x: e.clientX, y: e.clientY });
+      }}
+      onMouseLeave={() => setShowPopup(false)}
     >
       <div className={cn('relative w-full overflow-hidden rounded-sm', large ? 'aspect-[2/3]' : 'aspect-[2/3]')}> 
         {/* Quality badge at top left */}
@@ -195,7 +196,7 @@ const MediaCard = ({
         </div>
         {/* Bottom overlay bar for IMDB, title, year */}
         <div style={{position:'absolute',left:0,right:0,bottom:0,padding:0}}>
-          <div className="media-card-info-bar flex flex-col items-start gap-0 absolute left-1.5 bottom-3 z-10 px-2 py-1 rounded-sm" style={{maxWidth:'85%'}}>
+          <div className="media-card-info-bar flex flex-col items-start gap-0 absolute left-1.5 bottom-12 z-10 px-2 py-1 rounded-sm" style={{maxWidth:'85%'}}>
             {/* IMDB badge */}
             {media.vote_average > 0 && (
               <div className="flex items-center bg-white text-black rounded-full h-[22px] min-w-[32px] px-[10px] font-bold text-[13px] shadow mb-1 justify-center">
@@ -213,7 +214,7 @@ const MediaCard = ({
           </div>
         </div>
       </div>
-    </article>
+    </div>
   );
 };
 

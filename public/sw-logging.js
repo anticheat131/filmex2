@@ -29,9 +29,18 @@ self.log = function(level, ...args) {
     const logEntry = {
       timestamp,
       level,
-      message: args.map(arg => 
-        typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-      ).join(' ')
+      message: args.map(arg => {
+        if (typeof arg === 'object') {
+          try {
+            return JSON.stringify(arg);
+          } catch (e) {
+            // Fallback for non-serializable objects
+            return Object.prototype.toString.call(arg);
+          }
+        } else {
+          return String(arg);
+        }
+      }).join(' ')
     };
 
     // Add to buffer
@@ -51,7 +60,11 @@ self.log = function(level, ...args) {
     });
 
     // Also log to console with appropriate level
-    console[level](...args);
+    try {
+      console[level](...args);
+    } catch (e) {
+      console.log(...args);
+    }
   }
 }
 
