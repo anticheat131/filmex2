@@ -193,148 +193,151 @@ const currentYear = new Date().getFullYear();
 										{t('Filters')}
 									</button>
 								</SheetTrigger>
-								<SheetContent side="right" className="fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm flex flex-col px-0">
-									<div className="flex flex-col space-y-2 text-center sm:text-left px-4 md:px-6">
-										<h2 className="text-lg font-semibold text-foreground">{t('Filters')}</h2>
-										<p className="text-sm text-muted-foreground">{t('Narrow down your search results with the following filters.')}</p>
-									</div>
-									<div className="relative overflow-hidden px-4 md:px-6" style={{ position: 'relative' }}>
-										<div className="space-y-8">
-											{/* Genres */}
-											<div className="space-y-2">
-												<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">{t('Genres')}</label>
-												<div className="flex flex-wrap gap-2">
-													{MOVIE_GENRES.map((genre) => (
-														<button
-															key={genre.id}
-															className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent ${selectedGenres.includes(genre.id) ? 'bg-primary text-primary-foreground hover:bg-primary/80' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}
-															onClick={() => handleGenreToggle(genre.id)}
-															type="button"
+								<SheetContent side="right" className="fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm flex flex-col px-0"
+>
+									<div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
+										<div className="flex flex-col space-y-2 text-center sm:text-left px-4 md:px-6">
+											<h2 className="text-lg font-semibold text-foreground">{t('Filters')}</h2>
+											<p className="text-sm text-muted-foreground">{t('Narrow down your search results with the following filters.')}</p>
+										</div>
+										<div className="relative overflow-hidden px-4 md:px-6" style={{ position: 'relative' }}>
+											<div className="space-y-8">
+												{/* Genres */}
+												<div className="space-y-2">
+													<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">{t('Genres')}</label>
+													<div className="flex flex-wrap gap-2">
+														{MOVIE_GENRES.map((genre) => (
+															<button
+																key={genre.id}
+																className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent ${selectedGenres.includes(genre.id) ? 'bg-primary text-primary-foreground hover:bg-primary/80' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}
+																onClick={() => handleGenreToggle(genre.id)}
+																type="button"
+															>
+																{t(genre.name)}
+															</button>
+														))}
+													</div>
+												</div>
+												{/* Date pickers */}
+												<div className="grid gap-2 md:grid-cols-2">
+													<div className="space-y-2">
+														<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex text-muted-foreground">{t('From')}</label>
+														<select
+															className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full justify-start text-left font-normal text-muted-foreground"
+															value={fromYear || ''}
+															onChange={e => setFromYear(e.target.value ? Number(e.target.value) : null)}
 														>
-															{t(genre.name)}
+															<option value="">{t('Select date...')}</option>
+															{yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+														</select>
+													</div>
+													<div className="space-y-2">
+														<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex text-muted-foreground">{t('To')}</label>
+														<select
+															className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full justify-start text-left font-normal text-muted-foreground"
+															value={toYear || ''}
+															onChange={e => setToYear(e.target.value ? Number(e.target.value) : null)}
+														>
+															<option value="">{t('Select date...')}</option>
+															{yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+														</select>
+													</div>
+												</div>
+												{/* Language */}
+												<div className="space-y-2">
+													<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex text-muted-foreground">{t('Language')}</label>
+													<select
+														className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-muted-foreground w-full justify-between text-left"
+														value={language}
+														onChange={e => setLanguage(e.target.value)}
+													>
+														<option value="">{t('Select language...')}</option>
+														{MOVIE_LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.name}</option>)}
+													</select>
+												</div>
+												{/* Provider */}
+												<div className="space-y-2">
+													<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 text-muted-foreground">{t('Where to watch')}
+														<button data-state="closed" tabIndex={-1} className="ml-1">
+															<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-info size-4"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
 														</button>
-													))}
-												</div>
-											</div>
-											{/* Date pickers */}
-											<div className="grid gap-2 md:grid-cols-2">
-												<div className="space-y-2">
-													<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex text-muted-foreground">{t('From')}</label>
+													</label>
 													<select
-														className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full justify-start text-left font-normal text-muted-foreground"
-														value={fromYear || ''}
-														onChange={e => setFromYear(e.target.value ? Number(e.target.value) : null)}
+														className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-muted-foreground w-full justify-between text-left"
+														value={provider || ''}
+														onChange={e => setProvider(e.target.value ? Number(e.target.value) : null)}
 													>
-														<option value="">{t('Select date...')}</option>
-														{yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+														<option value="">{t('Select providers...')}</option>
+														{MOVIE_PROVIDERS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
 													</select>
 												</div>
-												<div className="space-y-2">
-													<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex text-muted-foreground">{t('To')}</label>
-													<select
-														className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full justify-start text-left font-normal text-muted-foreground"
-														value={toYear || ''}
-														onChange={e => setToYear(e.target.value ? Number(e.target.value) : null)}
-													>
-														<option value="">{t('Select date...')}</option>
-														{yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
-													</select>
+												{/* Vote Average */}
+												<div className="space-y-4">
+													<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">{t('Vote Average')}</label>
+													<Slider
+														min={0}
+														max={10}
+														step={0.1}
+														value={[voteAverage]}
+														onValueChange={([v]) => setVoteAverage(v)}
+													/>
+													<div className="mt-4 flex justify-between border-t">
+														{[...Array(11)].map((_, i) => (
+															<div className="relative pt-2" key={i}>
+																<span className="text-[9px] text-muted-foreground">{i}</span>
+																<span className="absolute left-1/2 top-0 block h-1/3 w-px -translate-x-px bg-muted"></span>
+															</div>
+														))}
+													</div>
 												</div>
-											</div>
-											{/* Language */}
-											<div className="space-y-2">
-												<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex text-muted-foreground">{t('Language')}</label>
-												<select
-													className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-muted-foreground w-full justify-between text-left"
-													value={language}
-													onChange={e => setLanguage(e.target.value)}
-												>
-													<option value="">{t('Select language...')}</option>
-													{MOVIE_LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.name}</option>)}
-												</select>
-											</div>
-											{/* Provider */}
-											<div className="space-y-2">
-												<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 text-muted-foreground">{t('Where to watch')}
-													<button data-state="closed" tabIndex={-1} className="ml-1">
-														<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-info size-4"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-													</button>
-												</label>
-												<select
-													className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-muted-foreground w-full justify-between text-left"
-													value={provider || ''}
-													onChange={e => setProvider(e.target.value ? Number(e.target.value) : null)}
-												>
-													<option value="">{t('Select providers...')}</option>
-													{MOVIE_PROVIDERS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-												</select>
-											</div>
-											{/* Vote Average */}
-											<div className="space-y-4">
-												<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">{t('Vote Average')}</label>
-												<Slider
-													min={0}
-													max={10}
-													step={0.1}
-													value={[voteAverage]}
-													onValueChange={([v]) => setVoteAverage(v)}
-												/>
-												<div className="mt-4 flex justify-between border-t">
-													{[...Array(11)].map((_, i) => (
-														<div className="relative pt-2" key={i}>
-															<span className="text-[9px] text-muted-foreground">{i}</span>
-															<span className="absolute left-1/2 top-0 block h-1/3 w-px -translate-x-px bg-muted"></span>
-														</div>
-													))}
-												</div>
-											</div>
-											{/* Minimum Votes */}
-											<div className="space-y-4">
-												<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">{t('Minimum Votes')}</label>
-												<Slider
-													min={0}
-													max={500}
-													step={10}
-													value={[minVotes]}
-													onValueChange={([v]) => setMinVotes(v)}
-												/>
-												<div className="mt-4 flex justify-between border-t">
-													{[0,50,100,150,200,250,300,350,400,450,500].map((v) => (
-														<div className="relative pt-2" key={v}>
-															<span className="text-[9px] text-muted-foreground">{v}</span>
-															<span className="absolute left-1/2 top-0 block h-1/3 w-px -translate-x-px bg-muted"></span>
-														</div>
-													))}
+												{/* Minimum Votes */}
+												<div className="space-y-4">
+													<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground">{t('Minimum Votes')}</label>
+													<Slider
+														min={0}
+														max={500}
+														step={10}
+														value={[minVotes]}
+														onValueChange={([v]) => setMinVotes(v)}
+													/>
+													<div className="mt-4 flex justify-between border-t">
+														{[0,50,100,150,200,250,300,350,400,450,500].map((v) => (
+															<div className="relative pt-2" key={v}>
+																<span className="text-[9px] text-muted-foreground">{v}</span>
+																<span className="absolute left-1/2 top-0 block h-1/3 w-px -translate-x-px bg-muted"></span>
+															</div>
+														))}
+													</div>
 												</div>
 											</div>
 										</div>
-									</div>
-									<div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2 px-4 md:gap-0 md:px-6 mt-6">
-										<button
-											className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-11 rounded-md px-8"
-											onClick={clearFilters}
-											type="button"
-										>
-											{t('Clear')}
-										</button>
-										<SheetClose asChild>
+										<div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2 px-4 md:gap-0 md:px-6 mt-6">
 											<button
+												className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-11 rounded-md px-8"
+												onClick={clearFilters}
 												type="button"
-												className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-												onClick={handleApplyFilters}
 											>
-												{t('Save Changes')}
+												{t('Clear')}
 											</button>
-										</SheetClose>
+											<SheetClose asChild>
+												<button
+													type="button"
+													className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+													onClick={handleApplyFilters}
+												>
+													{t('Save Changes')}
+												</button>
+											</SheetClose>
+										</div>
+										<button
+											type="button"
+											className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 data-[state=open]:bg-secondary"
+											onClick={() => setFilterOpen(false)}
+										>
+											<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x size-4"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+											<span className="sr-only">{t('Close')}</span>
+										</button>
 									</div>
-									<button
-										type="button"
-										className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 data-[state=open]:bg-secondary"
-										onClick={() => setFilterOpen(false)}
-									>
-										<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x size-4"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-										<span className="sr-only">{t('Close')}</span>
-									</button>
 								</SheetContent>
 							</Sheet>
 							{/* Sort by popover button */}
