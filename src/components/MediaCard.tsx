@@ -22,6 +22,8 @@ interface MediaCardProps {
   minimal?: boolean;
   smaller?: boolean;
   large?: boolean; // NEW: for homepage big cards
+  hideInfoBar?: boolean; // NEW: hide info bar for Trending Today
+  trendingNow?: boolean; // For Trending Now Movies or TV Shows
 }
 
 const slugifyTitle = (title: string) =>
@@ -33,6 +35,8 @@ const MediaCard = ({
   minimal = false,
   smaller = false,
   large = false,
+  hideInfoBar = false,
+  trendingNow = false,
 }: MediaCardProps) => {
   const [imageError, setImageError] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -144,6 +148,7 @@ const MediaCard = ({
     <div
       className={cn(
         'relative bg-black/30 rounded-lg overflow-hidden shadow-lg group transition-all duration-200',
+        smaller ? 'w-[150px] sm:w-full' : '',
         smaller ? 'scale-[0.97]' : '',
         large ? 'md:h-[420px] h-[360px] w-full' : 'md:h-[340px] h-[260px] w-full',
         className
@@ -195,8 +200,9 @@ const MediaCard = ({
           </a>
         </div>
         {/* Bottom overlay bar for IMDB, title, year */}
+        {!hideInfoBar && (
         <div style={{position:'absolute',left:0,right:0,bottom:0,padding:0}}>
-          <div className="media-card-info-bar flex flex-col items-start gap-0 absolute left-1.5 bottom-4 md:bottom-12 z-10 px-2 py-1 rounded-sm" style={{maxWidth:'85%'}}>
+          <div className={`media-card-info-bar flex flex-col items-start gap-0 absolute left-1.5 bottom-4 ${trendingNow ? 'md:bottom-4' : 'md:bottom-12'} z-10 px-2 py-1 rounded-sm`} style={{maxWidth:'85%'}}>
             {/* IMDB badge */}
             {media.vote_average > 0 && (
               <div className="flex items-center bg-white text-black rounded-full h-[22px] min-w-[32px] px-[10px] font-bold text-[13px] shadow mb-1 justify-center">
@@ -213,6 +219,7 @@ const MediaCard = ({
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
