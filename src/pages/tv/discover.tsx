@@ -225,7 +225,7 @@ const currentYear = new Date().getFullYear();
 									side="right"
 									className="fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm flex flex-col px-0"
 								>
-									<div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+									<div className="flex-1 min-h-0 overflow-y-auto overscroll-contain hide-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
 										<div className="flex flex-col space-y-2 text-center sm:text-left px-4 md:px-6">
 											<h2 className="text-lg font-semibold text-foreground">
 												{t('Filters')}
