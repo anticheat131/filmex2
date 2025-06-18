@@ -142,7 +142,7 @@ const ContinueWatching = ({ maxItems = 20 }: ContinueWatchingProps) => {
           {processedItems.map(item => (
             <motion.div
               key={item.id}
-              className="relative flex-none w-[280px] md:w-[300px] aspect-video bg-card rounded-lg overflow-hidden group cursor-pointer hover-card"
+              className="relative flex-none w-[280px] md:w-[300px] aspect-video bg-card rounded-[6px] overflow-hidden group cursor-pointer hover-card"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               whileHover={{ scale: 1.02 }}

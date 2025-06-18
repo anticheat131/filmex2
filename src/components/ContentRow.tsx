@@ -152,7 +152,8 @@ const ContentRow = ({ title, media, featured = false }: ContentRowProps) => {
             >
               <MediaCard 
                 media={item}
-                className={'w-[175px] h-[261px] md:h-[367px] sm:w-full'} // further 2% height reduction for mobile (266px -> 261px)
+                className={'w-[175px] h-[261px] md:h-[367px] sm:w-full'}
+                trendingNow={title === 'Trending Today Movies' || title === 'Trending Today TV Shows'}
               />
             </div>
           ))}

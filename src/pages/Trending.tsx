@@ -71,18 +71,16 @@ return (
 <Navbar />
 
 <main className="flex-1">  
-    <div className="container px-4 py-8">  
+    <div className="main-container mx-auto px-4 py-8 w-full flex-1" style={{maxWidth:'1850px'}}>
       <div className="flex items-center gap-3 mb-8 pt-10">  
         <TrendingUp className="h-8 w-8 text-accent" />  
         <h1 className="text-3xl font-bold text-white">Trending</h1>  
       </div>  
-        
       <Tabs defaultValue="week" onValueChange={(value) => handleTimeWindowChange(value as 'day' | 'week')}>  
         <TabsList className="mb-8">  
           <TabsTrigger value="day">Today</TabsTrigger>  
           <TabsTrigger value="week">This Week</TabsTrigger>  
         </TabsList>  
-          
         <TabsContent value="day">  
           {trendingQuery.isLoading ? (  
             <MediaGridSkeleton />  
@@ -91,7 +89,6 @@ return (
           ) : (  
             <>  
               <MediaGrid media={extendedMedia} title="Trending Today" />  
-                
               {hasMore && (  
                 <div className="flex justify-center my-8">  
                   <Button   
@@ -99,18 +96,14 @@ return (
                     variant="outline"  
                     className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300"  
                   >  
-                    {trendingQuery.isFetching ? (  
-                      <>Loading...</>  
-                    ) : (  
-                      <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>  
-                    )}  
+                    <ChevronDown className="mr-2 h-4 w-4" />  
+                    Show More  
                   </Button>  
                 </div>  
               )}  
             </>  
           )}  
         </TabsContent>  
-          
         <TabsContent value="week">  
           {trendingQuery.isLoading ? (  
             <MediaGridSkeleton />  
@@ -119,7 +112,6 @@ return (
           ) : (  
             <>  
               <MediaGrid media={extendedMedia} title="Trending This Week" />  
-                
               {hasMore && (  
                 <div className="flex justify-center my-8">  
                   <Button   
@@ -127,11 +119,8 @@ return (
                     variant="outline"  
                     className="border-white/10 text-white hover:bg-accent/20 hover:border-accent/50 hover:text-white transition-all duration-300"  
                   >  
-                    {trendingQuery.isFetching ? (  
-                      <>Loading...</>  
-                    ) : (  
-                      <>Show More <ChevronDown className="ml-2 h-4 w-4 animate-bounce" /></>  
-                    )}  
+                    <ChevronDown className="mr-2 h-4 w-4" />  
+                    Show More  
                   </Button>  
                 </div>  
               )}  

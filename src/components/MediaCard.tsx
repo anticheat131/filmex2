@@ -147,18 +147,23 @@ const MediaCard = ({
   const year = (media.release_date || media.first_air_date || '').slice(0, 4);
 
   // Use the same size as all grid cards for all non-large cards
-  const uniformCardClass = large
+  let uniformCardClass = large
     ? 'w-[200px] h-[320px] sm:w-[240px] sm:h-[380px] md:w-[209px] md:h-[309px]'
-    : 'w-[175px] h-[275px] md:h-[350px] sm:w-full'; // Unified grid size
+    : 'w-[175px] h-[261px] md:h-[350px] sm:w-full'; // md:h-[350px] for md screens
+
+  // If trendingNow, increase height by 20%
+  if (trendingNow && !large) {
+    uniformCardClass = 'w-[175px] h-[313px] md:h-[420px] sm:w-full'; // 261*1.20 ≈ 313, 350*1.20 ≈ 420
+  }
 
   return (
     <div
       className={cn(
-        'relative bg-neutral-900 rounded-lg overflow-hidden shadow-lg group transition-all duration-200',
+        'relative bg-neutral-900 overflow-hidden shadow-lg group transition-all duration-200',
         uniformCardClass,
-        className
+        className,
       )}
-      style={{ border: '0.5px solid rgba(255,255,255,0.01)' }} // nearly invisible border for minimal appearance
+      style={{ border: '0.5px solid rgba(255,255,255,0.03)', borderRadius: '6px' }} // force border radius inline
       tabIndex={0}
       aria-label={media.title || media.name}
       onClick={() => navigate(detailPath)}
@@ -171,7 +176,9 @@ const MediaCard = ({
       }}
       onMouseLeave={() => setShowPopup(false)}
     >
-      <div className={cn('relative w-full overflow-hidden rounded-sm', large ? 'aspect-[2/3]' : 'aspect-[2/3]')}> 
+      <div className={cn('relative w-full overflow-hidden', large ? 'aspect-[2/3]' : 'aspect-[2/3]')}
+        style={{ borderRadius: '6px' }} // force border radius inline
+      > 
         {/* Quality badge at top left */}
         {quality && (
           <div className="absolute top-2 left-2 z-20 px-3 py-1 rounded-full bg-black/70 border border-white/20 shadow-md backdrop-blur-md text-white text-xs font-semibold select-none pointer-events-none tracking-wider uppercase" style={{letterSpacing:'0.06em', fontSize:'0.78rem'}}>
@@ -183,6 +190,7 @@ const MediaCard = ({
           alt={media.title || media.name || 'Media Poster'}
           onError={() => setImageError(true)}
           className={cn('w-full h-full object-cover')}
+          style={{ border: '0.5px solid rgba(255,255,255,0.03)' }} // smallest, most subtle border for image
         />
         {/* Info bar: score, name, year in a single row, centered below buttons, always visible */}
         <div className="media-card-info-bar flex flex-row items-end gap-3 absolute left-1/2 -translate-x-1/2 z-20 px-2 py-1 rounded-sm bg-transparent justify-center w-[90%] pointer-events-auto" style={{ bottom: '5%' }}>

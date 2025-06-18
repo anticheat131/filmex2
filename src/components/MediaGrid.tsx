@@ -168,7 +168,7 @@ const MediaGrid = ({
             <motion.div 
               key={typeof mediaItem.media_id === 'number' || typeof mediaItem.media_id === 'string' ? `${mediaItem.media_type}-${mediaItem.media_id}` : idx}
               variants={item}
-              className="glass p-4 rounded-lg hover:bg-white/10 transition-colors group"
+              className="glass p-4 hover:bg-white/10 transition-colors group" // remove all rounded classes from outer card
             >
               <div className="flex gap-4 items-center">
                 {selectMode && mediaItem.docId && (
@@ -179,11 +179,11 @@ const MediaGrid = ({
                     />
                   </div>
                 )}
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0" style={{ borderRadius: '6px', overflow: 'hidden' }}>
                   <MediaCard 
                     media={{ ...mediaItem, id: mediaItem.media_id }}
                     trendingNow
-                    className="w-[175px] h-[350px] sm:w-full"
+                    className="w-[175px] h-[402px] sm:w-full"
                   />
                 </div>
                 {/* Remove custom title, score, year here to use MediaCard's info bar only */}
@@ -234,7 +234,7 @@ const MediaGrid = ({
               <MediaCard 
                 media={{ ...mediaItem, id: mediaItem.media_id }}
                 trendingNow
-                className="w-[175px] h-[261px] md:h-[353px] sm:w-full" // remove negative margin to prevent overlap
+                className="w-[175px] h-[258px] md:h-[346px] sm:w-full" // 1% smaller than 261 and 350
               />
             </motion.div>
           ))}
