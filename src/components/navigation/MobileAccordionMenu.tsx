@@ -497,7 +497,25 @@ const MobileAccordionMenu = () => {
 				transform: 'translate3d(0px, 0px, 0px)',
 			}}
 		>
-			<div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted"></div>
+			<div
+				className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted"
+				role="button"
+				tabIndex={0}
+				aria-label="Close menu"
+				onClick={() => {
+					if (window.innerWidth < 768) {
+						const closeBtn = document.querySelector('[data-mobile-menu-close]');
+						if (closeBtn) (closeBtn as HTMLElement).click();
+					}
+				}}
+				onKeyDown={e => {
+					if ((e.key === 'Enter' || e.key === ' ') && window.innerWidth < 768) {
+						const closeBtn = document.querySelector('[data-mobile-menu-close]');
+						if (closeBtn) (closeBtn as HTMLElement).click();
+					}
+				}}
+				style={{ cursor: 'pointer' }}
+			></div>
 			<div className="grid gap-1.5 p-4 text-center sm:text-left">
 				<h2 className="text-lg font-semibold leading-none tracking-tight">
 					Menu
