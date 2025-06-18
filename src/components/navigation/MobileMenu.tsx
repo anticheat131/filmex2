@@ -15,6 +15,15 @@ interface MobileMenuProps {
 const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   const { user } = useAuth();
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    function handleMenuCloseEvent(e: CustomEvent) {
+      onClose();
+    }
+    window.addEventListener('closeMobileMenu', handleMenuCloseEvent as EventListener);
+    return () => window.removeEventListener('closeMobileMenu', handleMenuCloseEvent as EventListener);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (

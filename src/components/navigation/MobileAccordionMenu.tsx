@@ -504,17 +504,35 @@ const MobileAccordionMenu = () => {
 				aria-label="Close menu"
 				onClick={() => {
 					if (window.innerWidth < 768) {
-						const closeBtn = document.querySelector('[data-mobile-menu-close]');
-						if (closeBtn) (closeBtn as HTMLElement).click();
+						window.dispatchEvent(new CustomEvent('closeMobileMenu'));
 					}
 				}}
 				onKeyDown={e => {
 					if ((e.key === 'Enter' || e.key === ' ') && window.innerWidth < 768) {
-						const closeBtn = document.querySelector('[data-mobile-menu-close]');
-						if (closeBtn) (closeBtn as HTMLElement).click();
+						window.dispatchEvent(new CustomEvent('closeMobileMenu'));
 					}
 				}}
 				style={{ cursor: 'pointer' }}
+				onTouchStart={e => {
+					if (window.innerWidth >= 768) return;
+					const startY = e.touches[0].clientY;
+					let moved = false;
+					const onTouchMove = (moveEvent: TouchEvent) => {
+						const deltaY = moveEvent.touches[0].clientY - startY;
+						if (deltaY > 40) {
+							moved = true;
+							window.dispatchEvent(new CustomEvent('closeMobileMenu'));
+							document.removeEventListener('touchmove', onTouchMove);
+							document.removeEventListener('touchend', onTouchEnd);
+						}
+					};
+					const onTouchEnd = () => {
+						document.removeEventListener('touchmove', onTouchMove);
+						document.removeEventListener('touchend', onTouchEnd);
+					};
+					document.addEventListener('touchmove', onTouchMove);
+					document.addEventListener('touchend', onTouchEnd);
+				}}
 			></div>
 			<div className="grid gap-1.5 p-4 text-center sm:text-left">
 				<h2 className="text-lg font-semibold leading-none tracking-tight">
