@@ -502,6 +502,7 @@ const MobileAccordionMenu = () => {
 				role="button"
 				tabIndex={0}
 				aria-label="Close menu"
+				style={{ cursor: 'pointer', touchAction: 'none' }}
 				onClick={() => {
 					if (window.innerWidth < 768) {
 						document.body.classList.add('mobile-menu-closing');
@@ -520,28 +521,45 @@ const MobileAccordionMenu = () => {
 						}, 300);
 					}
 				}}
-				style={{ cursor: 'pointer' }}
 				onTouchStart={e => {
 					if (window.innerWidth >= 768) return;
+					const menu = document.querySelector('.fixed.inset-x-0.bottom-0.z-50');
+					if (!menu) return;
 					const startY = e.touches[0].clientY;
-					let moved = false;
-					const onTouchMove = (moveEvent: TouchEvent) => {
-						const deltaY = moveEvent.touches[0].clientY - startY;
-						if (deltaY > 40) {
-							moved = true;
-							document.body.classList.add('mobile-menu-closing');
-							setTimeout(() => {
-								window.dispatchEvent(new CustomEvent('closeMobileMenu'));
-								document.body.classList.remove('mobile-menu-closing');
-							}, 300);
-							document.removeEventListener('touchmove', onTouchMove);
-							document.removeEventListener('touchend', onTouchEnd);
-						}
-					};
-					const onTouchEnd = () => {
+					let lastY = startY;
+					let dragging = false;
+					function onTouchMove(moveEvent) {
+						const currentY = moveEvent.touches[0].clientY;
+						const deltaY = Math.max(0, currentY - startY);
+						if (deltaY > 0) dragging = true;
+						menu.style.transition = 'none';
+						menu.style.transform = `translateY(${deltaY}px)`;
+						lastY = currentY;
+					}
+					function onTouchEnd() {
 						document.removeEventListener('touchmove', onTouchMove);
 						document.removeEventListener('touchend', onTouchEnd);
-					};
+						if (!menu) return;
+						const totalDelta = Math.max(0, lastY - startY);
+						if (totalDelta > 60) {
+							menu.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s cubic-bezier(0.4,0,0.2,1)';
+							menu.style.transform = 'translateY(100%)';
+							menu.style.opacity = '0';
+							setTimeout(() => {
+								window.dispatchEvent(new CustomEvent('closeMobileMenu'));
+								menu.style.transition = '';
+								menu.style.transform = '';
+								menu.style.opacity = '';
+							}, 300);
+						} else {
+							menu.style.transition = 'transform 0.2s cubic-bezier(0.4,0,0.2,1)';
+							menu.style.transform = 'translateY(0)';
+							setTimeout(() => {
+								menu.style.transition = '';
+								menu.style.transform = '';
+							}, 200);
+						}
+					}
 					document.addEventListener('touchmove', onTouchMove);
 					document.addEventListener('touchend', onTouchEnd);
 				}}
