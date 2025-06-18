@@ -24,6 +24,7 @@ interface MediaCardProps {
   large?: boolean; // NEW: for homepage big cards
   hideInfoBar?: boolean; // NEW: hide info bar for Trending Today
   trendingNow?: boolean; // For Trending Now Movies or TV Shows
+  popularPage?: boolean; // Only for /movie/popular
 }
 
 const slugifyTitle = (title: string) =>
@@ -37,6 +38,7 @@ const MediaCard = ({
   large = false,
   hideInfoBar = false,
   trendingNow = false,
+  popularPage = false,
 }: MediaCardProps) => {
   const [imageError, setImageError] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -144,15 +146,19 @@ const MediaCard = ({
 
   const year = (media.release_date || media.first_air_date || '').slice(0, 4);
 
+  // Use the same size as all grid cards for all non-large cards
+  const uniformCardClass = large
+    ? 'w-[200px] h-[320px] sm:w-[240px] sm:h-[380px] md:w-[209px] md:h-[309px]'
+    : 'w-[175px] h-[275px] md:h-[350px] sm:w-full'; // Unified grid size
+
   return (
     <div
       className={cn(
-        'relative bg-black/30 rounded-lg overflow-hidden shadow-lg group transition-all duration-200',
-        smaller ? 'w-[150px] sm:w-full' : '',
-        smaller ? 'scale-[0.97]' : '',
-        large ? 'md:h-[420px] h-[360px] w-full' : 'md:h-[340px] h-[260px] w-full',
+        'relative bg-neutral-900 rounded-lg overflow-hidden shadow-lg group transition-all duration-200',
+        uniformCardClass,
         className
       )}
+      style={{ border: '0.5px solid rgba(255,255,255,0.01)' }} // nearly invisible border for minimal appearance
       tabIndex={0}
       aria-label={media.title || media.name}
       onClick={() => navigate(detailPath)}
@@ -178,51 +184,51 @@ const MediaCard = ({
           onError={() => setImageError(true)}
           className={cn('w-full h-full object-cover')}
         />
-        {/* Buttons overlay, visible on hover, centered in card */}
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center space-y-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 pointer-events-none md:pointer-events-auto md:group-hover:pointer-events-auto">
-          <a
-            className="flex min-w-24 items-center justify-between rounded-sm bg-white/95 px-4 py-2 text-black transition-all hover:bg-red-200 hover:text-black md:bg-white/80 text-sm font-semibold shadow gap-2"
-            href={media.media_type === 'movie' ? `/movie/${mediaId}-${slug}` : `/tv/${mediaId}-${slug}`}
-            tabIndex={-1}
-            style={{ pointerEvents: 'auto' }}
-          >
-            <span>{t('Details')}</span>
-            <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className="ml-2 size-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M13 5h8"></path><path d="M13 9h5"></path><path d="M13 15h8"></path><path d="M13 19h5"></path><path d="M3 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path><path d="M3 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z"></path></svg>
-          </a>
-          <a
-            className="flex min-w-24 items-center justify-between rounded-sm bg-black/90 px-4 py-2 text-white transition-all hover:bg-red-200 hover:text-black md:bg-black/80 text-sm font-semibold shadow gap-2"
-            href={media.media_type === 'movie' ? `/watch/movie/${mediaId}-${slug}` : `/watch/tv/${mediaId}-${slug}`}
-            tabIndex={-1}
-            style={{ pointerEvents: 'auto' }}
-          >
-            <span>{t('Watch')}</span>
-            <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="ml-2 size-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M133 440a35.37 35.37 0 0 1-17.5-4.67c-12-6.8-19.46-20-19.46-34.33V111c0-14.37 7.46-27.53 19.46-34.33a35.13 35.13 0 0 1 35.77.45l247.85 148.36a36 36 0 0 1 0 61l-247.89 148.4A35.5 35.5 0 0 1 133 440z"></path></svg>
-          </a>
-        </div>
-        {/* Bottom overlay bar for IMDB, title, year */}
-        {!hideInfoBar && (
-        <div style={{position:'absolute',left:0,right:0,bottom:0,padding:0}}>
-          <div className={`media-card-info-bar flex flex-col items-start gap-0 absolute left-1.5 bottom-4 ${trendingNow ? 'md:bottom-4' : 'md:bottom-12'} z-10 px-2 py-1 rounded-sm`} style={{maxWidth:'85%'}}>
-            {/* IMDB badge */}
-            {media.vote_average > 0 && (
-              <div className="flex items-center bg-white text-black rounded-full h-[22px] min-w-[32px] px-[10px] font-bold text-[13px] shadow mb-1 justify-center">
-                {media.vote_average.toFixed(1)}
-              </div>
-            )}
-            {/* Title */}
-            <div className="font-semibold text-[15px] sm:text-[17px] text-white leading-tight truncate max-w-[150px] sm:max-w-[180px] mb-0">
+        {/* Info bar: score, name, year in a single row, centered below buttons, always visible */}
+        <div className="media-card-info-bar flex flex-row items-end gap-3 absolute left-1/2 -translate-x-1/2 z-40 px-2 py-1 rounded-sm bg-transparent justify-center w-[90%] pointer-events-auto" style={{ bottom: '5%' }}>
+          {media.vote_average > 0 && (
+            <div className="flex items-center bg-white text-black rounded-full h-[22px] min-w-[32px] px-[10px] font-bold text-[13px] shadow justify-center">
+              {media.vote_average.toFixed(1)}
+            </div>
+          )}
+          <div className="media-card-title-year flex flex-col items-start min-w-0 flex-1 justify-end">
+            <div className="media-card-title font-semibold text-[15px] sm:text-[17px] text-white leading-tight truncate max-w-[150px] sm:max-w-[180px] mb-0">
               {media.title || media.name}
             </div>
-            {/* Year */}
-            <div className="text-[13px] text-neutral-300 font-medium leading-none mt-0">
+            <div className="media-card-year text-[13px] text-neutral-300 font-medium leading-none mt-0">
               {(media.release_date || media.first_air_date || '').slice(0, 4)}
             </div>
           </div>
         </div>
-        )}
+        {/* Centered Details/Watch buttons, stacked vertically, only on hover, moved 6% higher */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-30 pointer-events-none group-hover:opacity-100 opacity-0 transition-opacity" style={{ justifyContent: 'center', top: '-6%' }}>
+          <div className="flex flex-col items-center justify-center h-full">
+            <a
+              className="flex items-center justify-center rounded bg-white/95 px-4 py-2 mb-2 text-black font-semibold text-sm shadow hover:bg-red-200 hover:text-black transition pointer-events-auto"
+              href={media.media_type === 'movie' ? `/movie/${mediaId}-${slug}` : `/tv/${mediaId}-${slug}`}
+              tabIndex={-1}
+              style={{ pointerEvents: 'auto' }}
+            >
+              <span>{t('Details')}</span>
+              <ArrowRight className="ml-2 size-4" />
+            </a>
+            <a
+              className="flex items-center justify-center rounded bg-black/90 px-4 py-2 text-white font-semibold text-sm shadow hover:bg-red-200 hover:text-black transition pointer-events-auto"
+              href={media.media_type === 'movie' ? `/watch/movie/${mediaId}-${slug}` : `/watch/tv/${mediaId}-${slug}`}
+              tabIndex={-1}
+              style={{ pointerEvents: 'auto' }}
+            >
+              <span>{t('Watch')}</span>
+              <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="ml-2 size-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M133 440a35.37 35.37 0 0 1-17.5-4.67c-12-6.8-19.46-20-19.46-34.33V111c0-14.37 7.46-27.53 19.46-34.33a35.13 35.13 0 0 1 35.77.45l247.85 148.36a36 36 0 0 1 0 61l-247.89 148.4A35.5 35.5 0 0 1 133 440z"></path></svg>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
 export default MediaCard;
+
+// To reduce the gap between cards by 5%, ensure the parent container (e.g., grid or flex row) uses a smaller gap utility, such as gap-3 instead of gap-4, or add style={{gap: '0.95rem'}} if using inline styles.
+// If you want to enforce it here, you can add a prop to MediaCard for custom margin, but best practice is to set the gap on the parent container.

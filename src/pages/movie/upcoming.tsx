@@ -108,10 +108,14 @@ export default function MovieUpcoming() {
           ) : error ? (
             <div className="py-16 text-center text-red-500">{error}</div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-x-6 gap-y-8 justify-start">
               {movies.filter(movie => movie.poster_path).map((movie) => (
-                <div key={movie.media_id} className="aspect-poster group relative">
-                  <MediaCard media={movie} />
+                <div key={movie.media_id} className="group relative">
+                  <MediaCard 
+                    media={movie} 
+                    trendingNow 
+                    className="w-[175px] h-[275px] md:h-[350px] sm:w-full"
+                  />
                   <div className="w-full text-center mt-2 text-sm text-muted-foreground font-medium">
                     {movie.release_date ? new Date(movie.release_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
                   </div>

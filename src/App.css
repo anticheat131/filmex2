@@ -845,3 +845,12 @@
   .navbar-inner { padding: 0 0.7rem; }
   .navbar-links { display: none; }
 }
+
+@media (min-width: 768px) {
+  .md\:w-\[200px\] {
+    width: 209px !important;
+  }
+  .md\:h-\[350px\] {
+    height: 309px !important;
+  }
+}

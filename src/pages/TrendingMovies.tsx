@@ -1,7 +1,8 @@
 import Navbar from '../components/Navbar';
-import MediaCard from '../components/MediaCard';
+import MediaGrid from '../components/MediaGrid';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ensureExtendedMediaArray } from '../utils/types';
 
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 
@@ -22,12 +23,8 @@ const TrendingMovies = () => {
   return (
     <>
       <Navbar />
-      <h1>{t('Trending Movies')}</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 p-4 pt-24">
-        {movies.map(m => (
-          <MediaCard key={m.id} media={{...m, media_type: 'movie'}} />
-        ))}
-      </div>
+      <h1 className="text-2xl font-bold text-white px-4 pt-24 pb-4">{t('Trending Movies')}</h1>
+      <MediaGrid media={ensureExtendedMediaArray(movies)} />
     </>
   );
 };

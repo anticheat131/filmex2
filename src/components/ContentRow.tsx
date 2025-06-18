@@ -139,39 +139,23 @@ const ContentRow = ({ title, media, featured = false }: ContentRowProps) => {
       <div className="overflow-hidden">
         <div
           ref={rowRef}
-          className={
-            'flex -ml-4 scrollbar-hide overflow-x-auto min-w-0 md:min-w-[1200px]'
-            + ((title === 'Trending Now Movies' || title === 'Trending Now TV Shows') ? ' gap-x-12 sm:gap-x-0' : '')
-          }
+          className={'flex -ml-4 scrollbar-hide overflow-x-auto min-w-0 md:min-w-[1200px] gap-x-0'} // removed gap completely
           style={{ transform: 'translate3d(0px, 0px, 0px)', flexWrap: 'nowrap' }}
           onScroll={handleScroll}
         >
-          {enrichedMedia
-            .filter(item =>
-              (title === 'Trending Now Movies' && item.media_type === 'movie') ||
-              (title === 'Trending Now TV Shows' && item.media_type === 'tv') ||
-              (title !== 'Trending Now Movies' && title !== 'Trending Now TV Shows')
-            )
-            .map((item, index) => (
-                <div
-                  role="group"
-                  aria-roledescription="slide"
-                  key={`${item.media_type}-${item.id}`}
-                  className={
-                    ((title === 'Trending Now Movies' || title === 'Trending Now TV Shows')
-                      ? `min-w-0 shrink-0 grow-0 pl-0 basis-[36vw] sm:pl-2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6 xl:basis-1/8${index === 0 ? ' ml-2' : ''}`
-                      : 'min-w-0 shrink-0 grow-0 pl-0 basis-[48vw] sm:pl-4 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5')
-                  }
-                >
-                  <MediaCard 
-                    media={item} 
-                    smaller={title === 'Trending Now Movies' || title === 'Trending Now TV Shows'} 
-                    className={(title === 'Trending Now Movies' || title === 'Trending Now TV Shows') ? 'w-[175px] h-[275px] md:h-[350px] sm:w-full' : ''} 
-                    hideInfoBar={title === 'Trending Today' || title === 'Trending Today Movies'}
-                    trendingNow={title === 'Trending Now Movies' || title === 'Trending Now TV Shows'}
-                  />
-                </div>
-            ))}
+          {enrichedMedia.map((item, index) => (
+            <div
+              role="group"
+              aria-roledescription="slide"
+              key={`${item.media_type}-${item.id}`}
+              className={'min-w-0 shrink-0 grow-0 pl-0 basis-[48vw] sm:pl-4 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5'}
+            >
+              <MediaCard 
+                media={item}
+                className={'w-[175px] h-[289px] md:h-[367px] sm:w-full'}
+              />
+            </div>
+          ))}
         </div>
       </div>
     </div>

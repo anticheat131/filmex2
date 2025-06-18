@@ -24,6 +24,7 @@ interface MediaGridProps {
   selectable?: boolean;
   onDelete?: (id: string) => void;
   onDeleteSelected?: (ids: string[]) => void;
+  popularPage?: boolean; // Only for /movie/popular
 }
 
 const MediaGrid = ({ 
@@ -32,7 +33,8 @@ const MediaGrid = ({
   listView = false, 
   selectable = false,
   onDelete,
-  onDeleteSelected
+  onDeleteSelected,
+  popularPage = false
 }: MediaGridProps) => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectMode, setSelectMode] = useState(false);
@@ -177,35 +179,15 @@ const MediaGrid = ({
                     />
                   </div>
                 )}
-                <div className="flex-shrink-0 w-16 h-24 md:w-20 md:h-30 overflow-hidden rounded-md">
-                  <MediaCard media={{ ...mediaItem, id: mediaItem.media_id }} className="h-full w-full" minimal />
+                <div className="flex-shrink-0">
+                  <MediaCard 
+                    media={{ ...mediaItem, id: mediaItem.media_id }}
+                    trendingNow
+                    className="w-[175px] h-[275px] md:h-[350px] sm:w-full"
+                  />
                 </div>
+                {/* Remove custom title, score, year here to use MediaCard's info bar only */}
                 <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-white">{mediaItem.title || mediaItem.name}</h3>
-                    {!selectMode && onDelete && mediaItem.docId && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onDelete(mediaItem.docId!)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Trash2 className="h-4 w-4 text-white/70 hover:text-red-500" />
-                      </Button>
-                    )}
-                  </div>
-                  <div className="flex items-center text-sm text-white/70 mb-2">
-                    <span>
-                      {mediaItem.media_type === 'movie'
-                        ? mediaItem.release_date?.substring(0, 4)
-                        : mediaItem.first_air_date?.substring(0, 4)}
-                    </span>
-                    {mediaItem.vote_average > 0 && (
-                      <span className="ml-3 flex items-center text-amber-400">
-                        ★ {mediaItem.vote_average.toFixed(1)}
-                      </span>
-                    )}
-                  </div>
                   {renderTimestamp(mediaItem)}
                   <p className="text-white/70 text-sm line-clamp-2">{mediaItem.overview}</p>
                 </div>
@@ -215,7 +197,7 @@ const MediaGrid = ({
         </motion.div>
       ) : (
         <motion.div 
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-2 justify-start"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-x-6 gap-y-8 justify-start"
           variants={container}
           initial="hidden"
           animate="show"
@@ -249,7 +231,11 @@ const MediaGrid = ({
                   <Trash2 className="h-4 w-4 text-white/70 hover:text-red-500" />
                 </Button>
               )}
-              <MediaCard media={{ ...mediaItem, id: mediaItem.media_id }} smaller />
+              <MediaCard 
+                media={{ ...mediaItem, id: mediaItem.media_id }}
+                trendingNow
+                className="w-[175px] h-[280px] md:h-[353px] sm:w-full"
+              />
             </motion.div>
           ))}
         </motion.div>
