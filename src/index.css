@@ -366,3 +366,10 @@ main, .main-container, .site-max-width {
   margin-left: auto !important;
   margin-right: auto !important;
 }
+
+body.mobile-menu-closing .fixed.inset-x-0.bottom-0.z-50 {
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s cubic-bezier(0.4,0,0.2,1);
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+}

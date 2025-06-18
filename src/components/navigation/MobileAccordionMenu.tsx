@@ -504,12 +504,20 @@ const MobileAccordionMenu = () => {
 				aria-label="Close menu"
 				onClick={() => {
 					if (window.innerWidth < 768) {
-						window.dispatchEvent(new CustomEvent('closeMobileMenu'));
+						document.body.classList.add('mobile-menu-closing');
+						setTimeout(() => {
+							window.dispatchEvent(new CustomEvent('closeMobileMenu'));
+							document.body.classList.remove('mobile-menu-closing');
+						}, 300);
 					}
 				}}
 				onKeyDown={e => {
 					if ((e.key === 'Enter' || e.key === ' ') && window.innerWidth < 768) {
-						window.dispatchEvent(new CustomEvent('closeMobileMenu'));
+						document.body.classList.add('mobile-menu-closing');
+						setTimeout(() => {
+							window.dispatchEvent(new CustomEvent('closeMobileMenu'));
+							document.body.classList.remove('mobile-menu-closing');
+						}, 300);
 					}
 				}}
 				style={{ cursor: 'pointer' }}
@@ -521,7 +529,11 @@ const MobileAccordionMenu = () => {
 						const deltaY = moveEvent.touches[0].clientY - startY;
 						if (deltaY > 40) {
 							moved = true;
-							window.dispatchEvent(new CustomEvent('closeMobileMenu'));
+							document.body.classList.add('mobile-menu-closing');
+							setTimeout(() => {
+								window.dispatchEvent(new CustomEvent('closeMobileMenu'));
+								document.body.classList.remove('mobile-menu-closing');
+							}, 300);
 							document.removeEventListener('touchmove', onTouchMove);
 							document.removeEventListener('touchend', onTouchEnd);
 						}
