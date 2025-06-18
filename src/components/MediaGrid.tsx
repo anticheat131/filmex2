@@ -183,7 +183,7 @@ const MediaGrid = ({
                   <MediaCard 
                     media={{ ...mediaItem, id: mediaItem.media_id }}
                     trendingNow
-                    className="w-[175px] h-[275px] md:h-[350px] sm:w-full"
+                    className="w-[175px] h-[350px] sm:w-full"
                   />
                 </div>
                 {/* Remove custom title, score, year here to use MediaCard's info bar only */}
@@ -197,7 +197,7 @@ const MediaGrid = ({
         </motion.div>
       ) : (
         <motion.div 
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-x-6 gap-y-8 justify-start"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-x-8 gap-y-8 justify-start ml-[-4%] sm:ml-0" // unified mobile grid for all pages
           variants={container}
           initial="hidden"
           animate="show"
@@ -234,7 +234,7 @@ const MediaGrid = ({
               <MediaCard 
                 media={{ ...mediaItem, id: mediaItem.media_id }}
                 trendingNow
-                className="w-[175px] h-[280px] md:h-[353px] sm:w-full"
+                className="w-[175px] h-[261px] md:h-[353px] sm:w-full" // remove negative margin to prevent overlap
               />
             </motion.div>
           ))}

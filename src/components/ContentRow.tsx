@@ -139,7 +139,7 @@ const ContentRow = ({ title, media, featured = false }: ContentRowProps) => {
       <div className="overflow-hidden">
         <div
           ref={rowRef}
-          className={'flex -ml-4 scrollbar-hide overflow-x-auto min-w-0 md:min-w-[1200px] gap-x-0'} // removed gap completely
+          className={'flex scrollbar-hide overflow-x-auto min-w-0 md:min-w-[1200px] gap-x-0'} // remove gap completely for tightest spacing
           style={{ transform: 'translate3d(0px, 0px, 0px)', flexWrap: 'nowrap' }}
           onScroll={handleScroll}
         >
@@ -152,7 +152,7 @@ const ContentRow = ({ title, media, featured = false }: ContentRowProps) => {
             >
               <MediaCard 
                 media={item}
-                className={'w-[175px] h-[289px] md:h-[367px] sm:w-full'}
+                className={'w-[175px] h-[261px] md:h-[367px] sm:w-full'} // further 2% height reduction for mobile (266px -> 261px)
               />
             </div>
           ))}

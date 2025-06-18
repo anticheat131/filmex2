@@ -185,7 +185,7 @@ const MediaCard = ({
           className={cn('w-full h-full object-cover')}
         />
         {/* Info bar: score, name, year in a single row, centered below buttons, always visible */}
-        <div className="media-card-info-bar flex flex-row items-end gap-3 absolute left-1/2 -translate-x-1/2 z-40 px-2 py-1 rounded-sm bg-transparent justify-center w-[90%] pointer-events-auto" style={{ bottom: '5%' }}>
+        <div className="media-card-info-bar flex flex-row items-end gap-3 absolute left-1/2 -translate-x-1/2 z-20 px-2 py-1 rounded-sm bg-transparent justify-center w-[90%] pointer-events-auto" style={{ bottom: '5%' }}>
           {media.vote_average > 0 && (
             <div className="flex items-center bg-white text-black rounded-full h-[22px] min-w-[32px] px-[10px] font-bold text-[13px] shadow justify-center">
               {media.vote_average.toFixed(1)}

@@ -77,12 +77,14 @@ export default function MoviePopular() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <div className="relative flex-1 py-4">
-        <div className="container space-y-8">
-          <div className="md:mb-12 md:mt-6 pt-16 text-left">
-            <h1 className="mb-2 text-2xl font-medium text-left">{t('Popular Movies')}</h1>
-            <p className="max-w-3xl text-muted-foreground text-left">
-              {t('Dive into the world of cinema with our collection of popular movies. These films are trending and loved by audiences worldwide.')}
-            </p>
+        <div className="main-container mx-auto px-4 py-8 w-full flex-1" style={{maxWidth:'1850px'}}>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+            <div className="text-left">
+              <h1 className="text-3xl md:text-4xl font-bold text-white text-left">{t('Popular Movies')}</h1>
+              <p className="text-gray-300 mt-1 text-base max-w-2xl text-left">
+                {t('Dive into the world of cinema with our collection of popular movies. These films are trending and loved by audiences worldwide.')}
+              </p>
+            </div>
           </div>
           {loading ? (
             <div className="py-16 text-center text-white">{t('Loading…')}</div>
